@@ -905,7 +905,7 @@ class _SpotsShellState extends State<SpotsShell> {
         ? null
         : LatLng(position!.latitude, position!.longitude);
     final center =
-        here ??
+        (farAway ? null : here) ??
         (spots.isNotEmpty
             ? LatLng(spots.first.lat, spots.first.lng)
             : const LatLng(-6.2088, 106.8456));
@@ -913,6 +913,7 @@ class _SpotsShellState extends State<SpotsShell> {
     return Stack(
       children: [
         FlutterMap(
+          key: ValueKey('map-$farAway-${spots.isEmpty}'),
           mapController: mapController,
           options: MapOptions(initialCenter: center, initialZoom: 12),
           children: [
