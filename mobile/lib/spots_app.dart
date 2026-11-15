@@ -163,6 +163,7 @@ class _SpotsShellState extends State<SpotsShell> {
   List<Store> nearStores = [];
   String? category;
   bool loading = true, locating = false, locationDenied = false;
+  bool farAway = false;
   String? error;
   StreamSubscription<void>? authSubscription;
   Timer? debounce;
@@ -319,15 +320,26 @@ class _SpotsShellState extends State<SpotsShell> {
         }
       } else {
         final near = (tab == 0 || tab == 2) && position != null;
-        final found = await repo.feed(
+        var found = await repo.feed(
           lat: position?.latitude,
           lng: position?.longitude,
           mode: near ? 'near' : 'popular',
           category: tab == 3 ? null : category,
           query: tab == 1 ? search.text.trim() : null,
         );
+        // Belum ada spot di sekitar: tampilkan yang lagi ramai di kota lain.
+        final fallback = near && found.isEmpty;
+        if (fallback) {
+          found = await repo.feed(
+            lat: position?.latitude,
+            lng: position?.longitude,
+            mode: 'popular',
+            category: category,
+          );
+        }
         if (ticket != request || !mounted) return;
         setState(() {
+          farAway = fallback && found.isNotEmpty;
           spots = found;
           focused = 0;
         });
@@ -495,6 +507,8 @@ class _SpotsShellState extends State<SpotsShell> {
                     SectionTitle(
                       explore
                           ? (search.text.isEmpty ? 'Lagi rame' : 'Hasil cari')
+                          : farAway
+                          ? 'Lagi rame di kota lain'
                           : position != null
                           ? 'Dekat kamu'
                           : 'Buat kamu',
@@ -1490,8 +1504,10 @@ class _SideRail extends StatelessWidget {
                 ],
               ),
             ),
-            const Spacer(),
-            RailExtras(repo: repo),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(child: RailExtras(repo: repo)),
+            ),
           ],
         ),
       ),
