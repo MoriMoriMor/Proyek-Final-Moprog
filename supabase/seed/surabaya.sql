@@ -282,5 +282,6 @@ Foto: Wikipedia / Wikimedia Commons', -7.2604, 112.7392, now() - interval '18 da
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000006', 'a5b0c000-0000-4000-8000-000000000002') on conflict do nothing;
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000006', 'a5b0c000-0000-4000-8000-000000000004') on conflict do nothing;
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000006', 'a5b0c000-0000-4000-8000-000000000005') on conflict do nothing;
+  if cardinality(posts) = 0 then raise exception 'Foto tidak bisa diambil. Jalankan dulu: dart run tools/seed_surabaya.dart'; end if;
 end
 $$;

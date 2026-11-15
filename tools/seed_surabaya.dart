@@ -5,6 +5,7 @@
 // Menulis supabase/seed/surabaya.sql. Saat dijalankan di Supabase SQL Editor,
 // SQL itu mengambil foto utama artikel Wikipedia tiap tempat. Aman diulang.
 // Aman diulang. Akun-akun ini tidak bisa dipakai login (tanpa password).
+import 'dart:convert';
 import 'dart:io';
 
 class Person {
@@ -198,6 +199,36 @@ begin
 end $f$;
 ''';
 
+final client = HttpClient()..userAgent = 'spots-seed/1.0 (student project)';
+
+/// Foto utama artikel Wikipedia, dicari dari komputer ini.
+Future<String?> wikiPhoto(List<String> titles) async {
+  for (final t in titles) {
+    final lang = t.split(':').first;
+    final title = t.substring(lang.length + 1).replaceAll(' ', '_');
+    try {
+      final req = await client.getUrl(
+        Uri.parse(
+          'https://$lang.wikipedia.org/api/rest_v1/page/summary/${Uri.encodeComponent(title)}',
+        ),
+      );
+      final res = await req.close();
+      if (res.statusCode != 200) {
+        await res.drain<void>();
+        continue;
+      }
+      final body = jsonDecode(await res.transform(utf8.decoder).join()) as Map;
+      final url = (body['originalimage'] as Map?)?['source'] as String?;
+      if (url != null &&
+          url.startsWith('https://upload.wikimedia.org/') &&
+          RegExp(r'\.(jpe?g|png)$', caseSensitive: false).hasMatch(url)) {
+        return url;
+      }
+    } catch (_) {}
+  }
+  return null;
+}
+
 Future<void> main() async {
   final ids = people.map((p) => "'${p.id}'").join(', ');
   final out = StringBuffer()
@@ -222,11 +253,17 @@ Future<void> main() async {
   out.writeln('  delete from public.posts where owner_id in ($ids);');
   for (final (n, place) in places.indexed) {
     final story = '${place.story}\n\nFoto: Wikipedia / Wikimedia Commons';
+    final found = await wikiPhoto(place.queries);
+    stdout.writeln(
+      '${found == null ? 'cari di Supabase' : 'foto ok'}  ${place.title}',
+    );
     final owner = people[owners[n][0] - 1];
     final ago = owners[n][1];
     out
       ..writeln(
-        '  img := pg_temp.wiki_img(array[${place.queries.map(sql).join(', ')}]);',
+        found == null
+            ? '  img := pg_temp.wiki_img(array[${place.queries.map(sql).join(', ')}]);'
+            : '  img := ${sql(found)};',
       )
       ..writeln('  if img is null then')
       ..writeln(
@@ -278,11 +315,15 @@ Future<void> main() async {
     }
   }
   out
+    ..writeln(
+      "  if cardinality(posts) = 0 then raise exception 'Foto tidak bisa diambil. Jalankan dulu: dart run tools/seed_surabaya.dart'; end if;",
+    )
     ..writeln('end')
     ..writeln('\$\$;');
   final file = File('supabase/seed/surabaya.sql');
   await file.parent.create(recursive: true);
   await file.writeAsString(out.toString());
+  client.close();
   stdout.writeln(
     '\nSelesai: ${file.path}. Salin isinya ke Supabase SQL Editor lalu Run.',
   );
