@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Konfirmasi Email · Spots</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="../piko.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <a class="logo" href="../">spots<span>.</span></a>
+
+    <div class="stage">
+      <img class="piko" src="../piko.svg" alt="">
+      <div class="confetti" aria-hidden="true"></div>
+    </div>
+
+    <section id="checking">
+      <h1>Sebentar…</h1>
+      <p>Lagi ngecek link konfirmasimu.</p>
+    </section>
+
+    <section id="ok" hidden>
+      <span class="sticker">Akun aktif!</span>
+      <h1>Email kamu sudah terkonfirmasi</h1>
+      <p>Balik ke aplikasi Spots, lalu masuk pakai email dan kata sandi yang tadi kamu daftarkan.</p>
+      <ol class="steps">
+        <li><span>Buka aplikasi Spots</span></li>
+        <li><span>Ketuk <b>Profil</b>, lalu <b>Masuk</b></span></li>
+        <li><span>Mulai cari spot seru</span></li>
+      </ol>
+    </section>
+
+    <section id="expired" hidden>
+      <span class="sticker warn">Link kedaluwarsa</span>
+      <h1>Link ini sudah tidak berlaku</h1>
+      <p id="reason">Link konfirmasi hanya bisa dipakai sekali dan ada batas waktunya.</p>
+      <p>Buka aplikasi Spots dan daftar lagi dengan email yang sama. Kami kirim link baru.</p>
+    </section>
+
+    <a class="pill" href="../">
+      <span class="arrow" aria-hidden="true">›</span>
+      Kenalan sama Spots
+    </a>
+  </main>
+
+  <script>
+    (function () {
+      var hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+      var query = new URLSearchParams(location.search);
+      var error = hash.get('error') || query.get('error');
+      var description = hash.get('error_description') || query.get('error_description');
+
+      // Token di URL tidak dibutuhkan halaman ini. Hapus supaya tidak ikut tersalin.
+      if (location.hash || location.search) {
+        history.replaceState(null, '', location.pathname);
+      }
+
+      document.getElementById('checking').hidden = true;
+      if (error) {
+        document.getElementById('expired').hidden = false;
+        document.body.classList.add('sad');
+        if (description) {
+          document.getElementById('reason').textContent =
+            description.indexOf('expired') >= 0 || description.indexOf('invalid') >= 0
+              ? 'Link ini sudah dipakai atau sudah lewat batas waktunya.'
+              : description;
+        }
+      } else {
+        document.getElementById('ok').hidden = false;
+        document.body.classList.add('happy');
+        var colors = ['#f27b8e', '#f4c65f', '#416cf4', '#2cc197', '#8b6cf3'];
+        var box = document.querySelector('.confetti');
+        for (var i = 0; i < 28; i++) {
+          var piece = document.createElement('i');
+          piece.style.left = Math.random() * 100 + '%';
+          piece.style.background = colors[i % colors.length];
+          piece.style.animationDelay = Math.random() * .6 + 's';
+          box.appendChild(piece);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

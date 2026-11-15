@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Spots</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <!-- Halaman ini juga melayani tautan bagikan seperti /s/<id>, /t/<id>, dan /i/<kode>. -->
+  <script>
+    (function () {
+      var base = location.pathname.split('/').slice(0, 2).join('/');
+      if (location.hostname.indexOf('github.io') < 0) base = '';
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = base + '/style.css';
+      document.head.appendChild(css);
+      window.SPOTS_BASE = base;
+    })();
+  </script>
+</head>
+<body>
+  <main class="card">
+    <a class="logo" id="home" href="/">spots<span>.</span></a>
+    <div class="stage"><img class="piko" id="piko" alt=""></div>
+    <span class="sticker" id="badge">Dibagikan lewat Spots</span>
+    <h1 id="title">Ada spot seru buat kamu</h1>
+    <p id="body">Buka aplikasi Spots untuk melihatnya.</p>
+    <p class="small" id="code" hidden></p>
+    <a class="pill" id="back" href="/"><span class="arrow" aria-hidden="true">›</span>Kenalan sama Spots</a>
+  </main>
+  <script>
+    (function () {
+      var base = window.SPOTS_BASE || '';
+      document.getElementById('piko').src = base + '/piko.svg';
+      document.getElementById('home').href = base + '/';
+      document.getElementById('back').href = base + '/';
+      var parts = location.pathname.slice(base.length).split('/').filter(Boolean);
+      var kind = parts.length >= 2 ? parts[parts.length - 2] : '';
+      var value = parts.length >= 2 ? decodeURIComponent(parts[parts.length - 1]) : '';
+      var title = document.getElementById('title');
+      var body = document.getElementById('body');
+      if (kind === 's') {
+        title.textContent = 'Temanmu nemu spot seru';
+        body.textContent = 'Buka aplikasi Spots untuk lihat foto, rute, dan obrolannya.';
+      } else if (kind === 't') {
+        document.getElementById('badge').textContent = 'Bisa pesan online';
+        title.textContent = 'Jajan dari toko ini';
+        body.textContent = 'Buka aplikasi Spots untuk lihat menu dan pesan.';
+      } else if (kind === 'i') {
+        document.getElementById('badge').textContent = 'Undangan';
+        title.textContent = 'Kamu diajak gabung Spots';
+        body.textContent = 'Pasang Spots dan masukkan kode ini untuk bonus XP.';
+        var code = document.getElementById('code');
+        code.hidden = false;
+        code.textContent = 'Kode: ' + value.toUpperCase();
+      } else {
+        document.getElementById('badge').textContent = 'Nyasar';
+        title.textContent = 'Halaman ini nggak ketemu';
+        body.textContent = 'Mungkin linknya salah ketik.';
+      }
+    })();
+  </script>
+</body>
+</html>
