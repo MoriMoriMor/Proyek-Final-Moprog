@@ -250,10 +250,11 @@ class _Headline extends StatelessWidget {
       Text(
         slide.kicker,
         style: const TextStyle(
-          fontFamily: 'Fraunces',
+          fontFamily: fontBody,
+          fontWeight: FontWeight.w900,
           color: Colors.white,
-          fontSize: 22,
-          height: 1,
+          fontSize: 18,
+          height: 1.1,
         ),
       ),
       const SizedBox(height: 2),
@@ -267,10 +268,10 @@ class _Headline extends StatelessWidget {
               Text(
                 slide.big,
                 style: TextStyle(
-                  fontFamily: 'Fraunces',
-                  fontSize: 58,
+                  fontFamily: fontDisplay,
+                  fontSize: 54,
                   height: 1.05,
-                  letterSpacing: -1.5,
+                  letterSpacing: -.5,
                   foreground: Paint()
                     ..style = PaintingStyle.stroke
                     ..strokeWidth = 12
@@ -281,11 +282,11 @@ class _Headline extends StatelessWidget {
               Text(
                 slide.big,
                 style: const TextStyle(
-                  fontFamily: 'Fraunces',
-                  fontSize: 58,
+                  fontFamily: fontDisplay,
+                  fontSize: 54,
                   height: 1.05,
-                  letterSpacing: -1.5,
-                  color: Color(0xFF111111),
+                  letterSpacing: -.5,
+                  color: ink,
                 ),
               ),
             ],
@@ -297,7 +298,7 @@ class _Headline extends StatelessWidget {
         child: Transform.rotate(
           angle: -.035,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            padding: const EdgeInsets.fromLTRB(16, 5, 16, 6),
             decoration: BoxDecoration(
               color: _lime,
               borderRadius: BorderRadius.circular(14),
@@ -305,8 +306,9 @@ class _Headline extends StatelessWidget {
             child: Text(
               slide.highlight,
               style: const TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 34,
+                fontFamily: fontBody,
+                fontWeight: FontWeight.w900,
+                fontSize: 20,
                 height: 1.1,
                 color: Color(0xFF1C3A0E),
               ),
@@ -450,9 +452,10 @@ class _Note extends StatelessWidget {
         child: Text(
           text,
           style: const TextStyle(
-            fontFamily: 'Caveat',
-            fontSize: 24,
-            height: 1.05,
+            fontFamily: fontBody,
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            height: 1.2,
             color: Color(0xFF3A2E1E),
           ),
         ),

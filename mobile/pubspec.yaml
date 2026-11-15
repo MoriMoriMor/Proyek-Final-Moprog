@@ -82,12 +82,6 @@ flutter:
     - family: Bagel
       fonts:
         - asset: assets/fonts/BagelFatOne-Regular.ttf
-    - family: Fraunces
-      fonts:
-        - asset: assets/fonts/Fraunces-Black.ttf
-    - family: Caveat
-      fonts:
-        - asset: assets/fonts/Caveat-Bold.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
