@@ -1,6 +1,6 @@
 # Spots
 
-*Spots to Go to before we Die.* Tempat berbagi rekomendasi warung, kafe, dan tujuan jalan-jalan dari pengalaman orang lain. Tiap cerita punya foto atau video, titik lokasi, dan obrolan kecil di bawahnya.
+*Spots.* Tempat berbagi rekomendasi warung, kafe, dan tujuan jalan-jalan dari pengalaman orang lain. Tiap cerita punya foto atau video, titik lokasi, dan obrolan kecil di bawahnya.
 
 Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka di browser dan desktop). Akun, data, dan media disimpan di **Supabase**.
 
