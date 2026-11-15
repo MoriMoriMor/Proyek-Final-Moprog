@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart' hide Path;
 
 import 'game.dart';
 import 'market_screens.dart';
+import 'people_page.dart';
 import 'share.dart';
 import 'spot.dart';
 import 'spot_views.dart';
@@ -330,6 +331,14 @@ class _ProfilePageState extends State<ProfilePage> {
           style: title.copyWith(fontSize: 20),
         ),
       ),
+      if (self) ...[
+        GlassButton(
+          glyph: Glyph.people,
+          label: 'Cari teman',
+          onTap: () => openPeople(context, repo),
+        ),
+        const SizedBox(width: 8),
+      ],
       if (self && widget.onSignOut != null)
         GlassButton(
           glyph: Glyph.exit,

@@ -502,7 +502,7 @@ class StreakChip extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _Flame(size: 24, lit: game.streak > 0),
+                StreakFlame(streak: game.streak, size: 22),
                 const SizedBox(width: 4),
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: game.streak.toDouble()),
@@ -526,19 +526,117 @@ class StreakChip extends StatelessWidget {
   );
 }
 
-class _Flame extends StatefulWidget {
-  const _Flame({required this.size, required this.lit});
-  final double size;
-  final bool lit;
-  @override
-  State<_Flame> createState() => _FlameState();
+/// Tingkat api streak. Makin lama streak, apinya berevolusi.
+class FlameTier {
+  const FlameTier(
+    this.name,
+    this.from,
+    this.stroke,
+    this.accent,
+    this.glow,
+    this.sparkles,
+    this.scale,
+  );
+  final String name;
+  final int from;
+  final Color stroke, accent, glow;
+  final int sparkles;
+  final double scale;
 }
 
-class _FlameState extends State<_Flame> with SingleTickerProviderStateMixin {
+const flameTiers = [
+  FlameTier(
+    'Padam',
+    0,
+    Color(0xFF9AA3BD),
+    Color(0xFFE2E6F5),
+    Colors.transparent,
+    0,
+    .9,
+  ),
+  FlameTier(
+    'Percikan',
+    1,
+    Color(0xFFD9541E),
+    Color(0xFFFFC56B),
+    Colors.transparent,
+    0,
+    .9,
+  ),
+  FlameTier(
+    'Api',
+    3,
+    Color(0xFFC8321A),
+    Color(0xFFFF8A3D),
+    Color(0x33FF6A2B),
+    0,
+    1,
+  ),
+  FlameTier(
+    'Api Biru',
+    7,
+    Color(0xFF1F4FD1),
+    Color(0xFF7FC8FF),
+    Color(0x553B8BFF),
+    1,
+    1.06,
+  ),
+  FlameTier(
+    'Api Ungu',
+    14,
+    Color(0xFF5B2DC2),
+    Color(0xFFC9A6FF),
+    Color(0x558B5CF6),
+    2,
+    1.1,
+  ),
+  FlameTier(
+    'Api Emas',
+    30,
+    Color(0xFFA86A05),
+    Color(0xFFFFE066),
+    Color(0x66FFC83D),
+    3,
+    1.15,
+  ),
+  FlameTier(
+    'Api Legenda',
+    100,
+    Color(0xFFD9265B),
+    Color(0xFFFFFFFF),
+    Color(0x66FF4FA0),
+    4,
+    1.2,
+  ),
+];
+
+FlameTier flameTierOf(int streak) => flameTiers.lastWhere(
+  (t) => streak >= t.from,
+  orElse: () => flameTiers.first,
+);
+
+FlameTier? nextFlameTier(int streak) {
+  for (final t in flameTiers) {
+    if (t.from > streak) return t;
+  }
+  return null;
+}
+
+/// Api streak yang menyala, bergoyang, dan berganti wujud sesuai tingkat.
+class StreakFlame extends StatefulWidget {
+  const StreakFlame({super.key, required this.streak, this.size = 24});
+  final int streak;
+  final double size;
+  @override
+  State<StreakFlame> createState() => _StreakFlameState();
+}
+
+class _StreakFlameState extends State<StreakFlame>
+    with SingleTickerProviderStateMixin {
   late final controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
+    duration: const Duration(milliseconds: 1600),
+  )..repeat();
 
   @override
   void dispose() {
@@ -547,24 +645,85 @@ class _FlameState extends State<_Flame> with SingleTickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: controller,
-    builder: (context, child) => Transform(
-      alignment: Alignment.bottomCenter,
-      transform: Matrix4.diagonal3Values(
-        1 - controller.value * .06,
-        1 + (calm(context) ? 0 : controller.value * .1),
-        1,
+  Widget build(BuildContext context) {
+    final tier = flameTierOf(widget.streak);
+    final size = widget.size * tier.scale;
+    final legend = tier.from >= 100;
+    return SizedBox.square(
+      dimension: widget.size * 1.25,
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          final t = calm(context) ? 0.0 : controller.value;
+          final wave = math.sin(t * math.pi * 2);
+          final accent = legend
+              ? HSVColor.fromAHSV(1, (t * 360) % 360, .55, 1).toColor()
+              : tier.accent;
+          return Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              if (tier.glow != Colors.transparent)
+                Container(
+                  width: size * (1 + wave.abs() * .15),
+                  height: size * (1 + wave.abs() * .15),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: tier.glow,
+                        blurRadius: size * .6,
+                        spreadRadius: size * .05,
+                      ),
+                    ],
+                  ),
+                ),
+              Transform(
+                alignment: Alignment.bottomCenter,
+                transform: Matrix4.diagonal3Values(
+                  1 - wave * .04,
+                  1 + wave * .08,
+                  1,
+                ),
+                child: SpotIcon(
+                  Glyph.fire,
+                  size: size,
+                  color: tier.stroke,
+                  accent: accent,
+                ),
+              ),
+              for (var i = 0; i < tier.sparkles; i++)
+                Positioned(
+                  left:
+                      widget.size * 1.25 / 2 +
+                      math.cos(
+                            t * math.pi * 2 + i * math.pi * 2 / tier.sparkles,
+                          ) *
+                          size *
+                          .62 -
+                      size * .12,
+                  top:
+                      widget.size * 1.25 / 2 +
+                      math.sin(
+                            t * math.pi * 2 + i * math.pi * 2 / tier.sparkles,
+                          ) *
+                          size *
+                          .5 -
+                      size * .12,
+                  child: SpotIcon(
+                    Glyph.sparkle,
+                    size: size * .26,
+                    color: tier.stroke,
+                    accent: tier.accent,
+                    tint: false,
+                  ),
+                ),
+            ],
+          );
+        },
       ),
-      child: child,
-    ),
-    child: SpotIcon(
-      Glyph.fire,
-      size: widget.size,
-      color: widget.lit ? const Color(0xFFD9541E) : muted,
-      accent: widget.lit ? const Color(0xFFFFB648) : line,
-    ),
-  );
+    );
+  }
 }
 
 class XpBar extends StatelessWidget {
@@ -741,15 +900,24 @@ class _QuestSheet extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const _Flame(size: 64, lit: true),
+                      StreakFlame(streak: game.streak, size: 60),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('${game.streak} hari', style: display(34)),
-                            const Text(
-                              'Buka Spots tiap hari biar apinya nyala.',
+                            Text(
+                              flameTierOf(game.streak).name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: flameTierOf(game.streak).stroke,
+                              ),
+                            ),
+                            Text(
+                              nextFlameTier(game.streak) == null
+                                  ? 'Api tertinggi. Kamu legenda!'
+                                  : '${nextFlameTier(game.streak)!.from - game.streak} hari lagi jadi ${nextFlameTier(game.streak)!.name}',
                               style: small,
                             ),
                           ],
@@ -757,7 +925,31 @@ class _QuestSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final tier in flameTiers.skip(1))
+                          Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: Opacity(
+                              opacity: game.streak >= tier.from ? 1 : .35,
+                              child: Column(
+                                children: [
+                                  StreakFlame(streak: tier.from, size: 30),
+                                  Text(
+                                    '${tier.from} hari',
+                                    style: small.copyWith(fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: List.generate(7, (i) {

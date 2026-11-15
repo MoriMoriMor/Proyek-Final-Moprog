@@ -1246,6 +1246,21 @@ class DemoSpotsRepository extends SpotsRepository {
   }
 
   @override
+  Future<List<UserProfile>> suggestedUsers({int limit = 8}) async {
+    await _wait(250);
+    return _profiles.values
+        .where((p) => p.id != _user && !_follows.contains('$_user>${p.id}'))
+        .take(limit)
+        .toList();
+  }
+
+  @override
+  Future<Set<String>> followingAmong(List<String> ids) async => {
+    for (final id in ids)
+      if (_follows.contains('$_user>$id')) id,
+  };
+
+  @override
   Future<List<UserProfile>> searchUsers(String query) async {
     final q = query.trim().replaceAll('@', '').toLowerCase();
     if (q.isEmpty) return [];

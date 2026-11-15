@@ -15,6 +15,7 @@ import 'demo_repository.dart';
 import 'game.dart';
 import 'market.dart';
 import 'market_screens.dart';
+import 'people_page.dart';
 import 'profile_page.dart';
 import 'reels.dart';
 import 'share.dart';
@@ -199,14 +200,9 @@ class _SpotsShellState extends State<SpotsShell> {
       await showCelebration(
         context,
         title: 'Streak ${game.streak} hari!',
-        subtitle: 'Apinya nyala terus. Pertahankan!',
+        subtitle: '${flameTierOf(game.streak).name} menyala. Pertahankan!',
         color: const Color(0xFFFF8A3D),
-        badge: const Mascot(
-          kind: MascotKind.cici,
-          size: 170,
-          mood: MascotMood.cool,
-          wave: true,
-        ),
+        badge: StreakFlame(streak: game.streak, size: 140),
         actionLabel: 'Pamerin streak',
         onAction: () => shareAchievement(context),
       );
@@ -412,7 +408,7 @@ class _SpotsShellState extends State<SpotsShell> {
       return Scaffold(
         body: Row(
           children: [
-            _SideRail(tab: tab, onTab: chooseTab, onCreate: create),
+            _SideRail(tab: tab, onTab: chooseTab, onCreate: create, repo: repo),
             Expanded(child: page),
           ],
         ),
@@ -469,7 +465,7 @@ class _SpotsShellState extends State<SpotsShell> {
                     if (explore)
                       _exploreHeader(wide)
                     else ...[
-                      _topBar(),
+                      _topBar(wide),
                       _greeting(),
                       _stories(),
                       Padding(
@@ -626,14 +622,17 @@ class _SpotsShellState extends State<SpotsShell> {
     ),
   );
 
-  Widget _topBar() => Padding(
+  Widget _topBar(bool wide) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 14, 6),
     child: Row(
       children: [
-        SvgPicture.asset('assets/logo.svg', height: 36),
-        const Spacer(),
-        StreakChip(onTap: () => openQuests(context)),
-        const SizedBox(width: 8),
+        if (!wide) ...[
+          SvgPicture.asset('assets/logo.svg', height: 36),
+          const Spacer(),
+          StreakChip(onTap: () => openQuests(context)),
+          const SizedBox(width: 8),
+        ] else
+          const Spacer(),
         _RoundButton(
           glyph: Glyph.search,
           label: 'Jelajah',
@@ -646,6 +645,13 @@ class _SpotsShellState extends State<SpotsShell> {
           label: 'Peta',
           accent: mint,
           onTap: () => chooseTab(2),
+        ),
+        const SizedBox(width: 8),
+        _RoundButton(
+          glyph: Glyph.people,
+          label: 'Cari teman',
+          accent: grape,
+          onTap: () => openPeople(context, repo),
         ),
       ],
     ),
@@ -1382,7 +1388,9 @@ class _SideRail extends StatelessWidget {
     required this.tab,
     required this.onTab,
     required this.onCreate,
+    required this.repo,
   });
+  final SpotsRepository repo;
   final int tab;
   final ValueChanged<int> onTab;
   final VoidCallback onCreate;
@@ -1470,11 +1478,7 @@ class _SideRail extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: XpBar(height: 10),
-            ),
-            const Align(child: Piko(size: 86)),
+            RailExtras(repo: repo),
           ],
         ),
       ),

@@ -586,6 +586,41 @@ class SpotsRepository {
         : ProfileStats.fromJson(Map<String, dynamic>.from(rows.first as Map));
   }
 
+  /// Orang yang belum diikuti, untuk "Saran teman".
+  Future<List<UserProfile>> suggestedUsers({int limit = 8}) async {
+    final me = userId;
+    final skip = <String>{?me};
+    if (me != null) {
+      final rows = await client
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', me);
+      skip.addAll(rows.map((r) => r['following_id'] as String));
+    }
+    final rows = await client
+        .from('profiles')
+        .select(_profileColumns)
+        .order('created_at', ascending: false)
+        .limit(limit + skip.length);
+    return rows
+        .map(UserProfile.fromJson)
+        .where((p) => !skip.contains(p.id))
+        .take(limit)
+        .toList();
+  }
+
+  /// Apakah akun yang sedang masuk mengikuti [ids].
+  Future<Set<String>> followingAmong(List<String> ids) async {
+    final me = userId;
+    if (me == null || ids.isEmpty) return {};
+    final rows = await client
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', me)
+        .inFilter('following_id', ids);
+    return rows.map((r) => r['following_id'] as String).toSet();
+  }
+
   Future<List<UserProfile>> searchUsers(String query) async {
     final q = query.trim().replaceAll('@', '');
     if (q.isEmpty) return [];
