@@ -2,10 +2,9 @@
 //
 //   dart run tools/seed_surabaya.dart
 //
-// Script mencari foto publik di Wikimedia Commons, lalu menulis
-// supabase/seed/surabaya.sql. Salin isinya ke Supabase SQL Editor, Run.
+// Menulis supabase/seed/surabaya.sql. Saat dijalankan di Supabase SQL Editor,
+// SQL itu mengambil foto utama artikel Wikipedia tiap tempat. Aman diulang.
 // Aman diulang. Akun-akun ini tidak bisa dipakai login (tanpa password).
-import 'dart:convert';
 import 'dart:io';
 
 class Person {
@@ -84,7 +83,7 @@ const places = [
     'Rawonnya hitam pekat, dagingnya empuk, sambalnya jangan diremehkan. '
         'Paling enak datang malam, sekalian lihat antreannya yang nggak ada habisnya. '
         'Tambah telur asin sama kerupuk udang, wajib.',
-    ['Rawon Setan Surabaya', 'rawon Surabaya', 'rawon'],
+    ['id:Rawon', 'en:Rawon'],
   ),
   Place(
     'Sate Klopo Ondomohen',
@@ -93,7 +92,7 @@ const places = [
     112.74710,
     'Satenya dibalur kelapa parut sebelum dibakar, jadi gurih dan agak garing di luar. '
         'Asapnya kecium dari ujung jalan. Pesan campur sapi + ayam biar nggak bingung.',
-    ['Sate Klopo Ondomohen', 'sate klopo', 'sate Surabaya'],
+    ['id:Sate klopo', 'id:Sate', 'en:Satay'],
   ),
   Place(
     'Taman Bungkul',
@@ -102,7 +101,7 @@ const places = [
     112.73980,
     'Tempat nongkrong sejuta umat. Sore-sore duduk di bawah pohon, jajan di sentra PKL '
         'belakang, terus jalan muter taman. Minggu pagi rame banget sama yang olahraga.',
-    ['Taman Bungkul', 'Bungkul park Surabaya'],
+    ['id:Taman Bungkul', 'en:Bungkul Park'],
   ),
   Place(
     'Tugu Pahlawan',
@@ -111,7 +110,7 @@ const places = [
     112.73780,
     'Ikonnya Surabaya. Di bawah tanahnya ada Museum 10 Nopember, isinya lumayan bikin '
         'merinding. Datang pas sore biar foto tugunya kena cahaya hangat.',
-    ['Tugu Pahlawan Surabaya', 'Heroes Monument Surabaya'],
+    ['id:Tugu Pahlawan', 'en:Heroes Monument'],
   ),
   Place(
     'House of Sampoerna',
@@ -120,7 +119,7 @@ const places = [
     112.73420,
     'Bangunan kolonialnya cakep dari luar sampai dalam. Masuk museumnya gratis, '
         'dan dari lantai atas bisa lihat proses linting kretek. Kawasan kota lamanya enak buat jalan kaki.',
-    ['House of Sampoerna', 'House of Sampoerna Surabaya'],
+    ['en:House of Sampoerna', 'id:House of Sampoerna'],
   ),
   Place(
     'Gelora Bung Tomo',
@@ -129,7 +128,7 @@ const places = [
     112.62300,
     'Kandangnya Persebaya. Kalau lagi nggak ada pertandingan, area luarnya sering dipakai '
         'lari sore sama sepedaan. Pas ada laga, suasananya beda level.',
-    ['Gelora Bung Tomo', 'Gelora Bung Tomo Stadium'],
+    ['id:Stadion Gelora Bung Tomo', 'en:Gelora Bung Tomo Stadium'],
   ),
   Place(
     'Monumen Kapal Selam',
@@ -138,7 +137,7 @@ const places = [
     112.75020,
     'Kapal selam beneran yang bisa dimasukin, dari ruang torpedo sampai ruang kemudi. '
         'Sempit, panas, tapi seru. Cocok buat bawa adik atau ponakan.',
-    ['Monumen Kapal Selam', 'KRI Pasopati Surabaya'],
+    ['id:Monumen Kapal Selam', 'en:Submarine Monument'],
   ),
   Place(
     'Kebun Binatang Surabaya',
@@ -147,7 +146,7 @@ const places = [
     112.73650,
     'Klasik, tapi tetap asik buat jalan pagi. Sapa komodonya, terus foto di patung '
         'Suro dan Boyo di depan. Datang lebih awal biar belum terlalu terik.',
-    ['Kebun Binatang Surabaya', 'Surabaya Zoo'],
+    ['id:Kebun Binatang Surabaya', 'en:Surabaya Zoo'],
   ),
   Place(
     'Pasar Atom',
@@ -156,7 +155,7 @@ const places = [
     112.74280,
     'Surganya kain, jajanan, sama barang serba ada. Lantai bawah buat camilan, '
         'lantai atas buat bahan baju. Siap-siap nawar dan siap-siap nyasar.',
-    ['Pasar Atom Surabaya', 'Pasar Atom', 'Tunjungan Plaza'],
+    ['id:Pasar Atom', 'id:Tunjungan Plaza', 'en:Tunjungan Plaza'],
   ),
   Place(
     'Hotel Majapahit',
@@ -165,59 +164,47 @@ const places = [
     112.73920,
     'Hotel bersejarah di Jalan Tunjungan, tempat insiden perobekan bendera tahun 1945. '
         'Taman dalamnya tenang banget, kayak lupa lagi di tengah kota. Malamnya tinggal jalan ke Tunjungan.',
-    ['Hotel Majapahit Surabaya', 'Hotel Majapahit', 'Hotel Yamato Surabaya'],
+    ['id:Hotel Majapahit', 'en:Hotel Majapahit'],
   ),
 ];
 
-final client = HttpClient()..userAgent = 'spots-seed/1.0 (student project)';
-
-Future<List<Map<String, String>>> photos(List<String> queries) async {
-  for (final q in queries) {
-    final uri = Uri.https('commons.wikimedia.org', '/w/api.php', {
-      'action': 'query',
-      'format': 'json',
-      'generator': 'search',
-      'gsrnamespace': '6',
-      'gsrlimit': '8',
-      'gsrsearch': '$q filetype:bitmap',
-      'prop': 'imageinfo',
-      'iiprop': 'url|mime|extmetadata',
-      'iiurlwidth': '1080',
-    });
-    final req = await client.getUrl(uri);
-    final res = await req.close();
-    final body = jsonDecode(await res.transform(utf8.decoder).join()) as Map;
-    final pages = ((body['query'] as Map?)?['pages'] as Map?)?.values ?? [];
-    final found = <Map<String, String>>[];
-    for (final p
-        in (pages.toList()
-          ..sort((a, b) => (a['index'] as int).compareTo(b['index'] as int)))) {
-      final info = (p['imageinfo'] as List).first as Map;
-      if (info['mime'] != 'image/jpeg') continue;
-      final meta = (info['extmetadata'] as Map?) ?? {};
-      String plain(String k) => ((meta[k] as Map?)?['value'] as String? ?? '')
-          .replaceAll(RegExp(r'<[^>]*>'), '')
-          .trim();
-      found.add({
-        'url': info['thumburl'] as String,
-        'author': plain('Artist'),
-        'license': plain('LicenseShortName'),
-      });
-      if (found.length == 2) break;
-    }
-    if (found.isNotEmpty) return found;
-  }
-  return [];
-}
-
 String sql(String v) => "'${v.replaceAll("'", "''")}'";
+
+// Foto diambil dari foto utama artikel Wikipedia saat SQL dijalankan.
+const wikiImg = r'''
+create extension if not exists http with schema extensions;
+create or replace function pg_temp.wiki_img(titles text[]) returns text
+language plpgsql as $f$
+declare t text; res record; u text;
+begin
+  foreach t in array titles loop
+    begin
+      select * into res from extensions.http((
+        'GET',
+        'https://' || split_part(t, ':', 1) || '.wikipedia.org/api/rest_v1/page/summary/'
+          || replace(substr(t, position(':' in t) + 1), ' ', '_'),
+        array[extensions.http_header('User-Agent', 'spots-seed/1.0 (student project)')],
+        null, null)::extensions.http_request);
+      if res.status = 200 then
+        u := res.content::jsonb #>> '{originalimage,source}';
+        if u like 'https://upload.wikimedia.org/%' and u ~* '\.(jpe?g|png)$' then
+          return u;
+        end if;
+      end if;
+    exception when others then null;
+    end;
+  end loop;
+  return null;
+end $f$;
+''';
 
 Future<void> main() async {
   final ids = people.map((p) => "'${p.id}'").join(', ');
   final out = StringBuffer()
     ..writeln('-- Spot Surabaya + 6 akun warga. Aman dijalankan ulang.')
+    ..writeln(wikiImg)
     ..writeln('do \$\$')
-    ..writeln('declare pid uuid; posts uuid[] := array[]::uuid[];')
+    ..writeln('declare pid uuid; img text; posts uuid[] := array[]::uuid[];')
     ..writeln('begin');
   for (final p in people) {
     out
@@ -234,22 +221,18 @@ Future<void> main() async {
   }
   out.writeln('  delete from public.posts where owner_id in ($ids);');
   for (final (n, place) in places.indexed) {
-    final pics = await photos(place.queries);
-    if (pics.isEmpty) {
-      stdout.writeln('lewati ${place.title}: foto tidak ketemu');
-      continue;
-    }
-    final credit = pics
-        .map((p) => p['author']!.isEmpty ? p['license']! : p['author']!)
-        .toSet()
-        .join(', ');
-    final story = '${place.story}\n\nFoto: $credit (Wikimedia Commons)';
+    final story = '${place.story}\n\nFoto: Wikipedia / Wikimedia Commons';
     final owner = people[owners[n][0] - 1];
     final ago = owners[n][1];
-    stdout.writeln(
-      'ok   ${place.title} (${pics.length} foto) oleh @${owner.username}',
-    );
     out
+      ..writeln(
+        '  img := pg_temp.wiki_img(array[${place.queries.map(sql).join(', ')}]);',
+      )
+      ..writeln('  if img is null then')
+      ..writeln(
+        "    raise notice 'lewati %: foto tidak ketemu', ${sql(place.title)};",
+      )
+      ..writeln('  else')
       ..writeln(
         '  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)',
       )
@@ -258,11 +241,6 @@ Future<void> main() async {
       )
       ..writeln('  returning id into pid;')
       ..writeln('  posts := posts || pid;');
-    for (final (i, p) in pics.indexed) {
-      out.writeln(
-        "  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, $i, ${sql(p['url']!)}, 'image');",
-      );
-    }
     // Reaksi dari akun lain supaya terlihat hidup.
     for (final fan in people) {
       if (fan == owner) continue;
@@ -285,6 +263,10 @@ Future<void> main() async {
         );
       }
     }
+    out.writeln(
+      "  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');",
+    );
+    out.writeln('  end if;');
   }
   for (final a in people) {
     for (final b in people) {
@@ -301,7 +283,6 @@ Future<void> main() async {
   final file = File('supabase/seed/surabaya.sql');
   await file.parent.create(recursive: true);
   await file.writeAsString(out.toString());
-  client.close();
   stdout.writeln(
     '\nSelesai: ${file.path}. Salin isinya ke Supabase SQL Editor lalu Run.',
   );
