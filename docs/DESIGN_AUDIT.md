@@ -11,6 +11,7 @@ Acuan: tiga referensi yang dipakai tim, yaitu aplikasi aktivitas luar ruang bern
 | Satu maskot (Piko), hanya naik-turun dan berkedip | Sepuluh maskot dengan peran jelas |
 | Gambar SVG statis | Digambar dengan kode: bernapas, melirik ke kiri dan kanan, berkedip acak (kadang dua kali), melambai, melompat saat disentuh, dan mengikuti kursor di desktop |
 | Ekspresi terbatas | Tujuh ekspresi: senang, tertawa, kaget, mengantuk, mengedip, jatuh cinta, kacamata keren |
+| Garis luar gelap tebal dan pupil kecil terasa seram | Gaya datar tanpa garis luar, gradasi lembut, topeng wajah terang, mata besar dengan pupil abu tua ke tengah, kaki oranye seragam |
 
 | Maskot | Peran |
 | --- | --- |
@@ -19,11 +20,11 @@ Acuan: tiga referensi yang dipakai tim, yaitu aplikasi aktivitas luar ruang bern
 | Pino | Peta dan tautan |
 | Cici | XP, misi, level, streak |
 
-Tempat maskot muncul: onboarding, sapaan di Beranda, pemilih kategori, halaman detail, Reels, Peta, Market, halaman toko, status pesanan (berubah sesuai status), keadaan kosong, perayaan, dan kartu bagikan. Semua gerak berhenti jika perangkat meminta gerak minimal.
+Tempat maskot muncul: onboarding, sapaan di Beranda, halaman detail, Reels, Peta, Market, halaman toko, status pesanan (berubah sesuai status), keadaan kosong, perayaan, dan kartu bagikan. Semua gerak berhenti jika perangkat meminta gerak minimal.
 
 ### Kategori
 
-Tiga kategori lama terlalu sempit, sementara daftar lengkap (12+) membingungkan. Hasil audit: **7 kategori besar**, masing-masing dengan contoh singkat di bawahnya.
+Tiga kategori lama terlalu sempit, sementara daftar lengkap (12+) membingungkan. Hasil audit: **7 kategori besar**, masing-masing dengan contoh singkat di bawahnya. Pemilih kategori memakai ikon supaya ringkas; tiap kategori tetap punya maskot pendamping di halaman detail, Reels, dan perayaan.
 
 | Kategori | Mencakup |
 | --- | --- |
@@ -44,7 +45,6 @@ Kunci di database `kafe` dan `destinasi` tidak diganti supaya data lama tetap co
 | Navbar hanya memberi label pada tab aktif, membingungkan pengguna baru dan orang tua | Semua tab selalu berlabel |
 | Ukuran huruf sistem yang besar bisa merusak tata letak | Tetap dihormati, dibatasi sampai 1,3× |
 | Beranda terasa datar di bagian atas | Gradasi lembut di latar, sapaan sesuai waktu, dan Piko melambai |
-| Kategori berupa chip ikon kecil | Kartu maskot dengan label di bawah, seperti referensi |
 | Tidak ada perkenalan aplikasi | Onboarding 3 layar dengan rombongan maskot dan tombol pil hitam |
 | Kartu "Lagi viral" kurang menonjol | Stiker HOT pada peringkat 1 |
 | Label kategori bisa terpotong | Lebar kartu disesuaikan |

@@ -159,11 +159,11 @@ class _MascotState extends State<Mascot> with TickerProviderStateMixin {
         final hopping = hop.isAnimating;
         // Gerak lirikan dari gabungan dua gelombang supaya tidak terasa mekanis.
         var gaze = Offset(
-          math.sin(t * math.pi * 2) * .55 + math.sin(t * math.pi * 6.2) * .25,
-          math.sin(t * math.pi * 4 + 1) * .35,
+          math.sin(t * math.pi * 2) * .45,
+          math.sin(t * math.pi * 4 + 1) * .2 - .15,
         );
         // Sesekali menatap lurus ke depan.
-        if (t > .42 && t < .58) gaze = Offset.zero;
+        if (t > .3 && t < .7) gaze = const Offset(0, -.1);
         final p = pointer;
         if (p != null) {
           final center = Offset(widget.size / 2, widget.size * .45);
@@ -225,8 +225,12 @@ class MascotPainter extends CustomPainter {
 
   late final _Spec _spec = _Spec.of(kind);
 
+  /// Warna fitur wajah: abu tua yang lembut, bukan hitam pekat.
+  static const face = Color(0xFF3B3A4A);
+  static const foot = Color(0xFFFF9F1C);
+
   Paint get line => Paint()
-    ..color = ink
+    ..color = face
     ..style = PaintingStyle.stroke
     ..strokeWidth = 4.6
     ..strokeCap = StrokeCap.round
@@ -234,9 +238,32 @@ class MascotPainter extends CustomPainter {
 
   Paint fill(Color c) => Paint()..color = c;
 
-  void shape(Canvas canvas, Path path, Color color) {
+  Color get _dark => Color.lerp(_spec.color, Colors.black, .16)!;
+  Color get _light => Color.lerp(_spec.color, Colors.white, .38)!;
+
+  /// Bentuk datar tanpa garis tepi, dengan gradasi lembut supaya terasa
+  /// sedikit timbul: terang di kiri atas, lebih gelap di kanan bawah.
+  void shape(Canvas canvas, Path path, Color color, {bool shade = true}) {
     canvas.drawPath(path, fill(color));
-    canvas.drawPath(path, line);
+    if (!shade) return;
+    final b = path.getBounds();
+    canvas.save();
+    canvas.clipPath(path);
+    canvas.drawRect(
+      b,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          stops: const [0, .5, 1],
+          colors: [
+            Colors.white.withValues(alpha: .22),
+            Colors.white.withValues(alpha: 0),
+            Colors.black.withValues(alpha: .14),
+          ],
+        ).createShader(b),
+    );
+    canvas.restore();
   }
 
   @override
@@ -306,8 +333,8 @@ class MascotPainter extends CustomPainter {
     final spread = lift > 2 ? 3.0 : 0.0;
     for (final x in [46.0 - spread, 74.0 + spread]) {
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(x, 115), width: 18, height: 9),
-        fill(ink),
+        Rect.fromCenter(center: Offset(x, 115), width: 19, height: 10),
+        fill(foot),
       );
     }
   }
@@ -325,8 +352,7 @@ class MascotPainter extends CustomPainter {
       const Rect.fromLTWH(-5.5, -2, 11, 22),
       const Radius.circular(6),
     );
-    canvas.drawRRect(arm, fill(_spec.color));
-    canvas.drawRRect(arm, line..strokeWidth = 3.8);
+    canvas.drawRRect(arm, fill(_dark));
     canvas.restore();
   }
 
@@ -342,8 +368,8 @@ class MascotPainter extends CustomPainter {
             const Rect.fromLTWH(-8, -26, 16, 32),
             const Radius.circular(8),
           );
-          canvas.drawRRect(ear, fill(const Color(0xFF82A1FF)));
-          canvas.drawRRect(ear, line);
+          canvas.drawRRect(ear, fill(_dark));
+          canvas.drawRRect(ear.deflate(4), fill(const Color(0xFF82A1FF)));
           canvas.restore();
         }
       case MascotKind.jojo:
@@ -366,10 +392,21 @@ class MascotPainter extends CustomPainter {
           -math.pi / 2,
           math.pi,
           false,
-          line..strokeWidth = 6,
+          Paint()
+            ..color = _dark
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 8
+            ..strokeCap = StrokeCap.round,
         );
       case MascotKind.gugu:
-        canvas.drawLine(const Offset(60, 20), const Offset(60, -2), line);
+        canvas.drawLine(
+          const Offset(60, 20),
+          const Offset(60, -2),
+          Paint()
+            ..color = const Color(0xFF8C8A9E)
+            ..strokeWidth = 3.4
+            ..strokeCap = StrokeCap.round,
+        );
         final flap = math.sin(w * 4) * 3;
         final flag = Path()
           ..moveTo(60, -2)
@@ -379,9 +416,9 @@ class MascotPainter extends CustomPainter {
         shape(canvas, flag, const Color(0xFFF27B8E));
       case MascotKind.tote:
         final handle = Paint()
-          ..color = ink
+          ..color = _dark
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 6
+          ..strokeWidth = 7
           ..strokeCap = StrokeCap.round;
         canvas.drawArc(
           Rect.fromLTWH(40, 26, 40, 34),
@@ -435,7 +472,6 @@ class MascotPainter extends CustomPainter {
           const Radius.circular(7),
         );
         canvas.drawRRect(rim, fill(const Color(0xFFFF8E73)));
-        canvas.drawRRect(rim, line);
         final sticks = Paint()
           ..color = const Color(0xFF8A5A2B)
           ..strokeWidth = 5
@@ -449,7 +485,6 @@ class MascotPainter extends CustomPainter {
           const Radius.circular(8),
         );
         canvas.drawRRect(lid, fill(const Color(0xFF7A4A2A)));
-        canvas.drawRRect(lid, line);
         final sleeve = Path()
           ..moveTo(28, 92)
           ..lineTo(92, 92)
@@ -477,14 +512,15 @@ class MascotPainter extends CustomPainter {
         canvas.drawLine(
           Offset.zero,
           const Offset(0, 7),
-          line..strokeWidth = 2.6,
+          Paint()
+            ..color = _dark
+            ..strokeWidth = 2.6,
         );
         final tag = RRect.fromRectAndRadius(
           const Rect.fromLTWH(-7, 7, 14, 15),
           const Radius.circular(4),
         );
         canvas.drawRRect(tag, fill(const Color(0xFFF27B8E)));
-        canvas.drawRRect(tag, line..strokeWidth = 3);
         canvas.restore();
       case MascotKind.pino:
         canvas.drawArc(
@@ -567,7 +603,6 @@ class MascotPainter extends CustomPainter {
           const Radius.circular(3),
         );
         canvas.drawRRect(chimney, fill(const Color(0xFFB9C3E6)));
-        canvas.drawRRect(chimney, line);
         final puff = still ? 0.0 : (w / (math.pi * 2) * 3) % 1;
         canvas.drawCircle(
           Offset(87 + puff * 6, 14 - puff * 14),
@@ -581,8 +616,16 @@ class MascotPainter extends CustomPainter {
   void _face(Canvas canvas, double w) {
     final (l, r) = _spec.eyes;
     final er = _spec.eyeRadius;
+    // Topeng wajah yang lebih terang di sekitar mata.
+    final patch = fill(_light.withValues(alpha: .75));
+    canvas.drawCircle(l, er * 1.42, patch);
+    canvas.drawCircle(r, er * 1.42, patch);
+    canvas.drawRect(
+      Rect.fromLTRB(l.dx, l.dy - er * 1.1, r.dx, r.dy + er * 1.1),
+      patch,
+    );
     final blush = Paint()
-      ..color = const Color(0xFFFF8E9B).withValues(alpha: .85);
+      ..color = const Color(0xFFFF8E9B).withValues(alpha: .6);
     canvas.drawOval(
       Rect.fromCenter(
         center: l + Offset(-er * .9, er * 1.5),
@@ -615,11 +658,13 @@ class MascotPainter extends CustomPainter {
               Radius.circular(er * .6),
             ),
           );
-        canvas.drawPath(glasses, fill(ink));
+        canvas.drawPath(glasses, fill(const Color(0xFF2E2D3A)));
         canvas.drawLine(
-          l + Offset(er * 1.4, -er * .3),
-          r - Offset(er * 1.4, er * .3),
-          line..strokeWidth = 3.5,
+          l + Offset(er * 1.3, -er * .3),
+          r - Offset(er * 1.3, er * .3),
+          Paint()
+            ..color = const Color(0xFF2E2D3A)
+            ..strokeWidth = 4,
         );
         final glint = Paint()
           ..color = Colors.white.withValues(alpha: .7)
@@ -636,15 +681,10 @@ class MascotPainter extends CustomPainter {
         _happyEye(canvas, l, er);
         _happyEye(canvas, r, er);
       case MascotMood.sleepy:
-        for (final e in [l, r]) {
-          canvas.drawLine(
-            e - Offset(er * .9, 0),
-            e + Offset(er * .9, 0),
-            line..strokeWidth = 4,
-          );
-        }
+        _eye(canvas, l, er, big: false, side: 1, lid: .62);
+        _eye(canvas, r, er, big: false, side: -1, lid: .62);
         final z = Paint()
-          ..color = ink.withValues(alpha: .6)
+          ..color = face.withValues(alpha: .55)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
           ..strokeJoin = StrokeJoin.round;
@@ -658,18 +698,18 @@ class MascotPainter extends CustomPainter {
           z,
         );
       case MascotMood.wink:
-        _eye(canvas, l, er, big: false);
+        _eye(canvas, l, er, big: false, side: 1);
         _happyEye(canvas, r, er);
       case MascotMood.love:
         for (final e in [l, r]) {
           _heart(canvas, e, er * 1.15);
         }
       case MascotMood.wow:
-        _eye(canvas, l, er * 1.2, big: true);
-        _eye(canvas, r, er * 1.2, big: true);
+        _eye(canvas, l, er * 1.1, big: true, side: 1);
+        _eye(canvas, r, er * 1.1, big: true, side: -1);
       case MascotMood.happy:
-        _eye(canvas, l, er, big: false);
-        _eye(canvas, r, er, big: false);
+        _eye(canvas, l, er, big: false, side: 1);
+        _eye(canvas, r, er, big: false, side: -1);
     }
 
     final m = _spec.mouth;
@@ -690,7 +730,7 @@ class MascotPainter extends CustomPainter {
           ..quadraticBezierTo(m.dx + 9, m.dy + 12, m.dx, m.dy + 12)
           ..quadraticBezierTo(m.dx - 9, m.dy + 12, m.dx - 11, m.dy - 3)
           ..close();
-        canvas.drawPath(open, fill(ink));
+        canvas.drawPath(open, fill(face));
         canvas.drawOval(
           Rect.fromCenter(center: m + const Offset(0, 8), width: 10, height: 6),
           fill(const Color(0xFFFF6F86)),
@@ -709,34 +749,77 @@ class MascotPainter extends CustomPainter {
           line..strokeWidth = 4.2,
         );
       default:
-        canvas.drawPath(
-          Path()
-            ..moveTo(m.dx - 10, m.dy - 2)
-            ..quadraticBezierTo(m.dx, m.dy + 9, m.dx + 10, m.dy - 2),
-          line..strokeWidth = 4.2,
+        final smile = Path()
+          ..moveTo(m.dx - 8, m.dy - 2)
+          ..quadraticBezierTo(m.dx, m.dy, m.dx + 8, m.dy - 2)
+          ..quadraticBezierTo(m.dx + 7, m.dy + 8, m.dx, m.dy + 8)
+          ..quadraticBezierTo(m.dx - 7, m.dy + 8, m.dx - 8, m.dy - 2)
+          ..close();
+        canvas.drawPath(smile, fill(face));
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: m + const Offset(0, 5.5),
+            width: 7,
+            height: 4,
+          ),
+          fill(const Color(0xFFFF6F86)),
         );
     }
   }
 
-  void _eye(Canvas canvas, Offset c, double r, {required bool big}) {
+  /// Mata besar: putih bersih, pupil lonjong abu tua yang mengarah ke tengah,
+  /// satu kilau besar. [lid] 0..1 menutup mata dari atas untuk ekspresi santai.
+  void _eye(
+    Canvas canvas,
+    Offset c,
+    double r, {
+    required bool big,
+    double side = 0,
+    double lid = 0,
+  }) {
     if (blink) {
       canvas.drawPath(
         Path()
-          ..moveTo(c.dx - r, c.dy)
-          ..quadraticBezierTo(c.dx, c.dy + r * .8, c.dx + r, c.dy),
+          ..moveTo(c.dx - r * .8, c.dy + r * .15)
+          ..quadraticBezierTo(
+            c.dx,
+            c.dy + r * .7,
+            c.dx + r * .8,
+            c.dy + r * .15,
+          ),
         line..strokeWidth = 4,
       );
       return;
     }
+    canvas.save();
+    final eye = Path()..addOval(Rect.fromCircle(center: c, radius: r));
+    canvas.clipPath(eye);
     canvas.drawCircle(c, r, fill(Colors.white));
-    canvas.drawCircle(c, r, line..strokeWidth = 3.4);
-    final pupil = c + gaze * r * .4;
-    canvas.drawCircle(pupil, r * (big ? .42 : .56), fill(ink));
+    final pupil = c + Offset(side * r * .26, r * .1) + gaze * r * .18;
+    final pw = r * (big ? .9 : 1.0), ph = r * (big ? 1.08 : 1.2);
+    canvas.drawOval(
+      Rect.fromCenter(center: pupil, width: pw, height: ph),
+      fill(face),
+    );
     canvas.drawCircle(
-      pupil + Offset(-r * .18, -r * .2),
-      r * .17,
+      pupil + Offset(-pw * .18, -ph * .22),
+      pw * .22,
       fill(Colors.white),
     );
+    if (lid > 0) {
+      canvas.drawRect(
+        Rect.fromLTRB(c.dx - r, c.dy - r, c.dx + r, c.dy - r + r * 2 * lid),
+        fill(_light),
+      );
+      canvas.drawLine(
+        Offset(c.dx - r, c.dy - r + r * 2 * lid),
+        Offset(c.dx + r, c.dy - r + r * 2 * lid),
+        Paint()
+          ..color = _dark
+          ..strokeWidth = 3,
+      );
+    }
+    canvas.restore();
   }
 
   void _happyEye(Canvas canvas, Offset c, double r) {
@@ -771,7 +854,6 @@ class MascotPainter extends CustomPainter {
       )
       ..close();
     canvas.drawPath(path, fill(const Color(0xFFFF4F79)));
-    canvas.drawPath(path, line..strokeWidth = 2.6);
   }
 
   @override

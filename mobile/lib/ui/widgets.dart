@@ -102,11 +102,10 @@ class _CategoryChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 240),
         curve: Curves.easeOutBack,
-        width: 90,
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 9),
+        padding: const EdgeInsets.fromLTRB(10, 9, 15, 9),
         decoration: BoxDecoration(
           color: active ? item.color : Colors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: active ? edgeOf(item.color) : line,
             width: 2,
@@ -118,25 +117,21 @@ class _CategoryChip extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Mascot(
-              kind: item.mascot,
-              size: 46,
-              mood: active ? MascotMood.laugh : MascotMood.happy,
-              wave: active,
-              bounce: active,
-              interactive: false,
+            SpotIcon(
+              item.glyph,
+              size: 22,
+              color: active ? Colors.white : ink,
+              accent: active ? edgeOf(item.color) : item.color,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(width: 6),
             Text(
               item.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 12,
+                fontSize: 14,
                 color: active ? Colors.white : ink,
               ),
             ),
