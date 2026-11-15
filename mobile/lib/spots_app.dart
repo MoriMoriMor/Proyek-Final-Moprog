@@ -12,6 +12,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'create_spot_screen.dart';
 import 'demo_repository.dart';
+import 'game.dart';
+import 'market.dart';
+import 'market_screens.dart';
+import 'reels.dart';
+import 'seller_screens.dart';
 import 'spot.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
@@ -39,6 +44,7 @@ class _SpotsAppState extends State<SpotsApp> {
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Spots',
+    navigatorKey: rootNavigator,
     debugShowCheckedModeBanner: false,
     theme: spotsTheme(),
     home: repo == null
@@ -109,17 +115,21 @@ class SetupScreen extends StatelessWidget {
 }
 
 class _Tab {
-  const _Tab(this.label, this.glyph, this.color);
+  const _Tab(this.label, this.glyph, this.color, this.index);
   final String label;
   final Glyph glyph;
   final Color color;
+  final int index;
 }
 
+// Indeks tab: 0 Beranda, 1 Jelajah, 2 Peta, 3 Reels, 4 Market, 5 Profil.
 const _tabs = [
-  _Tab('Beranda', Glyph.home, coral),
-  _Tab('Jelajah', Glyph.compass, caramel),
-  _Tab('Peta', Glyph.map, mint),
-  _Tab('Profil', Glyph.face, grape),
+  _Tab('Beranda', Glyph.home, coral, 0),
+  _Tab('Jelajah', Glyph.compass, caramel, 1),
+  _Tab('Peta', Glyph.map, mint, 2),
+  _Tab('Reels', Glyph.play, piko, 3),
+  _Tab('Market', Glyph.bag, yellow, 4),
+  _Tab('Profil', Glyph.face, grape, 5),
 ];
 
 class SpotsShell extends StatefulWidget {
@@ -136,8 +146,8 @@ class _SpotsShellState extends State<SpotsShell> {
   final search = TextEditingController();
   List<Spot> spots = [], mine = [], saved = [];
   Position? position;
-  int tab = 0, focused = 0;
-  bool showSaved = false;
+  int tab = 0, focused = 0, reelStart = 0, profileView = 0;
+  List<Store> nearStores = [];
   String? category;
   bool loading = true, locating = false, locationDenied = false;
   String? error;
@@ -152,6 +162,25 @@ class _SpotsShellState extends State<SpotsShell> {
       if (mounted) refresh(silent: true);
     });
     locate();
+    GameState.instance.load().then((_) {
+      final game = GameState.instance;
+      if (!mounted || !game.streakGrewToday || game.streak < 2) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showCelebration(
+          context,
+          title: 'Streak ${game.streak} hari!',
+          subtitle: 'Apinya nyala terus. Pertahankan!',
+          color: const Color(0xFFFF8A3D),
+          badge: const SpotIcon(
+            Glyph.fire,
+            size: 160,
+            color: Color(0xFF8A2A06),
+            accent: yellow,
+          ),
+        );
+      });
+    });
   }
 
   @override
@@ -203,12 +232,16 @@ class _SpotsShellState extends State<SpotsShell> {
   Future<void> refresh({bool silent = false}) async {
     if (!mounted) return;
     final ticket = ++request;
+    if (tab == 4) {
+      setState(() => loading = false);
+      return;
+    }
     setState(() {
       if (!silent) loading = true;
       error = null;
     });
     try {
-      if (tab == 3) {
+      if (tab == 5) {
         if (repo.userId == null) {
           mine = [];
           saved = [];
@@ -224,12 +257,12 @@ class _SpotsShellState extends State<SpotsShell> {
           });
         }
       } else {
-        final near = tab != 1 && position != null;
+        final near = (tab == 0 || tab == 2) && position != null;
         final found = await repo.feed(
           lat: position?.latitude,
           lng: position?.longitude,
           mode: near ? 'near' : 'popular',
-          category: category,
+          category: tab == 3 ? null : category,
           query: tab == 1 ? search.text.trim() : null,
         );
         if (ticket != request || !mounted) return;
@@ -237,6 +270,12 @@ class _SpotsShellState extends State<SpotsShell> {
           spots = found;
           focused = 0;
         });
+        if (tab == 0) {
+          try {
+            final shops = await repo.stores();
+            if (mounted) setState(() => nearStores = shops.take(8).toList());
+          } catch (_) {}
+        }
       }
     } catch (e) {
       if (ticket == request && mounted) {
@@ -254,9 +293,17 @@ class _SpotsShellState extends State<SpotsShell> {
       tab = index;
       category = null;
       search.clear();
-      spots = index == 0 || index == 2 ? spots : [];
+      if (index == 3) reelStart = 0;
     });
     refresh();
+  }
+
+  void openReels(int index) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      reelStart = index;
+      tab = 3;
+    });
   }
 
   void chooseCategory(String? value) {
@@ -277,9 +324,10 @@ class _SpotsShellState extends State<SpotsShell> {
       ),
     );
     if (created == true && mounted) {
+      GameState.instance.track('post');
       setState(() {
-        tab = 3;
-        showSaved = false;
+        tab = 5;
+        profileView = 0;
       });
       refresh();
     }
@@ -325,13 +373,25 @@ class _SpotsShellState extends State<SpotsShell> {
         tab: tab,
         onTab: chooseTab,
         onCreate: create,
+        dark: tab == 3,
       ),
     );
   }
 
   Widget _content(bool wide) => switch (tab) {
     2 => _map(wide),
-    3 => _profile(wide),
+    3 => ReelsView(
+      key: ValueKey('reels-$reelStart'),
+      spots: spots,
+      repo: repo,
+      loading: loading,
+      initialIndex: spots.isEmpty ? 0 : reelStart.clamp(0, spots.length - 1),
+      bottomInset: wide ? 0 : 92 + MediaQuery.paddingOf(context).bottom,
+      onChanged: () => refresh(silent: true),
+      onOpenStore: (id) => openStore(context, repo, id),
+    ),
+    4 => MarketTab(repo: repo),
+    5 => _profile(wide),
     _ => _feed(wide),
   };
 
@@ -354,21 +414,34 @@ class _SpotsShellState extends State<SpotsShell> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: top + 8),
-                    if (!wide) _topBar(),
-                    if (explore) _exploreHeader() else _hero(),
+                    if (explore)
+                      _exploreHeader(wide)
+                    else ...[
+                      _topBar(),
+                      _stories(),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                        child: Rise(
+                          index: 1,
+                          child: QuestCard(onTap: () => openQuests(context)),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 18),
                     CategoryRow(selected: category, onSelected: chooseCategory),
+                    if (!explore && !loading) ..._homeExtras(),
                     SectionTitle(
                       explore
                           ? (search.text.isEmpty ? 'Lagi rame' : 'Hasil cari')
                           : position != null
                           ? 'Dekat kamu'
-                          : 'Lagi rame',
-                      trailing: loading
+                          : 'Buat kamu',
+                      trailing: explore
                           ? null
-                          : Pill(
-                              color: const Color(0xFFEDF1FF),
-                              child: Text('${spots.length} spot'),
+                          : _LocationChip(
+                              active: position != null,
+                              busy: locating,
+                              onTap: locate,
                             ),
                     ),
                     if (error != null) Notice(error!, onRetry: refresh),
@@ -476,114 +549,167 @@ class _SpotsShellState extends State<SpotsShell> {
   );
 
   Widget _topBar() => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 4, 14, 10),
+    padding: const EdgeInsets.fromLTRB(20, 4, 14, 6),
     child: Row(
       children: [
         SvgPicture.asset('assets/logo.svg', height: 36),
         const Spacer(),
-        _LocationChip(active: position != null, busy: locating, onTap: locate),
+        StreakChip(onTap: () => openQuests(context)),
+        const SizedBox(width: 8),
+        _RoundButton(
+          glyph: Glyph.search,
+          label: 'Jelajah',
+          accent: yellow,
+          onTap: () => chooseTab(1),
+        ),
+        const SizedBox(width: 8),
+        _RoundButton(
+          glyph: Glyph.map,
+          label: 'Peta',
+          accent: mint,
+          onTap: () => chooseTab(2),
+        ),
       ],
     ),
   );
 
-  Widget _hero() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Rise(
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(34),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [piko, Color(0xFF6E5BF0)],
+  Widget _stories() {
+    final items = spots.take(10).toList();
+    return SizedBox(
+      height: 104,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        children: [
+          _StoryBubble(
+            label: 'Bagikan',
+            onTap: create,
+            child: const ColoredBox(
+              color: Color(0xFFFFEDF0),
+              child: Center(
+                child: SpotIcon(Glyph.plus, size: 30, color: coral),
+              ),
+            ),
           ),
-          boxShadow: const [
-            BoxShadow(color: Color(0xFF2B3FA8), offset: Offset(0, 6)),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            const Positioned(
-              right: 128,
-              top: 18,
-              child: _Twinkle(size: 22, color: yellow),
-            ),
-            const Positioned(
-              right: 24,
-              top: 26,
-              child: _Twinkle(size: 14, color: coral, delay: .4),
-            ),
-            const Positioned(
-              left: 150,
-              bottom: 22,
-              child: _Twinkle(size: 12, color: Colors.white, delay: .7),
-            ),
-            Positioned(
-              right: -6,
-              bottom: -28,
-              child: Transform.rotate(
-                angle: -.12,
-                child: const Piko(size: 150, mood: PikoMood.happy),
+          if (loading && items.isEmpty)
+            for (var i = 0; i < 5; i++)
+              const Padding(
+                padding: EdgeInsets.only(left: 14),
+                child: Shimmer(
+                  child: Column(
+                    children: [
+                      Bone(width: 66, height: 66, radius: 33),
+                      SizedBox(height: 6),
+                      Bone(width: 50, height: 10),
+                    ],
+                  ),
+                ),
+              ),
+          for (final (i, spot) in items.indexed)
+            Rise(
+              index: i,
+              from: 16,
+              child: _StoryBubble(
+                label: spot.title,
+                ring: true,
+                onTap: () => openReels(i),
+                child: _Cover(spot: spot, repo: repo),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 140, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Mau ke mana\nhari ini?',
-                    style: display(30, color: Colors.white, height: 1.05),
-                  ),
-                  Bouncy(
-                    onTap: () => chooseTab(1),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(14, 9, 16, 9),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0xFF2B3FA8),
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SpotIcon(Glyph.compass, size: 20, accent: yellow),
-                          SizedBox(width: 6),
-                          Text(
-                            'Jelajah',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: ink,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _exploreHeader() => Padding(
+  List<Widget> _homeExtras() {
+    final viral = [...spots]..sort((a, b) => b.likes.compareTo(a.likes));
+    return [
+      if (spots.length >= 3) ...[
+        SectionTitle(
+          'Lagi viral',
+          trailing: const SpotIcon(
+            Glyph.fire,
+            size: 28,
+            color: Color(0xFFD9541E),
+            accent: Color(0xFFFFB648),
+          ),
+        ),
+        SizedBox(
+          height: 262,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: math.min(6, viral.length),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, i) => Rise(
+              index: i,
+              child: _ViralCard(
+                spot: viral[i],
+                rank: i + 1,
+                repo: repo,
+                onTap: () => openReels(spots.indexOf(viral[i])),
+              ),
+            ),
+          ),
+        ),
+      ],
+      if (nearStores.isNotEmpty) ...[
+        SectionTitle(
+          'Bisa dipesan',
+          trailing: Bouncy(
+            onTap: () => chooseTab(4),
+            child: const Pill(
+              color: Color(0xFFFFF4D6),
+              child: Text('Market', style: TextStyle(color: Color(0xFF8A5B06))),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 112,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: nearStores.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, i) => Rise(
+              index: i,
+              child: StoreCard(
+                store: nearStores[i],
+                compactWidth: 300,
+                onTap: () => openStore(
+                  context,
+                  repo,
+                  nearStores[i].id,
+                  initial: nearStores[i],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ];
+  }
+
+  Widget _exploreHeader(bool wide) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Rise(child: Text('Jelajah', style: display(40))),
+        Row(
+          children: [
+            if (!wide) ...[
+              GlassButton(
+                glyph: Glyph.back,
+                label: 'Kembali',
+                onTap: () => chooseTab(0),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Rise(child: Text('Jelajah', style: display(40))),
+          ],
+        ),
         const SizedBox(height: 14),
         Rise(
           index: 1,
@@ -713,6 +839,14 @@ class _SpotsShellState extends State<SpotsShell> {
           right: 16,
           child: Row(
             children: [
+              if (!wide) ...[
+                GlassButton(
+                  glyph: Glyph.back,
+                  label: 'Kembali',
+                  onTap: () => chooseTab(0),
+                ),
+                const SizedBox(width: 10),
+              ],
               ClipRRect(
                 borderRadius: BorderRadius.circular(22),
                 child: BackdropFilter(
@@ -804,7 +938,7 @@ class _SpotsShellState extends State<SpotsShell> {
         ),
       );
     }
-    final list = showSaved ? saved : mine;
+    final list = profileView == 1 ? saved : mine;
     final likes = mine.fold<int>(0, (sum, s) => sum + s.likes);
     return RefreshIndicator(
       color: piko,
@@ -820,11 +954,24 @@ class _SpotsShellState extends State<SpotsShell> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Rise(child: _profileCard(likes)),
-                  const SizedBox(height: 20),
-                  Rise(index: 1, child: _segment()),
+                  const SizedBox(height: 16),
+                  Rise(
+                    index: 1,
+                    child: StoreEntryCard(
+                      key: ValueKey(repo.userId),
+                      repo: repo,
+                      start: position == null
+                          ? null
+                          : LatLng(position!.latitude, position!.longitude),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Rise(index: 2, child: _segment()),
                   const SizedBox(height: 16),
                   if (error != null) Notice(error!, onRetry: refresh),
-                  if (loading)
+                  if (profileView == 2)
+                    MyOrders(repo: repo)
+                  else if (loading)
                     Shimmer(
                       child: GridView.count(
                         crossAxisCount: wide ? 3 : 2,
@@ -841,12 +988,14 @@ class _SpotsShellState extends State<SpotsShell> {
                     )
                   else if (list.isEmpty)
                     EmptyState(
-                      title: showSaved
+                      title: profileView == 1
                           ? 'Belum ada yang\nkamu simpan.'
                           : 'Spot pertamamu\nmasih kosong.',
-                      action: showSaved ? 'Cari inspirasi' : 'Bagikan spot',
-                      color: showSaved ? caramel : coral,
-                      onAction: showSaved ? () => chooseTab(1) : create,
+                      action: profileView == 1
+                          ? 'Cari inspirasi'
+                          : 'Bagikan spot',
+                      color: profileView == 1 ? caramel : coral,
+                      onAction: profileView == 1 ? () => chooseTab(1) : create,
                     )
                   else
                     GridView.builder(
@@ -939,71 +1088,96 @@ class _SpotsShellState extends State<SpotsShell> {
             const SizedBox(width: 10),
             _ProfileStat(value: compact(likes), label: 'suka'),
             const SizedBox(width: 10),
-            _ProfileStat(value: '${saved.length}', label: 'disimpan'),
+            ListenableBuilder(
+              listenable: GameState.instance,
+              builder: (context, _) => _ProfileStat(
+                value: '${GameState.instance.streak}',
+                label: 'hari streak',
+              ),
+            ),
           ],
+        ),
+        const SizedBox(height: 14),
+        ListenableBuilder(
+          listenable: GameState.instance,
+          builder: (context, _) => Row(
+            children: [
+              Text(
+                'Lv ${GameState.instance.level}',
+                style: display(18, color: Colors.white),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(child: XpBar(height: 12, dark: true)),
+            ],
+          ),
         ),
       ],
     ),
   );
 
-  Widget _segment() => Container(
-    height: 54,
-    padding: const EdgeInsets.all(5),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: line, width: 2),
-    ),
-    child: Stack(
-      children: [
-        AnimatedAlign(
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutBack,
-          alignment: showSaved ? Alignment.centerRight : Alignment.centerLeft,
-          child: FractionallySizedBox(
-            widthFactor: .5,
-            heightFactor: 1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: showSaved ? caramel : coral,
-                borderRadius: BorderRadius.circular(15),
+  Widget _segment() {
+    const labels = ['Ceritaku', 'Simpanan', 'Pesanan'];
+    const colors = [coral, caramel, mint];
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: line, width: 2),
+      ),
+      child: Stack(
+        children: [
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutBack,
+            alignment: Alignment(profileView - 1.0, 0),
+            child: FractionallySizedBox(
+              widthFactor: 1 / 3,
+              heightFactor: 1,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                decoration: BoxDecoration(
+                  color: colors[profileView],
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
             ),
           ),
-        ),
-        Row(
-          children: [
-            for (final (i, label) in const ['Ceritaku', 'Tersimpan'].indexed)
-              Expanded(
-                child: Semantics(
-                  selected: showSaved == (i == 1),
-                  button: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => showSaved = i == 1);
-                    },
-                    child: Center(
-                      child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: TextStyle(
-                          fontFamily: fontBody,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          color: showSaved == (i == 1) ? Colors.white : muted,
+          Row(
+            children: [
+              for (final (i, label) in labels.indexed)
+                Expanded(
+                  child: Semantics(
+                    selected: profileView == i,
+                    button: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => profileView = i);
+                      },
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontFamily: fontBody,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14.5,
+                            color: profileView == i ? Colors.white : muted,
+                          ),
+                          child: Text(label),
                         ),
-                        child: Text(label),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ---------- Komponen kecil ----------
@@ -1109,7 +1283,7 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
 }
 
 class _Twinkle extends StatefulWidget {
-  const _Twinkle({required this.size, required this.color, this.delay = 0});
+  const _Twinkle({required this.size, required this.color}) : delay = 0;
   final double size, delay;
   final Color color;
   @override
@@ -1156,24 +1330,31 @@ class _FloatingNav extends StatelessWidget {
     required this.tab,
     required this.onTab,
     required this.onCreate,
+    this.dark = false,
   });
   final int tab;
   final ValueChanged<int> onTab;
   final VoidCallback onCreate;
+  final bool dark;
+
+  static const left = [0, 3], right = [4, 5];
+
+  bool active(int index) => index == 0 ? tab <= 2 : tab == index;
 
   @override
   Widget build(BuildContext context) => SafeArea(
     minimum: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-    child: Container(
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       height: 74,
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: dark ? const Color(0xF0141B3D) : Colors.white,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: line, width: 2),
+        border: Border.all(color: dark ? Colors.white12 : line, width: 2),
         boxShadow: [
           BoxShadow(
-            color: ink.withValues(alpha: .10),
+            color: ink.withValues(alpha: .12),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -1181,11 +1362,12 @@ class _FloatingNav extends StatelessWidget {
       ),
       child: Row(
         children: [
-          for (var i = 0; i < 2; i++)
+          for (final i in left)
             Expanded(
               child: _NavItem(
                 item: _tabs[i],
-                active: tab == i,
+                active: active(i),
+                dark: dark,
                 onTap: () => onTab(i),
               ),
             ),
@@ -1208,11 +1390,12 @@ class _FloatingNav extends StatelessWidget {
               ),
             ),
           ),
-          for (var i = 2; i < 4; i++)
+          for (final i in right)
             Expanded(
               child: _NavItem(
                 item: _tabs[i],
-                active: tab == i,
+                active: active(i),
+                dark: dark,
                 onTap: () => onTab(i),
               ),
             ),
@@ -1227,65 +1410,71 @@ class _NavItem extends StatelessWidget {
     required this.item,
     required this.active,
     required this.onTap,
+    this.dark = false,
   });
   final _Tab item;
-  final bool active;
+  final bool active, dark;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    selected: active,
-    button: true,
-    label: item.label,
-    child: Tooltip(
-      message: item.label,
-      child: Bouncy(
-        onTap: onTap,
-        scale: .82,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TweenAnimationBuilder<double>(
-              key: ValueKey(active),
-              tween: Tween(begin: active ? 0 : 1, end: 1),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.elasticOut,
-              builder: (_, v, child) => Transform.rotate(
-                angle: active ? (1 - v) * .5 : 0,
-                child: Transform.scale(
-                  scale: active ? .7 + v * .3 : 1,
-                  child: child,
+  Widget build(BuildContext context) {
+    final idle = dark ? Colors.white60 : muted;
+    final on = dark ? Colors.white : ink;
+    return Semantics(
+      selected: active,
+      button: true,
+      label: item.label,
+      child: Tooltip(
+        message: item.label,
+        child: Bouncy(
+          onTap: onTap,
+          scale: .82,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TweenAnimationBuilder<double>(
+                key: ValueKey(active),
+                tween: Tween(begin: active ? 0 : 1, end: 1),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.elasticOut,
+                builder: (_, v, child) => Transform.rotate(
+                  angle: active ? (1 - v) * .5 : 0,
+                  child: Transform.scale(
+                    scale: active ? .7 + v * .3 : 1,
+                    child: child,
+                  ),
+                ),
+                child: SpotIcon(
+                  item.glyph,
+                  size: 28,
+                  color: active ? on : idle,
+                  accent: item.color,
+                  tint: active,
                 ),
               ),
-              child: SpotIcon(
-                item.glyph,
-                size: 28,
-                color: active ? ink : muted,
-                accent: item.color,
-                tint: active,
-              ),
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              child: active
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Text(
-                        item.label,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11,
+              AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                child: active
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            color: on,
+                          ),
                         ),
-                      ),
-                    )
-                  : const SizedBox(width: 24),
-            ),
-          ],
+                      )
+                    : const SizedBox(width: 24),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _SideRail extends StatelessWidget {
@@ -1312,30 +1501,33 @@ class _SideRail extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 6, bottom: 28),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: SvgPicture.asset('assets/logo.svg', height: 42),
+              padding: const EdgeInsets.only(left: 6, bottom: 18),
+              child: Row(
+                children: [
+                  SvgPicture.asset('assets/logo.svg', height: 40),
+                  const Spacer(),
+                  StreakChip(onTap: () => openQuests(context)),
+                ],
               ),
             ),
-            for (final (i, item) in _tabs.indexed)
+            for (final item in _tabs)
               Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Semantics(
-                  selected: tab == i,
+                  selected: tab == item.index,
                   button: true,
                   child: Bouncy(
                     scale: .96,
-                    onTap: () => onTab(i),
+                    onTap: () => onTab(item.index),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
-                        vertical: 12,
+                        vertical: 11,
                       ),
                       decoration: BoxDecoration(
-                        color: tab == i
-                            ? item.color.withValues(alpha: .14)
+                        color: tab == item.index
+                            ? item.color.withValues(alpha: .16)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(18),
                       ),
@@ -1344,9 +1536,9 @@ class _SideRail extends StatelessWidget {
                           SpotIcon(
                             item.glyph,
                             size: 26,
-                            color: tab == i ? ink : muted,
+                            color: tab == item.index ? ink : muted,
                             accent: item.color,
-                            tint: tab == i,
+                            tint: tab == item.index,
                           ),
                           const SizedBox(width: 12),
                           Text(
@@ -1354,7 +1546,7 @@ class _SideRail extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
-                              color: tab == i ? ink : muted,
+                              color: tab == item.index ? ink : muted,
                             ),
                           ),
                         ],
@@ -1363,7 +1555,7 @@ class _SideRail extends StatelessWidget {
                   ),
                 ),
               ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             Chunky(
               onTap: onCreate,
               color: coral,
@@ -1378,7 +1570,261 @@ class _SideRail extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Align(child: Piko(size: 96)),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: XpBar(height: 10),
+            ),
+            const Align(child: Piko(size: 86)),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({
+    required this.glyph,
+    required this.label,
+    required this.accent,
+    required this.onTap,
+  });
+  final Glyph glyph;
+  final String label;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: label,
+    child: Semantics(
+      button: true,
+      label: label,
+      child: Bouncy(
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: line, width: 2),
+          ),
+          child: SpotIcon(glyph, size: 22, accent: accent),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Sampul kecil dari media pertama sebuah spot.
+class _Cover extends StatelessWidget {
+  const _Cover({required this.spot, required this.repo});
+  final Spot spot;
+  final SpotsRepository repo;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = spot.media.isEmpty ? null : spot.media.first;
+    if (media == null ||
+        media.path.startsWith('demo:') ||
+        media.type == 'video') {
+      return DemoCover(seed: media?.path ?? 'demo:${spot.category}:${spot.id}');
+    }
+    return Image.network(
+      repo.publicMediaUrl(media.path),
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) =>
+          DemoCover(seed: 'demo:${spot.category}:${spot.id}'),
+    );
+  }
+}
+
+class _StoryBubble extends StatelessWidget {
+  const _StoryBubble({
+    required this.label,
+    required this.child,
+    required this.onTap,
+    this.ring = false,
+  });
+  final String label;
+  final Widget child;
+  final VoidCallback onTap;
+  final bool ring;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(right: 14),
+    child: Semantics(
+      button: true,
+      label: label,
+      child: Bouncy(
+        onTap: onTap,
+        child: SizedBox(
+          width: 70,
+          child: Column(
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: ring
+                      ? const SweepGradient(
+                          colors: [coral, yellow, mint, piko, grape, coral],
+                        )
+                      : null,
+                  border: ring
+                      ? null
+                      : Border.all(color: const Color(0xFFFFC2CC), width: 2.5),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: const BoxDecoration(
+                    color: pale,
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipOval(child: child),
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _ViralCard extends StatelessWidget {
+  const _ViralCard({
+    required this.spot,
+    required this.rank,
+    required this.repo,
+    required this.onTap,
+  });
+  final Spot spot;
+  final int rank;
+  final SpotsRepository repo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Bouncy(
+    onTap: onTap,
+    child: Container(
+      width: 172,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [BoxShadow(color: line, offset: Offset(0, 5))],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _Cover(spot: spot, repo: repo),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment(0, -.1),
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xDD141B3D)],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 10,
+              top: 6,
+              child: Text(
+                '#$rank',
+                style: display(38, color: Colors.white).copyWith(
+                  shadows: const [Shadow(color: ink, offset: Offset(2, 3))],
+                ),
+              ),
+            ),
+            if (rank == 1)
+              const Positioned(
+                right: 14,
+                top: 16,
+                child: _Twinkle(size: 22, color: yellow),
+              ),
+            Positioned(
+              right: 10,
+              top: 54,
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .25),
+                  shape: BoxShape.circle,
+                ),
+                child: const SpotIcon(
+                  Glyph.play,
+                  size: 16,
+                  color: Colors.white,
+                  tint: false,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 14,
+              right: 12,
+              bottom: 14,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    spot.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: title.copyWith(color: Colors.white, fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const SpotIcon(
+                        Glyph.heart,
+                        size: 16,
+                        color: Colors.white,
+                        accent: coral,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        compact(spot.likes),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const Spacer(),
+                      Flexible(
+                        child: Text(
+                          spot.city,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

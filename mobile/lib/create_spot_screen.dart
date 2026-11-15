@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
+import 'market.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
 import 'ui/motion.dart';
@@ -34,6 +35,28 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
       ? null
       : LatLng(widget.position!.latitude, widget.position!.longitude);
   String category = 'kuliner';
+  List<Store> stores = [];
+  String? storeId;
+
+  @override
+  void initState() {
+    super.initState();
+    findStores();
+  }
+
+  Future<void> findStores() async {
+    final p = point;
+    if (p == null) return;
+    try {
+      final found = await widget.repo.storesNear(p.latitude, p.longitude);
+      if (!mounted) return;
+      setState(() {
+        stores = found;
+        if (!found.any((s) => s.id == storeId)) storeId = null;
+      });
+    } catch (_) {}
+  }
+
   bool busy = false, locating = false;
   String? error;
 
@@ -126,6 +149,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
         error = null;
       });
       map.move(found, 16);
+      findStores();
     } catch (e) {
       if (mounted) setState(() => error = friendlyError(e));
     } finally {
@@ -163,6 +187,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
         lat: point!.latitude,
         lng: point!.longitude,
         files: files,
+        storeId: storeId,
       );
       if (!mounted) return;
       await Navigator.push(
@@ -262,6 +287,32 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
               ),
               const SizedBox(height: 14),
               _location(),
+              if (stores.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                const Text(
+                  'Tautkan ke toko di titik ini?',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final store in stores)
+                      ChoiceChip(
+                        avatar: const SpotIcon(
+                          Glyph.store,
+                          size: 18,
+                          accent: yellow,
+                        ),
+                        label: Text(store.name),
+                        selected: storeId == store.id,
+                        onSelected: (on) =>
+                            setState(() => storeId = on ? store.id : null),
+                      ),
+                  ],
+                ),
+              ],
               AnimatedSize(
                 duration: const Duration(milliseconds: 220),
                 child: error == null
@@ -362,10 +413,13 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
                   options: MapOptions(
                     initialCenter: center,
                     initialZoom: point == null ? 11 : 16,
-                    onTap: (_, latLng) => setState(() {
-                      point = latLng;
-                      error = null;
-                    }),
+                    onTap: (_, latLng) {
+                      setState(() {
+                        point = latLng;
+                        error = null;
+                      });
+                      findStores();
+                    },
                   ),
                   children: [
                     TileLayer(

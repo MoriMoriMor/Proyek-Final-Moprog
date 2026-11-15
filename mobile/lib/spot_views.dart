@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
+import 'game.dart';
+import 'market.dart';
+import 'market_screens.dart';
 import 'spot.dart';
 import 'spots_repository.dart';
 import 'ui/motion.dart';
@@ -126,22 +129,26 @@ class _SpotCardState extends State<SpotCard>
   Future<void> doubleTapLike() async {
     if (!calm(context)) heart.forward(from: 0);
     HapticFeedback.mediumImpact();
-    await reactions.toggle(
+    final was = reactions.liked;
+    final ok = await reactions.toggle(
       context,
       widget.repo,
       widget.spot.id,
       'like',
       value: true,
     );
+    if (ok && !was) GameState.instance.track('like');
   }
 
   Future<void> toggle(String kind) async {
+    final was = kind == 'like' ? reactions.liked : reactions.saved;
     final ok = await reactions.toggle(
       context,
       widget.repo,
       widget.spot.id,
       kind,
     );
+    if (ok && !was) GameState.instance.track(kind);
     if (ok && kind == 'save') widget.onChanged();
   }
 
@@ -742,6 +749,7 @@ class _SpotDetailState extends State<SpotDetail> {
     setState(() => sending = true);
     try {
       await widget.repo.addComment(widget.spot.id, comment.text);
+      GameState.instance.track('comment');
       comment.clear();
       FocusManager.instance.primaryFocus?.unfocus();
       setState(() {
@@ -766,6 +774,7 @@ class _SpotDetailState extends State<SpotDetail> {
     HapticFeedback.selectionClick();
     try {
       await widget.repo.rate(widget.spot.id, score);
+      if (before == 0) GameState.instance.track('rate');
       widget.onChanged();
     } catch (e) {
       if (mounted) {
@@ -892,12 +901,16 @@ class _SpotDetailState extends State<SpotDetail> {
                           value: compact(reactions.likes),
                           label: 'suka',
                           active: reactions.liked,
-                          onTap: () => reactions.toggle(
-                            context,
-                            widget.repo,
-                            spot.id,
-                            'like',
-                          ),
+                          onTap: () async {
+                            final was = reactions.liked;
+                            final ok = await reactions.toggle(
+                              context,
+                              widget.repo,
+                              spot.id,
+                              'like',
+                            );
+                            if (ok && !was) GameState.instance.track('like');
+                          },
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -952,6 +965,16 @@ class _SpotDetailState extends State<SpotDetail> {
                   ),
                 ),
               ),
+              if (spot.storeId != null) ...[
+                const SizedBox(height: 16),
+                Rise(
+                  index: 6,
+                  child: _StoreTeaser(
+                    repo: widget.repo,
+                    storeId: spot.storeId!,
+                  ),
+                ),
+              ],
               const SizedBox(height: 28),
               Text('Kasih bintang', style: display(22)),
               const SizedBox(height: 10),
@@ -1436,5 +1459,114 @@ class _AuthSheetState extends State<AuthSheet> {
         ),
       ),
     ),
+  );
+}
+
+class _StoreTeaser extends StatefulWidget {
+  const _StoreTeaser({required this.repo, required this.storeId});
+  final SpotsRepository repo;
+  final String storeId;
+  @override
+  State<_StoreTeaser> createState() => _StoreTeaserState();
+}
+
+class _StoreTeaserState extends State<_StoreTeaser> {
+  late final Future<(Store?, List<Product>)> data = () async {
+    final results = await Future.wait([
+      widget.repo.store(widget.storeId),
+      widget.repo.products(widget.storeId),
+    ]);
+    return (
+      results[0] as Store?,
+      (results[1] as List<Product>).where((p) => p.active).toList(),
+    );
+  }();
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<(Store?, List<Product>)>(
+    future: data,
+    builder: (context, snapshot) {
+      final store = snapshot.data?.$1;
+      if (store == null) return const SizedBox.shrink();
+      final products = snapshot.data!.$2;
+      return Bouncy(
+        scale: .97,
+        onTap: () => openStore(context, widget.repo, store.id, initial: store),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF4D6),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: const Color(0xFFFFE19A), width: 2),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const SpotIcon(Glyph.bag, size: 30, accent: yellow),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Belanja di sini', style: display(20)),
+                        Text(
+                          store.onlineOrders
+                              ? '${products.length} produk · bisa pesan online'
+                              : 'Beli di lokasi',
+                          style: small.copyWith(fontSize: 12.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Transform.rotate(
+                    angle: 3.1416,
+                    child: const SpotIcon(Glyph.back, size: 20, tint: false),
+                  ),
+                ],
+              ),
+              if (products.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    for (final p in products.take(3))
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: ProductImage(
+                                    product: p,
+                                    repo: widget.repo,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                rupiah(p.price),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12.5,
+                                  color: Color(0xFFD9541E),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
   );
 }
