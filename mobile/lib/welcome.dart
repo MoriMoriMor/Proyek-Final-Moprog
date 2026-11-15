@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'spot_views.dart';
 import 'spots_repository.dart';
@@ -131,6 +132,14 @@ class _WelcomePageState extends State<WelcomePage>
               constraints: const BoxConstraints(maxWidth: 460),
               child: Column(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: SvgPicture.asset(
+                      'assets/logo_light.svg',
+                      height: 34,
+                      semanticsLabel: 'Spots',
+                    ),
+                  ),
                   Expanded(
                     child: PageView.builder(
                       controller: pages,
