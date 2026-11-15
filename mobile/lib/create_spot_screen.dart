@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
 import 'market.dart';
+import 'profile_page.dart';
+import 'spot.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
 import 'ui/motion.dart';
@@ -37,6 +39,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
   String category = 'kuliner';
   List<Store> stores = [];
   String? storeId;
+  List<UserProfile> tagged = [];
 
   @override
   void initState() {
@@ -188,6 +191,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
         lng: point!.longitude,
         files: files,
         storeId: storeId,
+        tags: [for (final p in tagged) p.id],
       );
       if (!mounted) return;
       await Navigator.push(
@@ -297,6 +301,12 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
                 decoration: const InputDecoration(
                   hintText: 'Kenapa orang wajib ke sini?',
                 ),
+              ),
+              const SizedBox(height: 10),
+              TagPicker(
+                repo: widget.repo,
+                selected: tagged,
+                onChanged: (value) => setState(() => tagged = value),
               ),
               const SizedBox(height: 14),
               _location(),

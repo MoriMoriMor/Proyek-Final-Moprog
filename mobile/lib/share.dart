@@ -21,12 +21,13 @@ import 'ui/widgets.dart';
 /// `--dart-define=SHARE_BASE_URL=https://domain-kamu` saat build.
 const shareBase = String.fromEnvironment(
   'SHARE_BASE_URL',
-  defaultValue: 'https://spots.app',
+  defaultValue: 'https://morimorimor.github.io/Proyek-Final-Moprog',
 );
 
 String spotLink(String id) => '$shareBase/s/$id';
 String storeLink(String id) => '$shareBase/t/$id';
 String inviteLink(String code) => '$shareBase/i/$code';
+String profileLink(String username) => '$shareBase/u/$username';
 
 String inviteCode(String userId) {
   final clean = userId.replaceAll('-', '').toUpperCase();
@@ -41,7 +42,7 @@ String inviteCode(String userId) {
   if (q['invite'] != null) return (kind: 'i', value: q['invite']!);
   final parts = uri.pathSegments.where((p) => p.isNotEmpty).toList();
   if (parts.length >= 2 &&
-      const ['s', 't', 'i'].contains(parts[parts.length - 2])) {
+      const ['s', 't', 'i', 'u'].contains(parts[parts.length - 2])) {
     return (kind: parts[parts.length - 2], value: parts.last);
   }
   return null;
@@ -86,6 +87,22 @@ Future<void> shareInvite(BuildContext context, SpotsRepository repo) {
     text: 'Yuk cari spot seru bareng di Spots! Pakai kode $code: $link',
     link: link,
     fileName: 'spots-ajak-$code.png',
+  );
+}
+
+Future<void> shareProfile(
+  BuildContext context,
+  UserProfile profile,
+  ProfileStats stats,
+) {
+  final link = profileLink(profile.username);
+  return _open(
+    context,
+    title: 'Bagikan profil',
+    card: ProfileShareCard(profile: profile, stats: stats),
+    text: 'Cek spot-spot pilihan @${profile.username} di Spots: $link',
+    link: link,
+    fileName: 'spots-${profile.username}.png',
   );
 }
 
@@ -750,6 +767,75 @@ class AchievementShareCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           _LinkPill(_short(shareBase)),
+        ],
+      ),
+    ),
+  );
+}
+
+class ProfileShareCard extends StatelessWidget {
+  const ProfileShareCard({
+    super.key,
+    required this.profile,
+    required this.stats,
+  });
+  final UserProfile profile;
+  final ProfileStats stats;
+
+  @override
+  Widget build(BuildContext context) => _CardFrame(
+    colors: const [piko, Color(0xFFE071C9)],
+    word: 'SPOTS',
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(22, 96, 22, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _Sticker('Ikuti jejakku', color: yellow, tilt: -.06),
+          const Spacer(),
+          Center(child: Avatar(profile.displayName, size: 120, ring: true)),
+          const SizedBox(height: 14),
+          Center(
+            child: Text(
+              profile.displayName,
+              style: display(36, color: Colors.white),
+            ),
+          ),
+          Center(
+            child: Text(
+              '@${profile.username}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 17,
+              ),
+            ),
+          ),
+          const Spacer(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (final (value, label) in [
+                ('${stats.posts}', 'spot'),
+                ('${stats.cities}', 'kota'),
+                (compact(stats.likes), 'suka'),
+              ])
+                Column(
+                  children: [
+                    Text(value, style: display(30, color: Colors.white)),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _LinkPill(_short(profileLink(profile.username))),
         ],
       ),
     ),

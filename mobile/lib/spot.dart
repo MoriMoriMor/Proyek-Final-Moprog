@@ -29,6 +29,8 @@ class Spot {
     this.distanceKm,
     this.rating,
     this.storeId,
+    this.authorUsername = '',
+    this.authorAvatar,
   });
 
   final String id, ownerId, author, title, city, category, story;
@@ -38,6 +40,8 @@ class Spot {
   final double? distanceKm, rating;
   final bool liked, saved;
   final String? storeId;
+  final String authorUsername;
+  final String? authorAvatar;
 
   factory Spot.fromJson(Map<String, dynamic> json) => Spot(
     id: json['id'] as String,
@@ -62,16 +66,81 @@ class Spot {
     distanceKm: (json['distance_km'] as num?)?.toDouble(),
     rating: (json['rating'] as num?)?.toDouble(),
     storeId: json['store_id'] as String?,
+    authorUsername: json['author_username'] as String? ?? '',
+    authorAvatar: json['author_avatar'] as String?,
   );
 }
 
 class SpotComment {
-  const SpotComment({required this.author, required this.body});
-  final String author, body;
+  const SpotComment({
+    required this.author,
+    required this.body,
+    this.userId = '',
+    this.username = '',
+    this.avatar,
+  });
+  final String author, body, userId, username;
+  final String? avatar;
 
-  factory SpotComment.fromJson(Map<String, dynamic> json) => SpotComment(
-    author:
-        (json['profiles'] as Map?)?['display_name'] as String? ?? 'Traveler',
-    body: json['body'] as String? ?? '',
+  factory SpotComment.fromJson(Map<String, dynamic> json) {
+    final profile = json['profiles'] as Map?;
+    return SpotComment(
+      author: profile?['display_name'] as String? ?? 'Traveler',
+      body: json['body'] as String? ?? '',
+      userId: json['user_id'] as String? ?? '',
+      username: profile?['username'] as String? ?? '',
+      avatar: profile?['avatar_path'] as String?,
+    );
+  }
+}
+
+class UserProfile {
+  const UserProfile({
+    required this.id,
+    required this.username,
+    required this.displayName,
+    this.bio = '',
+    this.avatarPath,
+  });
+  final String id, username, displayName, bio;
+  final String? avatarPath;
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
+    id: json['id'] as String,
+    username: json['username'] as String? ?? '',
+    displayName: json['display_name'] as String? ?? 'Traveler',
+    bio: json['bio'] as String? ?? '',
+    avatarPath: json['avatar_path'] as String?,
   );
 }
+
+class ProfileStats {
+  const ProfileStats({
+    this.posts = 0,
+    this.followers = 0,
+    this.following = 0,
+    this.likes = 0,
+    this.saves = 0,
+    this.cities = 0,
+    this.isFollowing = false,
+  });
+  final int posts, followers, following, likes, saves, cities;
+  final bool isFollowing;
+
+  factory ProfileStats.fromJson(Map<String, dynamic> json) {
+    int n(String k) => (json[k] as num?)?.toInt() ?? 0;
+    return ProfileStats(
+      posts: n('posts'),
+      followers: n('followers'),
+      following: n('following'),
+      likes: n('likes'),
+      saves: n('saves'),
+      cities: n('cities'),
+      isFollowing: json['is_following'] as bool? ?? false,
+    );
+  }
+}
+
+/// Username: huruf kecil, angka, titik, atau garis bawah; 3 sampai 20 karakter.
+final usernamePattern = RegExp(r'^[a-z0-9_.]{3,20}$');
+final mentionPattern = RegExp(r'@([a-z0-9_.]{3,20})');

@@ -43,7 +43,8 @@ Lihat [panduan setup Supabase](../docs/FLUTTER_SUPABASE.md) untuk rincian tabel,
 | `lib/reels.dart` | Reels layar penuh |
 | `lib/game.dart` | Streak, XP, level, misi harian, dan perayaan |
 | `lib/share.dart` | Lembar bagikan, kartu story, dan tautan |
-| `lib/onboarding.dart` | Perkenalan tiga layar untuk pengguna baru |
+| `lib/welcome.dart` | Halaman sambutan dan masuk (Google atau email) |
+| `lib/profile_page.dart` | Profil, edit profil, pengikut, tag teman, dan @mention |
 | `lib/market.dart` | Model toko, produk, pesanan, dan keranjang |
 | `lib/market_screens.dart` | Market, halaman toko, keranjang, dan pesanan |
 | `lib/seller_screens.dart` | Daftarkan toko, dashboard penjual, dan review admin |

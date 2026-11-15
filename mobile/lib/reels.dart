@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'game.dart';
+import 'profile_page.dart';
 import 'share.dart';
 import 'spot.dart';
 import 'spot_views.dart';
@@ -466,7 +467,15 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
                 children: [
                   _RailButton(
                     label: spot.author,
-                    child: Avatar(spot.author, size: 46),
+                    child: GestureDetector(
+                      onTap: () =>
+                          openProfile(context, widget.repo, spot.ownerId),
+                      child: Avatar(
+                        spot.author,
+                        size: 46,
+                        url: widget.repo.avatarUrl(spot.authorAvatar),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   _RailToggle(

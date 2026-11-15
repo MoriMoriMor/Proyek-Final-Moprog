@@ -15,13 +15,14 @@ import 'demo_repository.dart';
 import 'game.dart';
 import 'market.dart';
 import 'market_screens.dart';
-import 'onboarding.dart';
+import 'profile_page.dart';
 import 'reels.dart';
 import 'share.dart';
 import 'seller_screens.dart';
 import 'spot.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
+import 'welcome.dart';
 import 'ui/motion.dart';
 import 'ui/piko.dart';
 import 'ui/spot_icons.dart';
@@ -180,13 +181,14 @@ class _SpotsShellState extends State<SpotsShell> {
   Future<void> welcome() async {
     final game = GameState.instance;
     if (!mounted) return;
-    if (!game.onboarded) {
+    if (repo.userId == null) {
       await Navigator.of(context).push(
         PageRouteBuilder<void>(
-          pageBuilder: (context, _, _) => OnboardingPage(
+          pageBuilder: (context, _, _) => WelcomePage(
+            repo: repo,
             onDone: () {
               game.markOnboarded();
-              Navigator.of(context).pop();
+              Navigator.of(context).maybePop();
             },
           ),
           transitionsBuilder: (_, a, _, child) =>
@@ -224,6 +226,8 @@ class _SpotsShellState extends State<SpotsShell> {
         } catch (_) {}
       case 't':
         await openStore(context, repo, link.value);
+      case 'u':
+        await openProfileByUsername(context, repo, link.value);
       default:
         if (GameState.instance.claimInvite(link.value) && mounted) {
           message(context, 'Kamu datang lewat undangan teman. +30 XP!');
@@ -1041,8 +1045,8 @@ class _SpotsShellState extends State<SpotsShell> {
   // ---------- Profil ----------
 
   Widget _profile(bool wide) {
-    final top = MediaQuery.paddingOf(context).top;
-    if (repo.userId == null) {
+    final me = repo.userId;
+    if (me == null) {
       return Center(
         child: EmptyState(
           title: 'Masuk dulu,\nbiar spotmu awet.',
@@ -1053,259 +1057,26 @@ class _SpotsShellState extends State<SpotsShell> {
         ),
       );
     }
-    final list = profileView == 1 ? saved : mine;
-    final likes = mine.fold<int>(0, (sum, s) => sum + s.likes);
-    return RefreshIndicator(
-      color: piko,
-      onRefresh: refresh,
-      edgeOffset: top,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(16, top + 12, 16, 140),
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Rise(child: _profileCard(likes)),
-                  const SizedBox(height: 16),
-                  Rise(
-                    index: 1,
-                    child: StoreEntryCard(
-                      key: ValueKey(repo.userId),
-                      repo: repo,
-                      start: position == null
-                          ? null
-                          : LatLng(position!.latitude, position!.longitude),
-                    ),
-                  ),
-                  Rise(
-                    index: 2,
-                    child: _InviteCard(onTap: () => shareInvite(context, repo)),
-                  ),
-                  const SizedBox(height: 18),
-                  Rise(index: 3, child: _segment()),
-                  const SizedBox(height: 16),
-                  if (error != null) Notice(error!, onRetry: refresh),
-                  if (profileView == 2)
-                    MyOrders(repo: repo)
-                  else if (loading)
-                    Shimmer(
-                      child: GridView.count(
-                        crossAxisCount: wide ? 3 : 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: .8,
-                        children: List.generate(
-                          4,
-                          (_) => const Bone(height: 200, radius: 26),
-                        ),
-                      ),
-                    )
-                  else if (list.isEmpty)
-                    EmptyState(
-                      title: profileView == 1
-                          ? 'Belum ada yang\nkamu simpan.'
-                          : 'Spot pertamamu\nmasih kosong.',
-                      action: profileView == 1
-                          ? 'Cari inspirasi'
-                          : 'Bagikan spot',
-                      color: profileView == 1 ? caramel : coral,
-                      kind: profileView == 1
-                          ? MascotKind.jojo
-                          : MascotKind.piko,
-                      onAction: profileView == 1 ? () => chooseTab(1) : create,
-                    )
-                  else
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: wide ? 3 : 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: .8,
-                      ),
-                      itemCount: list.length,
-                      itemBuilder: (context, i) => Rise(
-                        index: i,
-                        child: _SpotTile(
-                          spot: list[i],
-                          repo: repo,
-                          onTap: () => open(list[i]),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _profileCard(int likes) => Container(
-    padding: const EdgeInsets.fromLTRB(20, 20, 14, 20),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(34),
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [grape, Color(0xFFE071C9)],
-      ),
-      boxShadow: const [
-        BoxShadow(color: Color(0xFF6A49D6), offset: Offset(0, 6)),
+    return ProfilePage(
+      key: ValueKey('profile-$me'),
+      repo: repo,
+      userId: me,
+      embedded: true,
+      onCreate: create,
+      onSignOut: () async {
+        await repo.signOut();
+        if (mounted) refresh();
+      },
+      extras: [
+        StoreEntryCard(
+          key: ValueKey(me),
+          repo: repo,
+          start: position == null
+              ? null
+              : LatLng(position!.latitude, position!.longitude),
+        ),
+        _InviteCard(onTap: () => shareInvite(context, repo)),
       ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Avatar(repo.displayName, size: 66),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    repo.displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: display(26, color: Colors.white),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    repo.email,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            GlassButton(
-              glyph: Glyph.exit,
-              label: 'Keluar',
-              dark: true,
-              onTap: () async {
-                await repo.signOut();
-                if (mounted) refresh();
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            _ProfileStat(value: '${mine.length}', label: 'spot'),
-            const SizedBox(width: 10),
-            _ProfileStat(value: compact(likes), label: 'suka'),
-            const SizedBox(width: 10),
-            ListenableBuilder(
-              listenable: GameState.instance,
-              builder: (context, _) => _ProfileStat(
-                value: '${GameState.instance.streak}',
-                label: 'hari streak',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        ListenableBuilder(
-          listenable: GameState.instance,
-          builder: (context, _) => Row(
-            children: [
-              Text(
-                'Lv ${GameState.instance.level}',
-                style: display(18, color: Colors.white),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(child: XpBar(height: 12, dark: true)),
-              const SizedBox(width: 10),
-              Bouncy(
-                onTap: () => shareAchievement(context),
-                child: const Pill(
-                  color: Colors.white,
-                  child: Text('Pamerin', style: TextStyle(color: grape)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _segment() {
-    const labels = ['Ceritaku', 'Simpanan', 'Pesanan'];
-    const colors = [coral, caramel, mint];
-    return Container(
-      height: 54,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: line, width: 2),
-      ),
-      child: Stack(
-        children: [
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 320),
-            curve: Curves.easeOutBack,
-            alignment: Alignment(profileView - 1.0, 0),
-            child: FractionallySizedBox(
-              widthFactor: 1 / 3,
-              heightFactor: 1,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                decoration: BoxDecoration(
-                  color: colors[profileView],
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              for (final (i, label) in labels.indexed)
-                Expanded(
-                  child: Semantics(
-                    selected: profileView == i,
-                    button: true,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() => profileView = i);
-                      },
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: TextStyle(
-                            fontFamily: fontBody,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14.5,
-                            color: profileView == i ? Colors.white : muted,
-                          ),
-                          child: Text(label),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
@@ -2233,95 +2004,6 @@ class _MiniCard extends StatelessWidget {
                   ],
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _ProfileStat extends StatelessWidget {
-  const _ProfileStat({required this.value, required this.label});
-  final String value, label;
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .18),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          Text(value, style: display(22, color: Colors.white)),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _SpotTile extends StatelessWidget {
-  const _SpotTile({
-    required this.spot,
-    required this.repo,
-    required this.onTap,
-  });
-  final Spot spot;
-  final SpotsRepository repo;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Bouncy(
-    onTap: onTap,
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(26),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          AbsorbPointer(
-            child: SpotGallery(
-              media: spot.media.take(1).toList(),
-              repo: repo,
-              height: double.infinity,
-            ),
-          ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.center,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Color(0xCC192553)],
-              ),
-            ),
-          ),
-          Positioned(
-            left: 10,
-            top: 12,
-            child: Transform.scale(
-              alignment: Alignment.topLeft,
-              scale: .85,
-              child: CategorySticker(categoryOf(spot.category)),
-            ),
-          ),
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: 14,
-            child: Text(
-              spot.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: title.copyWith(color: Colors.white, fontSize: 16),
             ),
           ),
         ],

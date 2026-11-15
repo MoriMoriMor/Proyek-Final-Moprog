@@ -1,8 +1,17 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'market.dart';
+
 import 'spot.dart';
+
+/// Halaman tujuan link konfirmasi email. Daftarkan juga di Supabase:
+/// Authentication → URL Configuration → Redirect URLs.
+const confirmUrl = String.fromEnvironment(
+  'CONFIRM_URL',
+  defaultValue: 'https://morimorimor.github.io/Proyek-Final-Moprog/confirm/',
+);
 
 class SpotsRepository {
   SpotsRepository(this._client);
@@ -31,8 +40,25 @@ class SpotsRepository {
       email: email.trim(),
       password: password,
       data: {'display_name': name.trim()},
+      emailRedirectTo: confirmUrl,
     );
     return response.session != null;
+  }
+
+  /// Alamat yang membuka aplikasi lagi setelah login Google di browser.
+  /// Daftarkan juga di Supabase: Authentication → URL Configuration.
+  static const authCallback = 'io.spots.app://login-callback';
+
+  Future<void> signInWithGoogle() async {
+    await client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb
+          ? Uri.base.replace(fragment: '', query: '').toString()
+          : authCallback,
+      authScreenLaunchMode: kIsWeb
+          ? LaunchMode.platformDefault
+          : LaunchMode.externalApplication,
+    );
   }
 
   Future<void> signOut() => client.auth.signOut();
@@ -45,6 +71,7 @@ class SpotsRepository {
     String mode = 'near',
     String? category,
     String? query,
+    String? user,
   }) async {
     final rows = await client.rpc(
       'feed_spots',
@@ -55,6 +82,7 @@ class SpotsRepository {
         'p_category': category,
         'p_query': query,
         'p_limit': 40,
+        'p_user': ?user,
       },
     ) as List;
     return rows
@@ -69,7 +97,8 @@ class SpotsRepository {
         .from('posts')
         .select(
           'id, owner_id, title, city, category, story, lat, lng, store_id, '
-          'profiles(display_name), post_media(storage_path, media_type, position)',
+          'profiles(display_name, username, avatar_path), '
+          'post_media(storage_path, media_type, position)',
         )
         .eq('id', id)
         .maybeSingle();
@@ -86,6 +115,8 @@ class SpotsRepository {
     return Spot.fromJson({
       ...row,
       'author': (row['profiles'] as Map?)?['display_name'] ?? 'Traveler',
+      'author_username': (row['profiles'] as Map?)?['username'],
+      'author_avatar': (row['profiles'] as Map?)?['avatar_path'],
       'media': [
         for (final m in media)
           {'path': m['storage_path'], 'type': m['media_type']},
@@ -96,7 +127,7 @@ class SpotsRepository {
   Future<List<SpotComment>> comments(String postId) async {
     final rows = await client
         .from('comments')
-        .select('body,profiles(display_name)')
+        .select('body,user_id,profiles(display_name,username,avatar_path)')
         .eq('post_id', postId)
         .order('created_at', ascending: false)
         .limit(50);
@@ -151,6 +182,7 @@ class SpotsRepository {
     required double lng,
     required List<XFile> files,
     String? storeId,
+    List<String> tags = const [],
   }) async {
     final id = userId;
     if (id == null) throw StateError('Masuk dulu untuk membagikan spot.');
@@ -216,6 +248,11 @@ class SpotsRepository {
           'storage_path': path,
           'media_type': video ? 'video' : 'image',
         });
+      }
+      if (tags.isNotEmpty) {
+        await client.from('post_tags').insert([
+          for (final user in tags.toSet()) {'post_id': postId, 'user_id': user},
+        ]);
       }
     } catch (_) {
       try {
@@ -508,5 +545,166 @@ class SpotsRepository {
       function,
       params: {'p_order': orderId, if (action == 'reject') 'p_reason': reason},
     );
+  }
+
+  // ---------- Profil sosial ----------
+
+  /// Alamat gambar profil; null jika belum ada foto.
+  String? avatarUrl(String? path) =>
+      path == null || path.isEmpty ? null : publicMediaUrl(path);
+
+  static const _profileColumns = 'id, username, display_name, bio, avatar_path';
+
+  Future<UserProfile?> profile(String id) async {
+    final row = await client
+        .from('profiles')
+        .select(_profileColumns)
+        .eq('id', id)
+        .maybeSingle();
+    return row == null ? null : UserProfile.fromJson(row);
+  }
+
+  Future<UserProfile?> profileByUsername(String username) async {
+    final row = await client
+        .from('profiles')
+        .select(_profileColumns)
+        .eq('username', username.toLowerCase())
+        .maybeSingle();
+    return row == null ? null : UserProfile.fromJson(row);
+  }
+
+  Future<UserProfile?> myProfile() async {
+    final id = userId;
+    return id == null ? null : profile(id);
+  }
+
+  Future<ProfileStats> profileStats(String id) async {
+    final rows =
+        await client.rpc('profile_stats', params: {'p_user': id}) as List;
+    return rows.isEmpty
+        ? const ProfileStats()
+        : ProfileStats.fromJson(Map<String, dynamic>.from(rows.first as Map));
+  }
+
+  Future<List<UserProfile>> searchUsers(String query) async {
+    final q = query.trim().replaceAll('@', '');
+    if (q.isEmpty) return [];
+    final rows = await client
+        .from('profiles')
+        .select(_profileColumns)
+        .or('username.ilike.%$q%,display_name.ilike.%$q%')
+        .limit(12);
+    return rows.map(UserProfile.fromJson).where((p) => p.id != userId).toList();
+  }
+
+  Future<void> setFollow(String target, bool on) async {
+    final me = _need();
+    if (on) {
+      await client.from('follows').upsert({
+        'follower_id': me,
+        'following_id': target,
+      }, ignoreDuplicates: true);
+    } else {
+      await client
+          .from('follows')
+          .delete()
+          .eq('follower_id', me)
+          .eq('following_id', target);
+    }
+  }
+
+  /// [followers] true untuk daftar pengikut, false untuk yang diikuti.
+  Future<List<UserProfile>> followList(
+    String id, {
+    required bool followers,
+  }) async {
+    final rows = await client
+        .from('follows')
+        .select(
+          followers
+              ? 'profiles!follows_follower_id_fkey($_profileColumns)'
+              : 'profiles!follows_following_id_fkey($_profileColumns)',
+        )
+        .eq(followers ? 'following_id' : 'follower_id', id)
+        .order('created_at', ascending: false)
+        .limit(100);
+    return [
+      for (final row in rows)
+        if (row['profiles'] != null)
+          UserProfile.fromJson(
+            Map<String, dynamic>.from(row['profiles'] as Map),
+          ),
+    ];
+  }
+
+  Future<List<UserProfile>> taggedUsers(String postId) async {
+    final rows = await client
+        .from('post_tags')
+        .select('profiles($_profileColumns)')
+        .eq('post_id', postId);
+    return [
+      for (final row in rows)
+        if (row['profiles'] != null)
+          UserProfile.fromJson(
+            Map<String, dynamic>.from(row['profiles'] as Map),
+          ),
+    ];
+  }
+
+  Future<void> updateProfile({
+    required String displayName,
+    required String username,
+    required String bio,
+    XFile? avatar,
+  }) async {
+    final me = _need();
+    final handle = username.trim().toLowerCase();
+    if (!usernamePattern.hasMatch(handle)) {
+      throw StateError(
+        'Username 3-20 karakter: huruf kecil, angka, titik, atau _.',
+      );
+    }
+    if (displayName.trim().length < 2) {
+      throw StateError('Nama minimal 2 huruf.');
+    }
+    String? avatarPath;
+    if (avatar != null) {
+      final extension = avatar.name.split('.').last.toLowerCase();
+      if (!const ['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
+        throw StateError('Foto profil harus JPG, PNG, atau WEBP.');
+      }
+      final bytes = await avatar.readAsBytes();
+      if (bytes.length > 5000000) {
+        throw StateError('Foto profil maksimal 5 MB.');
+      }
+      avatarPath = '$me/avatar/${newRequestKey()}.$extension';
+      await client.storage
+          .from('spot-media')
+          .uploadBinary(
+            avatarPath,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: extension == 'jpg'
+                  ? 'image/jpeg'
+                  : 'image/$extension',
+            ),
+          );
+    }
+    try {
+      await client
+          .from('profiles')
+          .update({
+            'display_name': displayName.trim(),
+            'username': handle,
+            'bio': bio.trim(),
+            'avatar_path': ?avatarPath,
+          })
+          .eq('id', me);
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw StateError('Username @$handle sudah dipakai.');
+      }
+      rethrow;
+    }
   }
 }

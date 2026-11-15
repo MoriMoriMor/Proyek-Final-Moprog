@@ -173,6 +173,7 @@ class _MascotState extends State<Mascot> with TickerProviderStateMixin {
         }
         return CustomPaint(
           size: Size.square(widget.size),
+          isComplex: true,
           painter: MascotPainter(
             kind: widget.kind,
             mood: hopping && h < .85 ? MascotMood.laugh : widget.mood,
@@ -186,7 +187,8 @@ class _MascotState extends State<Mascot> with TickerProviderStateMixin {
         );
       },
     );
-    if (!widget.interactive) return ExcludeSemantics(child: painter);
+    final box = SizedBox.square(dimension: widget.size, child: painter);
+    if (!widget.interactive) return ExcludeSemantics(child: box);
     return Semantics(
       label: widget.kind.label,
       child: MouseRegion(
@@ -195,7 +197,7 @@ class _MascotState extends State<Mascot> with TickerProviderStateMixin {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: poke,
-          child: painter,
+          child: box,
         ),
       ),
     );
@@ -268,7 +270,14 @@ class MascotPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 120, size.height / 120);
+    // Skala seragam dan di tengah, supaya maskot tidak gepeng
+    // walau wadahnya tidak persegi.
+    final unit = math.min(size.width, size.height) / 120;
+    canvas.translate(
+      (size.width - 120 * unit) / 2,
+      (size.height - 120 * unit) / 2,
+    );
+    canvas.scale(unit);
     final w = still ? 0.0 : t * math.pi * 2;
 
     // Lompatan: jongkok, melayang, lalu mendarat dengan sedikit pantulan.

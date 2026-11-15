@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'market.dart';
 import 'spot.dart';
 import 'spots_repository.dart';
+import 'ui/widgets.dart' show memoryImages;
 
 /// Data contoh di memori untuk mencoba tampilan tanpa proyek Supabase.
 /// Aktif dengan `--dart-define=SPOTS_DEMO=true` atau tombol di layar setup.
@@ -20,10 +21,27 @@ class DemoSpotsRepository extends SpotsRepository {
   final _ratings = <String, int>{};
   final _comments = <String, List<SpotComment>>{
     'd1': const [
-      SpotComment(author: 'Rara', body: 'Kuahnya juara, wajib nambah kerupuk.'),
-      SpotComment(author: 'Bimo', body: 'Datang sebelum jam 7 biar kebagian.'),
+      SpotComment(
+        author: 'Rara',
+        userId: 'u-Rara',
+        username: 'rara.jalan',
+        body: 'Kuahnya juara, wajib nambah kerupuk. @bimo.ngopi ayo balik!',
+      ),
+      SpotComment(
+        author: 'Bimo',
+        userId: 'u-Bimo',
+        username: 'bimo.ngopi',
+        body: 'Datang sebelum jam 7 biar kebagian.',
+      ),
     ],
-    'd2': const [SpotComment(author: 'Nadia', body: 'Spot fotonya cakep!')],
+    'd2': const [
+      SpotComment(
+        author: 'Nadia',
+        userId: 'u-Nadia',
+        username: 'nadia.naik',
+        body: 'Spot fotonya cakep!',
+      ),
+    ],
   };
   final List<Map<String, dynamic>> _rows = [
     _row(
@@ -543,6 +561,16 @@ class DemoSpotsRepository extends SpotsRepository {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     _user = 'demo-user';
     _name = email.split('@').first;
+    _ensureMe();
+    _auth.add(null);
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    _user = 'demo-user';
+    _name = 'Kamu';
+    _ensureMe();
     _auth.add(null);
   }
 
@@ -551,6 +579,7 @@ class DemoSpotsRepository extends SpotsRepository {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     _user = 'demo-user';
     _name = name;
+    _ensureMe();
     _auth.add(null);
     return true;
   }
@@ -568,6 +597,7 @@ class DemoSpotsRepository extends SpotsRepository {
     String mode = 'near',
     String? category,
     String? query,
+    String? user,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 650));
     final q = (query ?? '').toLowerCase();
@@ -581,6 +611,12 @@ class DemoSpotsRepository extends SpotsRepository {
       }
       if (mode == 'saved' && !_saves.contains(id)) continue;
       if (mode == 'mine' && row['owner_id'] != _user) continue;
+      if (mode == 'user' && row['owner_id'] != user) continue;
+      if (mode == 'tagged' && !(_tags[id] ?? const {}).contains(user)) continue;
+      if (mode == 'following' &&
+          !_follows.contains('$_user>${row['owner_id']}')) {
+        continue;
+      }
       double? distance;
       if (lat != null && lng != null) {
         distance = _km(lat, lng, row['lat'] as double, row['lng'] as double);
@@ -597,6 +633,8 @@ class DemoSpotsRepository extends SpotsRepository {
           'saved': _saves.contains(id),
           'distance_km': distance,
           'store_id': row['store_id'] ?? _storeOf[id],
+          'author_username': _profiles[row['owner_id']]?.username ?? '',
+          'author_avatar': _profiles[row['owner_id']]?.avatarPath,
           'rating': _blend((row['rating'] as num?)?.toDouble(), mine),
         }),
       );
@@ -643,7 +681,13 @@ class DemoSpotsRepository extends SpotsRepository {
     if (_user == null) throw StateError('Masuk dulu untuk berkomentar.');
     (_comments[postId] ??= []).insert(
       0,
-      SpotComment(author: _name, body: body.trim()),
+      SpotComment(
+        author: _name,
+        body: body.trim(),
+        userId: _user!,
+        username: _profiles[_user]?.username ?? '',
+        avatar: _profiles[_user]?.avatarPath,
+      ),
     );
   }
 
@@ -670,6 +714,7 @@ class DemoSpotsRepository extends SpotsRepository {
     required double lng,
     required List<XFile> files,
     String? storeId,
+    List<String> tags = const [],
   }) async {
     if (_user == null) throw StateError('Masuk dulu untuk membagikan spot.');
     await Future<void>.delayed(const Duration(milliseconds: 900));
@@ -693,6 +738,7 @@ class DemoSpotsRepository extends SpotsRepository {
       'rating': null,
       'store_id': storeId,
     });
+    if (tags.isNotEmpty) _tags[id] = tags.toSet();
   }
 
   // ---------- Marketplace demo ----------
@@ -1091,5 +1137,182 @@ class DemoSpotsRepository extends SpotsRepository {
         }
         o['status'] = 'dibatalkan';
     }
+  }
+
+  // ---------- Profil sosial demo ----------
+
+  final _profiles = <String, UserProfile>{
+    for (final (name, handle, bio) in const [
+      ('Rara', 'rara.jalan', 'Kuliner pinggir jalan > resto mahal.'),
+      (
+        'Bimo',
+        'bimo.ngopi',
+        'Ngopi dulu, mikir belakangan. Thrift tiap Minggu.',
+      ),
+      ('Nadia', 'nadia.naik', 'Naik gunung, turun ke warung.'),
+      ('Gilang', 'gilang.makan', 'Sate hunter sejak 2015.'),
+      ('Sekar', 'sekar.seduh', 'Manual brew dan tanaman.'),
+      ('Dimas', 'dimas.pantai', 'Ngejar sunset di pantai sepi.'),
+      ('Raka', 'raka.skate', 'Skate sore, bakso malam.'),
+      (
+        'Tasya',
+        'tasya.liat',
+        'Bikin mangkuk, makan bakso pakai mangkuk sendiri.',
+      ),
+    ])
+      'u-$name': UserProfile(
+        id: 'u-$name',
+        username: handle,
+        displayName: name,
+        bio: bio,
+      ),
+  };
+
+  /// Pasangan "pengikut>diikuti".
+  final _follows = <String>{
+    'u-Rara>u-Bimo',
+    'u-Bimo>u-Rara',
+    'u-Nadia>u-Rara',
+    'u-Dimas>u-Nadia',
+    'u-Raka>u-Nadia',
+    'u-Tasya>u-Bimo',
+    'u-Sekar>u-Bimo',
+    'u-Nadia>demo-user',
+    'u-Bimo>demo-user',
+  };
+
+  final _tags = <String, Set<String>>{
+    'd1': {'u-Bimo'},
+    'd3': {'u-Rara', 'u-Dimas'},
+    'd8': {'u-Nadia'},
+  };
+
+  void _ensureMe() {
+    final handle = _name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    _profiles.putIfAbsent(
+      'demo-user',
+      () => UserProfile(
+        id: 'demo-user',
+        username: handle.length >= 3 ? handle : 'kamu.spots',
+        displayName: _name,
+        bio: 'Baru gabung Spots.',
+      ),
+    );
+  }
+
+  @override
+  String? avatarUrl(String? path) => path;
+
+  @override
+  Future<UserProfile?> profile(String id) async {
+    await _wait(200);
+    return _profiles[id];
+  }
+
+  @override
+  Future<UserProfile?> profileByUsername(String username) async {
+    await _wait(150);
+    for (final p in _profiles.values) {
+      if (p.username == username.toLowerCase()) return p;
+    }
+    return null;
+  }
+
+  @override
+  Future<UserProfile?> myProfile() async =>
+      _user == null ? null : _profiles[_user];
+
+  @override
+  Future<ProfileStats> profileStats(String id) async {
+    await _wait(250);
+    final mine = _rows.where((r) => r['owner_id'] == id).toList();
+    var likes = 0, saves = 0;
+    for (final r in mine) {
+      likes += (r['likes'] as int) + (_likes.contains(r['id']) ? 1 : 0);
+      saves += (r['saves'] as int) + (_saves.contains(r['id']) ? 1 : 0);
+    }
+    return ProfileStats(
+      posts: mine.length,
+      followers: _follows.where((f) => f.endsWith('>$id')).length,
+      following: _follows.where((f) => f.startsWith('$id>')).length,
+      likes: likes,
+      saves: saves,
+      cities: mine
+          .map((r) => (r['city'] as String).toLowerCase())
+          .toSet()
+          .length,
+      isFollowing: _follows.contains('$_user>$id'),
+    );
+  }
+
+  @override
+  Future<List<UserProfile>> searchUsers(String query) async {
+    final q = query.trim().replaceAll('@', '').toLowerCase();
+    if (q.isEmpty) return [];
+    return _profiles.values
+        .where((p) => p.id != _user)
+        .where(
+          (p) =>
+              p.username.contains(q) || p.displayName.toLowerCase().contains(q),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> setFollow(String target, bool on) async {
+    final me = _me();
+    if (me == target) throw StateError('Tidak bisa mengikuti diri sendiri.');
+    on ? _follows.add('$me>$target') : _follows.remove('$me>$target');
+  }
+
+  @override
+  Future<List<UserProfile>> followList(
+    String id, {
+    required bool followers,
+  }) async {
+    await _wait(250);
+    return [
+      for (final f in _follows)
+        if (followers ? f.endsWith('>$id') : f.startsWith('$id>'))
+          ?_profiles[followers ? f.split('>').first : f.split('>').last],
+    ];
+  }
+
+  @override
+  Future<List<UserProfile>> taggedUsers(String postId) async => [
+    for (final id in _tags[postId] ?? const <String>{}) ?_profiles[id],
+  ];
+
+  @override
+  Future<void> updateProfile({
+    required String displayName,
+    required String username,
+    required String bio,
+    XFile? avatar,
+  }) async {
+    final me = _me();
+    await _wait(500);
+    final handle = username.trim().toLowerCase();
+    if (!usernamePattern.hasMatch(handle)) {
+      throw StateError(
+        'Username 3-20 karakter: huruf kecil, angka, titik, atau _.',
+      );
+    }
+    if (_profiles.values.any((p) => p.username == handle && p.id != me)) {
+      throw StateError('Username @$handle sudah dipakai.');
+    }
+    var avatarPath = _profiles[me]?.avatarPath;
+    if (avatar != null) {
+      avatarPath = 'mem:$me:${DateTime.now().millisecondsSinceEpoch}';
+      memoryImages[avatarPath] = await avatar.readAsBytes();
+    }
+    _name = displayName.trim();
+    _profiles[me] = UserProfile(
+      id: me,
+      username: handle,
+      displayName: _name,
+      bio: bio.trim(),
+      avatarPath: avatarPath,
+    );
   }
 }

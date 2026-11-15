@@ -7,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'game.dart';
+import 'profile_page.dart';
 import 'share.dart';
+import 'welcome.dart';
 import 'market.dart';
 import 'market_screens.dart';
 import 'spot.dart';
@@ -234,19 +236,27 @@ class _SpotCardState extends State<SpotCard>
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Avatar(spot.author, size: 22),
-                      const SizedBox(width: 7),
-                      Flexible(
-                        child: Text(
-                          '${spot.author} · ${spot.city}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: small,
+                  GestureDetector(
+                    onTap: () =>
+                        openProfile(context, widget.repo, spot.ownerId),
+                    child: Row(
+                      children: [
+                        Avatar(
+                          spot.author,
+                          size: 22,
+                          url: widget.repo.avatarUrl(spot.authorAvatar),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 7),
+                        Flexible(
+                          child: Text(
+                            '${spot.author} · ${spot.city}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: small,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (spot.story.isNotEmpty) ...[
                     const SizedBox(height: 10),
@@ -911,24 +921,35 @@ class _SpotDetailState extends State<SpotDetail> {
               const SizedBox(height: 12),
               Rise(
                 index: 2,
-                child: Row(
-                  children: [
-                    Avatar(spot.author, size: 30),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        '${spot.author} · ${spot.city}',
-                        style: small.copyWith(fontSize: 14),
+                child: GestureDetector(
+                  onTap: () => openProfile(context, widget.repo, spot.ownerId),
+                  child: Row(
+                    children: [
+                      Avatar(
+                        spot.author,
+                        size: 30,
+                        url: widget.repo.avatarUrl(spot.authorAvatar),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          spot.authorUsername.isEmpty
+                              ? '${spot.author} · ${spot.city}'
+                              : '@${spot.authorUsername} · ${spot.city}',
+                          style: small.copyWith(fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              _TaggedRow(repo: widget.repo, postId: spot.id),
               const SizedBox(height: 18),
               Rise(
                 index: 3,
-                child: Text(
+                child: MentionText(
                   spot.story,
+                  repo: widget.repo,
                   style: const TextStyle(
                     height: 1.55,
                     fontSize: 16,
@@ -1074,7 +1095,11 @@ class _SpotDetailState extends State<SpotDetail> {
                   return Column(
                     children: [
                       for (final (i, c) in snapshot.data!.indexed)
-                        Rise(index: i, from: 14, child: _Bubble(c)),
+                        Rise(
+                          index: i,
+                          from: 14,
+                          child: _Bubble(c, widget.repo),
+                        ),
                     ],
                   );
                 },
@@ -1245,15 +1270,23 @@ class _StarPicker extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble(this.comment);
+  const _Bubble(this.comment, this.repo);
   final SpotComment comment;
+  final SpotsRepository repo;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Avatar(comment.author, size: 34),
+        GestureDetector(
+          onTap: () => openProfile(context, repo, comment.userId),
+          child: Avatar(
+            comment.author,
+            size: 34,
+            url: repo.avatarUrl(comment.avatar),
+          ),
+        ),
         const SizedBox(width: 10),
         Flexible(
           child: Container(
@@ -1271,15 +1304,18 @@ class _Bubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  comment.author,
+                  comment.username.isEmpty
+                      ? comment.author
+                      : '@${comment.username}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                MentionText(
                   comment.body,
+                  repo: repo,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     height: 1.4,
@@ -1411,7 +1447,59 @@ class _AuthSheetState extends State<AuthSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
+                Bouncy(
+                  onTap: busy
+                      ? null
+                      : () async {
+                          try {
+                            await widget.repo.signInWithGoogle();
+                            if (widget.repo.userId != null && context.mounted) {
+                              widget.onSuccess?.call();
+                              Navigator.pop(context);
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              setState(() => error = friendlyError(e));
+                            }
+                          }
+                        },
+                  child: Container(
+                    height: 54,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GoogleMark(size: 20),
+                        SizedBox(width: 10),
+                        Text(
+                          'Lanjut dengan Google',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Row(
+                  children: [
+                    Expanded(child: Divider(color: line, thickness: 2)),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text('atau pakai email', style: small),
+                    ),
+                    Expanded(child: Divider(color: line, thickness: 2)),
+                  ],
+                ),
+                const SizedBox(height: 14),
                 AnimatedSize(
                   duration: const Duration(milliseconds: 260),
                   curve: Curves.easeOutCubic,
@@ -1617,6 +1705,63 @@ class _StoreTeaserState extends State<_StoreTeaser> {
               ],
             ],
           ),
+        ),
+      );
+    },
+  );
+}
+
+/// "Bareng @teman" di bawah penulis spot.
+class _TaggedRow extends StatelessWidget {
+  const _TaggedRow({required this.repo, required this.postId});
+  final SpotsRepository repo;
+  final String postId;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<List<UserProfile>>(
+    future: repo.taggedUsers(postId),
+    builder: (context, snapshot) {
+      final people = snapshot.data ?? const [];
+      if (people.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Text('Bareng', style: small),
+            for (final person in people)
+              Bouncy(
+                onTap: () => openProfile(context, repo, person.id),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDF1FF),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Avatar(
+                        person.displayName,
+                        size: 22,
+                        url: repo.avatarUrl(person.avatarPath),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '@${person.username}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12.5,
+                          color: blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
       );
     },

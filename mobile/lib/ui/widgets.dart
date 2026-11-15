@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -166,10 +167,25 @@ class CategoryHint extends StatelessWidget {
   }
 }
 
+/// Gambar yang hanya ada di memori (dipakai mode demo), dengan kunci `mem:...`.
+final memoryImages = <String, Uint8List>{};
+
 class Avatar extends StatelessWidget {
-  const Avatar(this.name, {super.key, this.size = 38});
+  const Avatar(
+    this.name, {
+    super.key,
+    this.size = 38,
+    this.url,
+    this.ring = false,
+  });
   final String name;
   final double size;
+
+  /// Alamat foto profil. Kosong berarti tampil huruf awal nama.
+  final String? url;
+
+  /// Cincin warna-warni seperti profil Spots.
+  final bool ring;
 
   static const _tones = [piko, coral, mint, caramel, grape, tomato];
 
@@ -177,20 +193,51 @@ class Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final letter = name.trim().isEmpty ? 'S' : name.trim()[0].toUpperCase();
     final tone = _tones[name.hashCode.abs() % _tones.length];
-    return Container(
+    final radius = BorderRadius.circular(size * .38);
+    final source = url;
+    Widget face = Text(
+      letter,
+      style: display(size * .46, color: Colors.white, height: 1),
+    );
+    if (source != null && source.isNotEmpty) {
+      final bytes = memoryImages[source];
+      face = ClipRRect(
+        borderRadius: radius,
+        child: bytes != null
+            ? Image.memory(bytes, width: size, height: size, fit: BoxFit.cover)
+            : Image.network(
+                source,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Center(child: face),
+              ),
+      );
+    }
+    final tile = Container(
       width: size,
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: tone,
-        borderRadius: BorderRadius.circular(size * .38),
-        border: Border.all(color: Colors.white, width: 2.5),
-        boxShadow: [BoxShadow(color: edgeOf(tone), offset: const Offset(0, 3))],
+        borderRadius: radius,
+        border: Border.all(color: Colors.white, width: size > 60 ? 4 : 2.5),
+        boxShadow: ring
+            ? null
+            : [BoxShadow(color: edgeOf(tone), offset: const Offset(0, 3))],
       ),
-      child: Text(
-        letter,
-        style: display(size * .46, color: Colors.white, height: 1),
+      child: face,
+    );
+    if (!ring) return tile;
+    return Container(
+      padding: const EdgeInsets.all(3.5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * .44),
+        gradient: const SweepGradient(
+          colors: [coral, yellow, mint, piko, grape, coral],
+        ),
       ),
+      child: tile,
     );
   }
 }
