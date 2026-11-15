@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'game.dart';
+import 'share.dart';
 import 'spot.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
@@ -65,7 +66,9 @@ class _ReelsViewState extends State<ReelsView> {
     if (widget.loading && widget.spots.isEmpty) {
       return const ColoredBox(
         color: ink,
-        child: Center(child: Piko(size: 120, mood: PikoMood.wow)),
+        child: Center(
+          child: Piko(size: 120, mood: PikoMood.wow, kind: MascotKind.pino),
+        ),
       );
     }
     if (widget.spots.isEmpty) {
@@ -492,9 +495,17 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
                     onTap: save,
                   ),
                   _RailToggle(
-                    glyph: Glyph.route,
+                    glyph: Glyph.share,
                     active: false,
                     color: mint,
+                    count: 'Bagikan',
+                    label: 'Bagikan',
+                    onTap: () => shareSpot(context, widget.repo, spot),
+                  ),
+                  _RailToggle(
+                    glyph: Glyph.route,
+                    active: false,
+                    color: sky,
                     count: 'Rute',
                     label: 'Buka rute',
                     onTap: () => launchUrl(
@@ -523,7 +534,10 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
                     ),
                   ),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    Mascot(kind: category.mascot, size: 52, wave: true),
+                    const SizedBox(width: 6),
                     CategorySticker(category),
                     const SizedBox(width: 10),
                     if (spot.distanceKm != null)

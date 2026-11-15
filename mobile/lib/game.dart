@@ -13,6 +13,9 @@ import 'ui/widgets.dart';
 
 final rootNavigator = GlobalKey<NavigatorState>();
 
+/// Diisi oleh share.dart agar game.dart tidak bergantung balik ke sana.
+void Function(BuildContext context)? onShareAchievement;
+
 class Quest {
   const Quest(
     this.key,
@@ -33,6 +36,7 @@ const quests = [
   Quest('like', 'Kasih 3 suka', 3, 15, Glyph.heart, coral),
   Quest('save', 'Simpan 1 spot', 1, 10, Glyph.bookmark, caramel),
   Quest('comment', 'Tulis 1 komentar', 1, 15, Glyph.chat, piko),
+  Quest('share', 'Bagikan 1 spot', 1, 25, Glyph.share, mint),
 ];
 
 const _xpFor = {
@@ -44,6 +48,8 @@ const _xpFor = {
   'post': 30,
   'order': 20,
   'store': 25,
+  'share': 5,
+  'invited': 30,
 };
 
 /// Streak, XP, level, dan misi harian. Disimpan di perangkat.
@@ -60,6 +66,17 @@ class GameState extends ChangeNotifier {
   final claimed = <String>{};
   List<String> activeDays = [];
   bool streakGrewToday = false;
+
+  bool get onboarded => _prefs?.getBool('onboarded') ?? false;
+  Future<void> markOnboarded() async => _prefs?.setBool('onboarded', true);
+
+  /// Hadiah sekali untuk orang yang datang lewat kode undangan.
+  bool claimInvite(String code) {
+    if (_prefs?.getString('invite') != null) return false;
+    _prefs?.setString('invite', code);
+    track('invited');
+    return true;
+  }
 
   int get level => xp ~/ perLevel + 1;
   double get levelProgress => (xp % perLevel) / perLevel;
@@ -174,6 +191,16 @@ class GameState extends ChangeNotifier {
       title: 'Level $value!',
       subtitle: 'Makin jago nyari spot.',
       color: grape,
+      badge: const MascotCrew(
+        kinds: [MascotKind.cici, MascotKind.piko, MascotKind.bobi],
+        size: 96,
+        mood: MascotMood.laugh,
+      ),
+      actionLabel: 'Pamerin ke teman',
+      onAction: () {
+        final ctx = rootNavigator.currentContext;
+        if (ctx != null) onShareAchievement?.call(ctx);
+      },
     );
   }
 }
@@ -184,6 +211,8 @@ Future<void> showCelebration(
   required String subtitle,
   Color color = piko,
   Widget? badge,
+  String? actionLabel,
+  VoidCallback? onAction,
 }) => Navigator.of(context, rootNavigator: true).push(
   PageRouteBuilder<void>(
     opaque: false,
@@ -193,6 +222,8 @@ Future<void> showCelebration(
       subtitle: subtitle,
       color: color,
       badge: badge,
+      actionLabel: actionLabel,
+      onAction: onAction,
     ),
     transitionsBuilder: (_, animation, _, child) =>
         FadeTransition(opacity: animation, child: child),
@@ -205,10 +236,14 @@ class _Celebration extends StatefulWidget {
     required this.subtitle,
     required this.color,
     this.badge,
+    this.actionLabel,
+    this.onAction,
   });
   final String title, subtitle;
   final Color color;
   final Widget? badge;
+  final String? actionLabel;
+  final VoidCallback? onAction;
   @override
   State<_Celebration> createState() => _CelebrationState();
 }
@@ -217,9 +252,12 @@ class _CelebrationState extends State<_Celebration> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 2600), () {
-      if (mounted) Navigator.maybePop(context);
-    });
+    Future.delayed(
+      Duration(milliseconds: widget.onAction == null ? 2600 : 5200),
+      () {
+        if (mounted) Navigator.maybePop(context);
+      },
+    );
   }
 
   @override
@@ -264,6 +302,21 @@ class _CelebrationState extends State<_Celebration> {
                     ),
                   ),
                 ),
+                if (widget.onAction != null) ...[
+                  const SizedBox(height: 26),
+                  Rise(
+                    index: 4,
+                    child: Chunky(
+                      color: ink,
+                      edge: Colors.black,
+                      onTap: () {
+                        Navigator.maybePop(context);
+                        widget.onAction!();
+                      },
+                      child: Text(widget.actionLabel ?? 'Bagikan'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -386,7 +439,13 @@ class _QuestBannerState extends State<_QuestBanner>
               ),
               child: Row(
                 children: [
-                  const Piko(size: 52, mood: PikoMood.wink, bounce: false),
+                  const Mascot(
+                    kind: MascotKind.cici,
+                    size: 54,
+                    mood: MascotMood.laugh,
+                    wave: true,
+                    interactive: false,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(

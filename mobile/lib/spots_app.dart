@@ -15,7 +15,9 @@ import 'demo_repository.dart';
 import 'game.dart';
 import 'market.dart';
 import 'market_screens.dart';
+import 'onboarding.dart';
 import 'reels.dart';
+import 'share.dart';
 import 'seller_screens.dart';
 import 'spot.dart';
 import 'spot_views.dart';
@@ -47,6 +49,15 @@ class _SpotsAppState extends State<SpotsApp> {
     navigatorKey: rootNavigator,
     debugShowCheckedModeBanner: false,
     theme: spotsTheme(),
+    builder: (context, child) {
+      final media = MediaQuery.of(context);
+      return MediaQuery(
+        data: media.copyWith(
+          textScaler: media.textScaler.clamp(maxScaleFactor: 1.3),
+        ),
+        child: child!,
+      );
+    },
     home: repo == null
         ? SetupScreen(
             onDemo: () => setState(() => repo = DemoSpotsRepository()),
@@ -71,7 +82,7 @@ class SetupScreen extends StatelessWidget {
               children: [
                 SvgPicture.asset('assets/logo.svg', width: 170),
                 const SizedBox(height: 26),
-                const Piko(size: 150),
+                const MascotCrew(size: 76, mood: MascotMood.laugh),
                 const SizedBox(height: 22),
                 Text(
                   'Tempat seru\nlagi nunggu.',
@@ -162,25 +173,62 @@ class _SpotsShellState extends State<SpotsShell> {
       if (mounted) refresh(silent: true);
     });
     locate();
-    GameState.instance.load().then((_) {
-      final game = GameState.instance;
-      if (!mounted || !game.streakGrewToday || game.streak < 2) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showCelebration(
-          context,
-          title: 'Streak ${game.streak} hari!',
-          subtitle: 'Apinya nyala terus. Pertahankan!',
-          color: const Color(0xFFFF8A3D),
-          badge: const SpotIcon(
-            Glyph.fire,
-            size: 160,
-            color: Color(0xFF8A2A06),
-            accent: yellow,
+    onShareAchievement = shareAchievement;
+    GameState.instance.load().then((_) => welcome());
+  }
+
+  Future<void> welcome() async {
+    final game = GameState.instance;
+    if (!mounted) return;
+    if (!game.onboarded) {
+      await Navigator.of(context).push(
+        PageRouteBuilder<void>(
+          pageBuilder: (context, _, _) => OnboardingPage(
+            onDone: () {
+              game.markOnboarded();
+              Navigator.of(context).pop();
+            },
           ),
-        );
-      });
-    });
+          transitionsBuilder: (_, a, _, child) =>
+              FadeTransition(opacity: a, child: child),
+        ),
+      );
+    } else if (game.streakGrewToday && game.streak >= 2 && mounted) {
+      await showCelebration(
+        context,
+        title: 'Streak ${game.streak} hari!',
+        subtitle: 'Apinya nyala terus. Pertahankan!',
+        color: const Color(0xFFFF8A3D),
+        badge: const Mascot(
+          kind: MascotKind.cici,
+          size: 170,
+          mood: MascotMood.cool,
+          wave: true,
+        ),
+        actionLabel: 'Pamerin streak',
+        onAction: () => shareAchievement(context),
+      );
+    }
+    await openIncoming();
+  }
+
+  /// Membuka spot, toko, atau undangan dari tautan yang dibagikan.
+  Future<void> openIncoming() async {
+    final link = parseIncoming(Uri.base);
+    if (link == null || !mounted) return;
+    switch (link.kind) {
+      case 's':
+        try {
+          final spot = await repo.spotById(link.value);
+          if (spot != null && mounted) open(spot);
+        } catch (_) {}
+      case 't':
+        await openStore(context, repo, link.value);
+      default:
+        if (GameState.instance.claimInvite(link.value) && mounted) {
+          message(context, 'Kamu datang lewat undangan teman. +30 XP!');
+        }
+    }
   }
 
   @override
@@ -400,7 +448,7 @@ class _SpotsShellState extends State<SpotsShell> {
   Widget _feed(bool wide) {
     final explore = tab == 1;
     final top = MediaQuery.paddingOf(context).top;
-    return RefreshIndicator(
+    final feed = RefreshIndicator(
       color: piko,
       onRefresh: refresh,
       edgeOffset: top,
@@ -418,6 +466,7 @@ class _SpotsShellState extends State<SpotsShell> {
                       _exploreHeader(wide)
                     else ...[
                       _topBar(),
+                      _greeting(),
                       _stories(),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
@@ -462,6 +511,7 @@ class _SpotsShellState extends State<SpotsShell> {
                 action: explore ? null : 'Jadi yang pertama',
                 onAction: create,
                 mood: explore ? PikoMood.wow : PikoMood.sleepy,
+                kind: explore ? MascotKind.gugu : MascotKind.pino,
                 color: coral,
               ),
             )
@@ -470,6 +520,30 @@ class _SpotsShellState extends State<SpotsShell> {
           const SliverToBoxAdapter(child: SizedBox(height: 130)),
         ],
       ),
+    );
+    return Stack(
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 460,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: explore
+                      ? const [Color(0xFFFFEFC9), pale]
+                      : const [Color(0xFFD5E2FF), pale],
+                ),
+              ),
+            ),
+          ),
+        ),
+        feed,
+      ],
     );
   }
 
@@ -572,6 +646,40 @@ class _SpotsShellState extends State<SpotsShell> {
       ],
     ),
   );
+
+  Widget _greeting() {
+    final hour = DateTime.now().hour;
+    final hello = hour < 11
+        ? 'Pagi'
+        : hour < 15
+        ? 'Siang'
+        : hour < 19
+        ? 'Sore'
+        : 'Malam';
+    final name = repo.userId == null ? 'kamu' : repo.displayName;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 16, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$hello, $name!', style: small.copyWith(fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(
+                  'Mau ke mana\nhari ini?',
+                  style: display(30, height: 1.02),
+                ),
+              ],
+            ),
+          ),
+          const Piko(size: 78, wave: true),
+        ],
+      ),
+    );
+  }
 
   Widget _stories() {
     final items = spots.take(10).toList();
@@ -856,6 +964,12 @@ class _SpotsShellState extends State<SpotsShell> {
                     color: Colors.white.withValues(alpha: .86),
                     child: Row(
                       children: [
+                        const Mascot(
+                          kind: MascotKind.pino,
+                          size: 40,
+                          wave: true,
+                        ),
+                        const SizedBox(width: 6),
                         Text('Peta', style: display(26)),
                         const SizedBox(width: 10),
                         Pill(
@@ -934,6 +1048,7 @@ class _SpotsShellState extends State<SpotsShell> {
           title: 'Masuk dulu,\nbiar spotmu awet.',
           action: 'Masuk / Daftar',
           mood: PikoMood.wink,
+          kind: MascotKind.piko,
           onAction: () => openAuth(context, repo),
         ),
       );
@@ -965,8 +1080,12 @@ class _SpotsShellState extends State<SpotsShell> {
                           : LatLng(position!.latitude, position!.longitude),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Rise(index: 2, child: _segment()),
+                  Rise(
+                    index: 2,
+                    child: _InviteCard(onTap: () => shareInvite(context, repo)),
+                  ),
+                  const SizedBox(height: 18),
+                  Rise(index: 3, child: _segment()),
                   const SizedBox(height: 16),
                   if (error != null) Notice(error!, onRetry: refresh),
                   if (profileView == 2)
@@ -995,6 +1114,9 @@ class _SpotsShellState extends State<SpotsShell> {
                           ? 'Cari inspirasi'
                           : 'Bagikan spot',
                       color: profileView == 1 ? caramel : coral,
+                      kind: profileView == 1
+                          ? MascotKind.jojo
+                          : MascotKind.piko,
                       onAction: profileView == 1 ? () => chooseTab(1) : create,
                     )
                   else
@@ -1108,6 +1230,14 @@ class _SpotsShellState extends State<SpotsShell> {
               ),
               const SizedBox(width: 10),
               const Expanded(child: XpBar(height: 12, dark: true)),
+              const SizedBox(width: 10),
+              Bouncy(
+                onTap: () => shareAchievement(context),
+                child: const Pill(
+                  color: Colors.white,
+                  child: Text('Pamerin', style: TextStyle(color: grape)),
+                ),
+              ),
             ],
           ),
         ),
@@ -1455,19 +1585,18 @@ class _NavItem extends StatelessWidget {
               AnimatedSize(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
-                child: active
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Text(
-                          item.label,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
-                            color: on,
-                          ),
-                        ),
-                      )
-                    : const SizedBox(width: 24),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11.5,
+                      color: active ? on : idle,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1754,10 +1883,31 @@ class _ViralCard extends StatelessWidget {
               ),
             ),
             if (rank == 1)
-              const Positioned(
-                right: 14,
-                top: 16,
-                child: _Twinkle(size: 22, color: yellow),
+              Positioned(
+                right: 10,
+                top: 14,
+                child: Transform.rotate(
+                  angle: .12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: yellow,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: ink, width: 2),
+                    ),
+                    child: const Text(
+                      'HOT',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        color: ink,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             Positioned(
               right: 10,
@@ -2172,6 +2322,62 @@ class _SpotTile extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: title.copyWith(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _InviteCard extends StatelessWidget {
+  const _InviteCard({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Bouncy(
+    scale: .97,
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF1C7), Color(0xFFFFE0E6)],
+        ),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFFFD98A), width: 2),
+      ),
+      child: Row(
+        children: [
+          const MascotCrew(
+            kinds: [MascotKind.mimi, MascotKind.piko, MascotKind.jojo],
+            size: 38,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Ajak squad-mu', style: title.copyWith(fontSize: 16)),
+                Text(
+                  'Kirim kartu undangan ke teman',
+                  style: small.copyWith(fontSize: 12.5),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            decoration: BoxDecoration(
+              color: ink,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: const Text(
+              'Ajak',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

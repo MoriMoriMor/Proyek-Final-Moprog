@@ -129,6 +129,12 @@ class _ApplyStorePageState extends State<ApplyStorePage> {
         title: 'Pengajuan\nterkirim!',
         subtitle: 'Admin akan cek dulu, ya.',
         color: grape,
+        badge: Mascot(
+          kind: categoryOf(category).mascot,
+          size: 170,
+          mood: MascotMood.laugh,
+          wave: true,
+        ),
       );
       navigator.pop(true);
     } catch (e) {
@@ -162,7 +168,11 @@ class _ApplyStorePageState extends State<ApplyStorePage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(child: Text('Daftarkan\ntoko', style: display(38))),
-                  const SpotIcon(Glyph.store, size: 72, accent: yellow),
+                  Mascot(
+                    kind: categoryOf(category).mascot,
+                    size: 84,
+                    wave: true,
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -186,7 +196,7 @@ class _ApplyStorePageState extends State<ApplyStorePage> {
               ),
               const SizedBox(height: 14),
               _chips<String>(
-                values: const ['kuliner', 'kafe', 'destinasi', 'lainnya'],
+                values: [for (final c in spotCategories) c.key!],
                 selected: category,
                 label: (v) => v == 'destinasi'
                     ? 'Wisata/suvenir'
@@ -647,6 +657,7 @@ class _SellerPageState extends State<SellerPage> {
       return const EmptyState(
         title: 'Belum ada pesanan\nmasuk.',
         mood: PikoMood.sleepy,
+        kind: MascotKind.tote,
       );
     }
     return Column(
@@ -1355,7 +1366,8 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
                       if (snapshot.data!.isEmpty) {
                         return const EmptyState(
                           title: 'Semua pengajuan\nsudah dicek.',
-                          mood: PikoMood.wink,
+                          mood: PikoMood.cool,
+                          kind: MascotKind.cici,
                         );
                       }
                       return Column(

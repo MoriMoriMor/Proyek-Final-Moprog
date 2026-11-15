@@ -62,6 +62,37 @@ class SpotsRepository {
         .toList();
   }
 
+  /// Satu spot untuk tautan yang dibagikan. Angka interaksi dimuat ulang
+  /// saat halaman detail dibuka dari feed.
+  Future<Spot?> spotById(String id) async {
+    final row = await client
+        .from('posts')
+        .select(
+          'id, owner_id, title, city, category, story, lat, lng, store_id, '
+          'profiles(display_name), post_media(storage_path, media_type, position)',
+        )
+        .eq('id', id)
+        .maybeSingle();
+    if (row == null) return null;
+    final media =
+        ((row['post_media'] as List?) ?? const [])
+            .map((m) => Map<String, dynamic>.from(m as Map))
+            .toList()
+          ..sort(
+            (a, b) => ((a['position'] as num?) ?? 0).compareTo(
+              (b['position'] as num?) ?? 0,
+            ),
+          );
+    return Spot.fromJson({
+      ...row,
+      'author': (row['profiles'] as Map?)?['display_name'] ?? 'Traveler',
+      'media': [
+        for (final m in media)
+          {'path': m['storage_path'], 'type': m['media_type']},
+      ],
+    });
+  }
+
   Future<List<SpotComment>> comments(String postId) async {
     final rows = await client
         .from('comments')

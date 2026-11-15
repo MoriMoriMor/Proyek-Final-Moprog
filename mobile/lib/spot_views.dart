@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'game.dart';
+import 'share.dart';
 import 'market.dart';
 import 'market_screens.dart';
 import 'spot.dart';
@@ -298,6 +299,24 @@ class _SpotCardState extends State<SpotCard>
                     ),
                   ),
                   _Count(spot.comments),
+                  const SizedBox(width: 6),
+                  Bouncy(
+                    onTap: () => shareSpot(context, widget.repo, spot),
+                    child: Semantics(
+                      button: true,
+                      label: 'Bagikan',
+                      child: const SizedBox.square(
+                        dimension: 44,
+                        child: Center(
+                          child: SpotIcon(
+                            Glyph.share,
+                            size: 25,
+                            accent: Color(0xFFC6F1E2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   const Spacer(),
                   PopToggle(
                     active: reactions.saved,
@@ -816,6 +835,15 @@ class _SpotDetailState extends State<SpotDetail> {
                 ),
               ),
               Positioned(
+                right: 72,
+                top: MediaQuery.paddingOf(context).top + 10,
+                child: GlassButton(
+                  glyph: Glyph.share,
+                  label: 'Bagikan',
+                  onTap: () => shareSpot(context, widget.repo, spot),
+                ),
+              ),
+              Positioned(
                 right: 16,
                 top: MediaQuery.paddingOf(context).top + 10,
                 child: ListenableBuilder(
@@ -851,11 +879,34 @@ class _SpotDetailState extends State<SpotDetail> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Rise(child: CategorySticker(category)),
-              const SizedBox(height: 14),
-              Rise(
-                index: 1,
-                child: Text(spot.title, style: display(32, height: 1.05)),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Rise(child: CategorySticker(category)),
+                        const SizedBox(height: 14),
+                        Rise(
+                          index: 1,
+                          child: Text(
+                            spot.title,
+                            style: display(32, height: 1.05),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Rise(
+                    index: 2,
+                    child: Mascot(
+                      kind: category.mascot,
+                      size: 78,
+                      mood: MascotMood.love,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Rise(
@@ -1356,6 +1407,7 @@ class _AuthSheetState extends State<AuthSheet> {
                     Piko(
                       size: 86,
                       mood: register ? PikoMood.wow : PikoMood.wink,
+                      wave: true,
                     ),
                   ],
                 ),

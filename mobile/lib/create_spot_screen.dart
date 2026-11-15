@@ -194,7 +194,8 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
         context,
         PageRouteBuilder<void>(
           opaque: false,
-          pageBuilder: (_, _, _) => const _Celebrate(),
+          pageBuilder: (_, _, _) =>
+              _Celebrate(kind: categoryOf(category).mascot),
           transitionsBuilder: (_, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
@@ -233,7 +234,18 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(child: Text('Spot\nbaru!', style: display(40))),
-                  const Piko(size: 80, mood: PikoMood.wow),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, a) =>
+                        ScaleTransition(scale: a, child: child),
+                    child: Mascot(
+                      key: ValueKey(category),
+                      kind: categoryOf(category).mascot,
+                      size: 84,
+                      mood: MascotMood.laugh,
+                      wave: true,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 22),
@@ -274,6 +286,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
                 onSelected: (value) =>
                     setState(() => category = value ?? 'kuliner'),
               ),
+              CategoryHint(category),
               const SizedBox(height: 18),
               TextField(
                 controller: story,
@@ -628,7 +641,8 @@ class _DashedBox extends CustomPainter {
 }
 
 class _Celebrate extends StatefulWidget {
-  const _Celebrate();
+  const _Celebrate({required this.kind});
+  final MascotKind kind;
   @override
   State<_Celebrate> createState() => _CelebrateState();
 }
@@ -659,7 +673,12 @@ class _CelebrateState extends State<_Celebrate> {
                   curve: Curves.elasticOut,
                   builder: (_, v, child) =>
                       Transform.scale(scale: v, child: child),
-                  child: const Piko(size: 170, mood: PikoMood.wow),
+                  child: Mascot(
+                    kind: widget.kind,
+                    size: 170,
+                    mood: MascotMood.laugh,
+                    wave: true,
+                  ),
                 ),
                 const SizedBox(height: 22),
                 Rise(

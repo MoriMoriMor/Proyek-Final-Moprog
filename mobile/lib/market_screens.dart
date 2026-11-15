@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'game.dart';
+import 'share.dart';
 import 'market.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
@@ -17,15 +18,9 @@ import 'ui/widgets.dart';
 /// Keranjang dipakai bersama oleh semua layar.
 final cart = Cart();
 
-const marketCategories = [
-  ...spotCategories,
-  SpotCategory('lainnya', 'Lainnya', grape, Glyph.bag),
-];
+const marketCategories = spotCategories;
 
-SpotCategory marketCategoryOf(String key) => marketCategories.firstWhere(
-  (c) => c.key == key,
-  orElse: () => marketCategories.last,
-);
+SpotCategory marketCategoryOf(String key) => categoryOf(key);
 
 class ProductImage extends StatelessWidget {
   const ProductImage({super.key, required this.product, required this.repo});
@@ -235,7 +230,14 @@ class _MarketTabState extends State<MarketTab> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  _categories(),
+                  CategoryRow(
+                    selected: category,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    onSelected: (value) {
+                      setState(() => category = value);
+                      load();
+                    },
+                  ),
                   if (featured.isNotEmpty) ...[
                     SectionTitle(
                       'Lagi laris',
@@ -298,6 +300,7 @@ class _MarketTabState extends State<MarketTab> {
                     const EmptyState(
                       title: 'Belum ada toko\ndi sini.',
                       mood: PikoMood.wow,
+                      kind: MascotKind.tote,
                     )
                   else
                     Padding(
@@ -348,11 +351,16 @@ class _MarketTabState extends State<MarketTab> {
     child: Stack(
       children: [
         Positioned(
-          right: -10,
-          bottom: -26,
+          right: 4,
+          bottom: 4,
           child: Transform.rotate(
-            angle: .14,
-            child: const Piko(size: 124, mood: PikoMood.wink),
+            angle: .1,
+            child: const Piko(
+              size: 112,
+              mood: PikoMood.wink,
+              kind: MascotKind.tote,
+              wave: true,
+            ),
           ),
         ),
         Positioned(
@@ -390,65 +398,6 @@ class _MarketTabState extends State<MarketTab> {
             ],
           ),
         ),
-      ],
-    ),
-  );
-
-  Widget _categories() => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    clipBehavior: Clip.none,
-    child: Row(
-      children: [
-        for (final item in [allCategory, ...marketCategories])
-          Padding(
-            padding: const EdgeInsets.only(right: 10, bottom: 4),
-            child: Bouncy(
-              onTap: () {
-                setState(() => category = item.key);
-                load();
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                padding: const EdgeInsets.fromLTRB(10, 9, 15, 9),
-                decoration: BoxDecoration(
-                  color: category == item.key ? item.color : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: category == item.key ? edgeOf(item.color) : line,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: category == item.key ? edgeOf(item.color) : line,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SpotIcon(
-                      item.glyph,
-                      size: 22,
-                      color: category == item.key ? Colors.white : ink,
-                      accent: category == item.key
-                          ? edgeOf(item.color)
-                          : item.color,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      item.key == 'destinasi' ? 'Suvenir' : item.label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: category == item.key ? Colors.white : ink,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
       ],
     ),
   );
@@ -566,11 +515,11 @@ class StoreCard extends StatelessWidget {
                     ),
                   ),
                   child: Center(
-                    child: SpotIcon(
-                      Glyph.store,
-                      size: 44,
-                      color: edgeOf(category.color),
-                      accent: Colors.white,
+                    child: Mascot(
+                      kind: category.mascot,
+                      size: 60,
+                      bounce: false,
+                      interactive: false,
                     ),
                   ),
                 ),
@@ -927,12 +876,7 @@ class _StorePageState extends State<StorePage> {
               ),
               Rise(
                 index: 2,
-                child: SpotIcon(
-                  Glyph.store,
-                  size: 72,
-                  color: Colors.white,
-                  accent: edgeOf(category.color),
-                ),
+                child: Mascot(kind: category.mascot, size: 92, wave: true),
               ),
             ],
           ),
@@ -958,6 +902,10 @@ class _StorePageState extends State<StorePage> {
                   mode: LaunchMode.externalApplication,
                 ),
                 child: _HeaderChip(Glyph.pin, 'Rute'),
+              ),
+              Bouncy(
+                onTap: () => shareStore(context, shop),
+                child: _HeaderChip(Glyph.share, 'Bagikan'),
               ),
             ],
           ),
@@ -1297,6 +1245,12 @@ class _CartSheetState extends State<CartSheet> {
         title: 'Pesanan\nterkirim!',
         subtitle: 'Tunggu ${shop.name} menerima pesananmu.',
         color: mint,
+        badge: const Mascot(
+          kind: MascotKind.tote,
+          size: 170,
+          mood: MascotMood.laugh,
+          wave: true,
+        ),
       );
       if (navigator.mounted) {
         await navigator.push(
@@ -1331,6 +1285,7 @@ class _CartSheetState extends State<CartSheet> {
             child: EmptyState(
               title: 'Keranjang\nmasih kosong.',
               mood: PikoMood.sleepy,
+              kind: MascotKind.tote,
             ),
           ),
         );
@@ -1762,7 +1717,39 @@ class _OrderPageState extends State<OrderPage> {
                               ],
                             ),
                             const SizedBox(height: 14),
-                            Text(o.storeName, style: display(30)),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: Text(o.storeName, style: display(30)),
+                                ),
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 350),
+                                  transitionBuilder: (child, a) =>
+                                      ScaleTransition(scale: a, child: child),
+                                  child: Mascot(
+                                    key: ValueKey(o.status),
+                                    size: 76,
+                                    kind: switch (o.status) {
+                                      'menunggu' => MascotKind.jojo,
+                                      'selesai' => MascotKind.cici,
+                                      'ditolak' ||
+                                      'dibatalkan' => MascotKind.piko,
+                                      _ => MascotKind.tote,
+                                    },
+                                    mood: switch (o.status) {
+                                      'menunggu' => MascotMood.sleepy,
+                                      'selesai' => MascotMood.love,
+                                      'ditolak' ||
+                                      'dibatalkan' => MascotMood.wow,
+                                      'siap' => MascotMood.laugh,
+                                      _ => MascotMood.happy,
+                                    },
+                                    wave: o.status == 'siap',
+                                  ),
+                                ),
+                              ],
+                            ),
                             Text(
                               o.fulfillment == 'kirim'
                                   ? 'Dikirim ke ${o.address}'
@@ -1882,7 +1869,7 @@ class _OrderPageState extends State<OrderPage> {
         else
           const Row(
             children: [
-              Piko(size: 40, mood: PikoMood.wink, bounce: false),
+              Piko(size: 44, mood: PikoMood.wink, kind: MascotKind.tote),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1992,6 +1979,7 @@ class _MyOrdersState extends State<MyOrders> {
         return const EmptyState(
           title: 'Belum ada\npesanan.',
           mood: PikoMood.sleepy,
+          kind: MascotKind.tote,
         );
       }
       return Column(
