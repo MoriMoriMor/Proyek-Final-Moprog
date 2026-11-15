@@ -1,0 +1,10 @@
+.env
+.pub-cache/
+.tool-state/
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+mobile/config.json
+.DS_Store
+.idea/
+.vscode/
