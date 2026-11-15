@@ -338,7 +338,7 @@ class _MarketTabState extends State<MarketTab> {
   }
 
   Widget _promo() => Container(
-    height: 132,
+    constraints: const BoxConstraints(minHeight: 132),
     width: double.infinity,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(30),
@@ -377,10 +377,10 @@ class _MarketTabState extends State<MarketTab> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(22, 20, 150, 18),
+          padding: const EdgeInsets.fromLTRB(22, 20, 132, 20),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Jajan dari\nspot favorit',
