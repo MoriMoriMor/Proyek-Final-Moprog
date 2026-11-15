@@ -179,4 +179,12 @@ select pg_temp.act(null);
 select count(*) >= 0 as feed_ok from public.feed_spots(null, null, 'popular');
 
 reset role;
+\echo '7. kategori baru'
+\ir ../migrations/202611160001_categories.sql
+insert into public.posts (owner_id, title, city, category, story, lat, lng)
+  values ('00000000-0000-0000-0000-00000000000c', 'Skatepark Kolong', 'Bandung', 'olahraga',
+    'Rampnya mulus, ramai sore.', -6.9, 107.6);
+select pg_temp.fails($$insert into public.posts (owner_id, title, city, category, story, lat, lng)
+  values ('00000000-0000-0000-0000-00000000000c', 'Tempat aneh', 'Bandung', 'lainnya',
+    'Kategori lama.', -6.9, 107.6)$$, 'posts_category_check');
 \echo 'SEMUA UJI MARKETPLACE LULUS'
