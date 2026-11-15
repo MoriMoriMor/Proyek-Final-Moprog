@@ -26,10 +26,14 @@ Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka 
 
 ## Menjalankan
 
-```bash
-cd mobile
-flutter pub get
-flutter run --dart-define=SPOTS_DEMO=true
-```
+Butuh [Flutter](https://docs.flutter.dev/get-started/install) 3.47 dan Chrome. Dari folder repo:
 
-Perintah di atas memakai data contoh. Untuk data asli, siapkan proyek Supabase lewat [panduan setup](docs/FLUTTER_SUPABASE.md), isi `mobile/config.json`, lalu jalankan `flutter run --dart-define-from-file=config.json`.
+| Perintah | Windows | macOS/Linux |
+| --- | --- | --- |
+| Mode demo (data contoh) | `.\run` | `./run.sh` |
+| Data Supabase | `.\run live` | `./run.sh live` |
+| HP atau emulator | `.\run demo <ID>` | `./run.sh demo <ID>` |
+
+ID perangkat bisa dilihat dengan `flutter devices`. Selama aplikasi berjalan, tekan `r` untuk memuat ulang dan `q` untuk keluar.
+
+Mode `live` butuh `mobile/config.json`. Siapkan proyek Supabase lewat [panduan setup](docs/FLUTTER_SUPABASE.md), salin `mobile/config.example.json` menjadi `mobile/config.json`, lalu isi URL dan publishable key. File ini tidak masuk Git, jadi tiap anggota tim membuatnya sendiri.
