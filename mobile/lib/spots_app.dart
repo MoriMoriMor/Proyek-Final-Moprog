@@ -173,10 +173,23 @@ class _SpotsShellState extends State<SpotsShell> {
     super.initState();
     authSubscription = repo.authChanges.listen((_) {
       if (mounted) refresh(silent: true);
+      syncStreak();
     });
     locate();
     onShareAchievement = shareAchievement;
-    GameState.instance.load().then((_) => welcome());
+    GameState.instance.load().then((_) {
+      syncStreak();
+      welcome();
+    });
+  }
+
+  /// Simpan streak ke profil supaya teman bisa melihatnya.
+  Future<void> syncStreak() async {
+    final streak = GameState.instance.streak;
+    if (repo.userId == null || streak == 0) return;
+    try {
+      await repo.syncStreak(streak);
+    } catch (_) {}
   }
 
   Future<void> welcome() async {

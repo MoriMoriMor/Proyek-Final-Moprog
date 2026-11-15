@@ -1141,6 +1141,17 @@ class DemoSpotsRepository extends SpotsRepository {
 
   // ---------- Profil sosial demo ----------
 
+  static const _demoStreaks = {
+    'Rara': 9,
+    'Bimo': 3,
+    'Nadia': 41,
+    'Gilang': 1,
+    'Sekar': 16,
+    'Dimas': 120,
+    'Raka': 0,
+    'Tasya': 5,
+  };
+
   final _profiles = <String, UserProfile>{
     for (final (name, handle, bio) in const [
       ('Rara', 'rara.jalan', 'Kuliner pinggir jalan > resto mahal.'),
@@ -1165,6 +1176,8 @@ class DemoSpotsRepository extends SpotsRepository {
         username: handle,
         displayName: name,
         bio: bio,
+        streak: _demoStreaks[name] ?? 0,
+        bestStreak: (_demoStreaks[name] ?? 0) + 4,
       ),
   };
 
@@ -1202,6 +1215,22 @@ class DemoSpotsRepository extends SpotsRepository {
 
   @override
   String? avatarUrl(String? path) => path;
+
+  @override
+  Future<void> syncStreak(int streak) async {
+    final me = _user;
+    final p = me == null ? null : _profiles[me];
+    if (p == null) return;
+    _profiles[me!] = UserProfile(
+      id: p.id,
+      username: p.username,
+      displayName: p.displayName,
+      bio: p.bio,
+      avatarPath: p.avatarPath,
+      streak: streak,
+      bestStreak: streak > p.bestStreak ? streak : p.bestStreak,
+    );
+  }
 
   @override
   Future<UserProfile?> profile(String id) async {
@@ -1328,6 +1357,8 @@ class DemoSpotsRepository extends SpotsRepository {
       displayName: _name,
       bio: bio.trim(),
       avatarPath: avatarPath,
+      streak: _profiles[me]?.streak ?? 0,
+      bestStreak: _profiles[me]?.bestStreak ?? 0,
     );
   }
 }

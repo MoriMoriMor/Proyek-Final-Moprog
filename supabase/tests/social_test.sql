@@ -91,5 +91,20 @@ do $$ begin
   end if;
 end $$;
 
+\echo '5. streak'
+reset role;
+\ir ../migrations/202611180001_streaks.sql
+select pg_temp.act('00000000-0000-0000-0000-00000000000c');
+select public.sync_streak(12);
+select public.sync_streak(3);
+do $$ begin
+  if (select streak || '/' || best_streak from public.profiles
+      where id = '00000000-0000-0000-0000-00000000000c') <> '3/12' then
+    raise exception 'streak salah';
+  end if;
+end $$;
+select pg_temp.act(null);
+select pg_temp.fails('select public.sync_streak(5)', 'permission denied');
+
 reset role;
 \echo 'SEMUA UJI SOSIAL LULUS'

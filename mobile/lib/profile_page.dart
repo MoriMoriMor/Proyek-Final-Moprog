@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -285,6 +287,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 14),
                         Rise(child: _header(p)),
                         const SizedBox(height: 14),
+                        Rise(index: 1, child: _streakCard(p)),
+                        const SizedBox(height: 12),
                         Rise(index: 1, child: _passport()),
                         const SizedBox(height: 14),
                         Rise(index: 2, child: _actions(p)),
@@ -425,6 +429,64 @@ class _ProfilePageState extends State<ProfilePage> {
     ],
   );
 
+  /// Kartu streak yang bisa dilihat semua orang. Apinya berevolusi.
+  Widget _streakCard(UserProfile p) {
+    final days = self
+        ? math.max(GameState.instance.streak, p.streak)
+        : p.streak;
+    final best = math.max(days, p.bestStreak);
+    final tier = flameTierOf(days);
+    final next = nextFlameTier(days);
+    return Bouncy(
+      scale: .98,
+      onTap: self ? () => openQuests(context) : null,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              tier.accent.withValues(alpha: .35),
+              tier.stroke.withValues(alpha: .12),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: tier.stroke.withValues(alpha: .25),
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            StreakFlame(streak: days, size: 62),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('$days hari streak', style: display(22)),
+                  Text(
+                    tier.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: tier.stroke,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    self && next != null
+                        ? 'Rekor $best hari · ${next.from - days} hari lagi jadi ${next.name}'
+                        : 'Rekor $best hari',
+                    style: small.copyWith(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// "Paspor": ciri khas Spots, merangkum jejak tempat seseorang.
   Widget _passport() {
     final chips = <Widget>[
@@ -444,22 +506,6 @@ class _ProfilePageState extends State<ProfilePage> {
         text: '${compact(stats.saves)} disimpan',
       ),
     ];
-    if (self) {
-      chips.add(
-        ListenableBuilder(
-          listenable: GameState.instance,
-          builder: (context, _) => Bouncy(
-            onTap: () => openQuests(context),
-            child: _PassportChip(
-              glyph: Glyph.fire,
-              color: const Color(0xFFFF8A3D),
-              text:
-                  'Lv ${GameState.instance.level} · ${GameState.instance.streak} hari',
-            ),
-          ),
-        ),
-      );
-    }
     return Wrap(spacing: 8, runSpacing: 8, children: chips);
   }
 
@@ -1036,9 +1082,29 @@ class UserRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(profile.displayName, style: title.copyWith(fontSize: 15)),
-                Text(
-                  '@${profile.username}',
-                  style: small.copyWith(fontSize: 12.5),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '@${profile.username}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: small.copyWith(fontSize: 12.5),
+                      ),
+                    ),
+                    if (profile.streak > 0) ...[
+                      const SizedBox(width: 6),
+                      StreakFlame(streak: profile.streak, size: 14),
+                      Text(
+                        '${profile.streak}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          color: flameTierOf(profile.streak).stroke,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

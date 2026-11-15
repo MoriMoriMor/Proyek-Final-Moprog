@@ -553,7 +553,14 @@ class SpotsRepository {
   String? avatarUrl(String? path) =>
       path == null || path.isEmpty ? null : publicMediaUrl(path);
 
-  static const _profileColumns = 'id, username, display_name, bio, avatar_path';
+  static const _profileColumns =
+      'id, username, display_name, bio, avatar_path, streak, best_streak';
+
+  /// Menyimpan streak supaya tampil di profil untuk orang lain.
+  Future<void> syncStreak(int streak) async {
+    if (userId == null) return;
+    await client.rpc('sync_streak', params: {'p_streak': streak});
+  }
 
   Future<UserProfile?> profile(String id) async {
     final row = await client

@@ -101,9 +101,12 @@ class UserProfile {
     required this.displayName,
     this.bio = '',
     this.avatarPath,
+    this.streak = 0,
+    this.bestStreak = 0,
   });
   final String id, username, displayName, bio;
   final String? avatarPath;
+  final int streak, bestStreak;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
     id: json['id'] as String,
@@ -111,6 +114,8 @@ class UserProfile {
     displayName: json['display_name'] as String? ?? 'Traveler',
     bio: json['bio'] as String? ?? '',
     avatarPath: json['avatar_path'] as String?,
+    streak: (json['streak'] as num?)?.toInt() ?? 0,
+    bestStreak: (json['best_streak'] as num?)?.toInt() ?? 0,
   );
 }
 

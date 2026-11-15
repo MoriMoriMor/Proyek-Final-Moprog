@@ -678,18 +678,13 @@ class _StreakFlameState extends State<StreakFlame>
                     ],
                   ),
                 ),
-              Transform(
-                alignment: Alignment.bottomCenter,
-                transform: Matrix4.diagonal3Values(
-                  1 - wave * .04,
-                  1 + wave * .08,
-                  1,
-                ),
-                child: SpotIcon(
-                  Glyph.fire,
-                  size: size,
-                  color: tier.stroke,
-                  accent: accent,
+              CustomPaint(
+                size: Size.square(size),
+                painter: ApoPainter(
+                  tier: tier,
+                  inner: accent,
+                  t: t,
+                  face: widget.size >= 26,
                 ),
               ),
               for (var i = 0; i < tier.sparkles; i++)
@@ -1092,4 +1087,176 @@ class _QuestRow extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Apo, si api streak. Bentuknya berkobar, wajahnya ikut tingkat streak.
+class ApoPainter extends CustomPainter {
+  ApoPainter({
+    required this.tier,
+    required this.inner,
+    required this.t,
+    this.face = true,
+  });
+  final FlameTier tier;
+  final Color inner;
+  final double t;
+  final bool face;
+
+  static const ink = Color(0xFF3B3A4A);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final unit = size.shortestSide / 120;
+    canvas.translate(
+      (size.width - 120 * unit) / 2,
+      (size.height - 120 * unit) / 2,
+    );
+    canvas.scale(unit);
+    final w = t * math.pi * 2;
+    final sway = math.sin(w) * 6;
+    final lick = math.sin(w * 2 + 1) * 4;
+    final out = tier.from == 0;
+    final body = out
+        ? const Color(0xFFB9C0D6)
+        : Color.lerp(tier.stroke, inner, .2)!;
+
+    final flame = Path()
+      ..moveTo(60 + sway, 4)
+      ..cubicTo(74 + sway, 26, 104, 42, 104, 76)
+      ..cubicTo(104, 102, 84, 118, 60, 118)
+      ..cubicTo(36, 118, 16, 102, 16, 76)
+      ..cubicTo(16, 58, 26, 46, 34 + lick, 34)
+      ..cubicTo(36, 48, 42, 56, 48, 58)
+      ..cubicTo(44, 36, 50, 18, 60 + sway, 4)
+      ..close();
+    canvas.drawPath(flame, Paint()..color = body);
+    final b = flame.getBounds();
+    canvas.save();
+    canvas.clipPath(flame);
+    canvas.drawRect(
+      b,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: .25),
+            Colors.black.withValues(alpha: .14),
+          ],
+        ).createShader(b),
+    );
+    final core = Path()
+      ..moveTo(60 - sway * .5, 44)
+      ..cubicTo(72, 60, 88, 72, 88, 90)
+      ..cubicTo(88, 106, 76, 116, 60, 116)
+      ..cubicTo(44, 116, 32, 106, 32, 90)
+      ..cubicTo(32, 72, 50, 62, 60 - sway * .5, 44)
+      ..close();
+    canvas.drawPath(
+      core,
+      Paint()
+        ..color = out ? const Color(0xFFE2E6F5) : inner.withValues(alpha: .9),
+    );
+    canvas.restore();
+
+    if (!face) return;
+    const l = Offset(47, 84), r = Offset(73, 84);
+    final blush = Paint()
+      ..color = const Color(0xFFFF8E9B).withValues(alpha: .55);
+    canvas.drawOval(
+      Rect.fromCenter(center: l + const Offset(-9, 13), width: 12, height: 7),
+      blush,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: r + const Offset(9, 13), width: 12, height: 7),
+      blush,
+    );
+
+    Paint line([double width = 4]) => Paint()
+      ..color = ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..strokeCap = StrokeCap.round;
+    final blink = t > .62 && t < .66;
+    if (tier.from >= 100) {
+      final glasses = Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: l, width: 28, height: 18),
+            const Radius.circular(6),
+          ),
+        )
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: r, width: 28, height: 18),
+            const Radius.circular(6),
+          ),
+        );
+      canvas.drawPath(glasses, Paint()..color = const Color(0xFF2E2D3A));
+      canvas.drawLine(
+        l + const Offset(13, -3),
+        r - const Offset(13, 3),
+        line(3.5),
+      );
+    } else if (out || blink) {
+      for (final e in [l, r]) {
+        canvas.drawPath(
+          Path()
+            ..moveTo(e.dx - 8, e.dy)
+            ..quadraticBezierTo(e.dx, e.dy + 6, e.dx + 8, e.dy),
+          line(),
+        );
+      }
+    } else if (tier.from >= 30) {
+      for (final e in [l, r]) {
+        canvas.drawPath(
+          Path()
+            ..moveTo(e.dx - 8, e.dy + 3)
+            ..quadraticBezierTo(e.dx, e.dy - 9, e.dx + 8, e.dy + 3),
+          line(4.4),
+        );
+      }
+    } else {
+      for (final (e, side) in [(l, 1.0), (r, -1.0)]) {
+        canvas.drawCircle(e, 10, Paint()..color = Colors.white);
+        final p = e + Offset(side * 2.4, 1.2);
+        canvas.drawOval(
+          Rect.fromCenter(center: p, width: 10, height: 12),
+          Paint()..color = ink,
+        );
+        canvas.drawCircle(
+          p + const Offset(-2, -3),
+          2.4,
+          Paint()..color = Colors.white,
+        );
+      }
+    }
+
+    const m = Offset(60, 102);
+    if (out) {
+      canvas.drawLine(
+        m - const Offset(5, 0),
+        m + const Offset(5, 0),
+        line(3.6),
+      );
+    } else {
+      final big = tier.from >= 30;
+      final d = big ? 10.0 : 7.0, half = big ? 9.0 : 7.0;
+      final mouth = Path()
+        ..moveTo(m.dx - half, m.dy - 2)
+        ..quadraticBezierTo(m.dx, m.dy, m.dx + half, m.dy - 2)
+        ..quadraticBezierTo(m.dx + 6, m.dy + d, m.dx, m.dy + d)
+        ..quadraticBezierTo(m.dx - 6, m.dy + d, m.dx - half, m.dy - 2)
+        ..close();
+      canvas.drawPath(mouth, Paint()..color = ink);
+      canvas.drawOval(
+        Rect.fromCenter(center: m + Offset(0, d - 4), width: 7, height: 4),
+        Paint()..color = const Color(0xFFFF6F86),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(ApoPainter old) =>
+      old.t != t || old.tier != tier || old.inner != inner;
 }
