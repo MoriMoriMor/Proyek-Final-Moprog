@@ -13,9 +13,19 @@ import 'ui/spot_icons.dart';
 import 'ui/theme.dart';
 import 'ui/widgets.dart';
 
-Future<void> openRoute(BuildContext context, Spot spot) => Navigator.push(
+Future<void> openRoute(BuildContext context, Spot spot) =>
+    openRouteTo(context, spot.title, spot.lat, spot.lng);
+
+Future<void> openRouteTo(
+  BuildContext context,
+  String name,
+  double lat,
+  double lng,
+) => Navigator.push(
   context,
-  MaterialPageRoute(builder: (_) => RoutePage(spot: spot)),
+  MaterialPageRoute(
+    builder: (_) => RoutePage(name: name, lat: lat, lng: lng),
+  ),
 );
 
 enum Travel {
@@ -31,8 +41,14 @@ enum Travel {
 }
 
 class RoutePage extends StatefulWidget {
-  const RoutePage({super.key, required this.spot});
-  final Spot spot;
+  const RoutePage({
+    super.key,
+    required this.name,
+    required this.lat,
+    required this.lng,
+  });
+  final String name;
+  final double lat, lng;
   @override
   State<RoutePage> createState() => _RoutePageState();
 }
@@ -46,7 +62,7 @@ class _RoutePageState extends State<RoutePage> {
   String? error;
   bool loading = true;
 
-  LatLng get to => LatLng(widget.spot.lat, widget.spot.lng);
+  LatLng get to => LatLng(widget.lat, widget.lng);
 
   @override
   void initState() {
@@ -254,7 +270,7 @@ class _RoutePageState extends State<RoutePage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          widget.spot.title,
+          widget.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: title.copyWith(fontSize: 17),

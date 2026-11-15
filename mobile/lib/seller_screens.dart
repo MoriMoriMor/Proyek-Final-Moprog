@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart' hide Path;
-import 'package:url_launcher/url_launcher.dart';
 
 import 'game.dart';
 import 'market.dart';
 import 'market_screens.dart';
+import 'route_page.dart';
 import 'spot.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
@@ -1418,12 +1418,7 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
           ),
         ],
         TextButton.icon(
-          onPressed: () => launchUrl(
-            Uri.parse(
-              'https://www.google.com/maps/search/?api=1&query=${app.lat},${app.lng}',
-            ),
-            mode: LaunchMode.externalApplication,
-          ),
+          onPressed: () => openRouteTo(context, app.storeName, app.lat, app.lng),
           icon: const SpotIcon(Glyph.pin, size: 18, accent: coral),
           label: const Text(
             'Cek lokasi',

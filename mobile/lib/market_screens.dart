@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'game.dart';
 import 'share.dart';
 import 'market.dart';
 import 'spot_views.dart';
+import 'route_page.dart';
 import 'spots_repository.dart';
 import 'ui/motion.dart';
 import 'ui/piko.dart';
@@ -895,12 +895,8 @@ class _StorePageState extends State<StorePage> {
                       : 'Kirim ${rupiah(shop.deliveryFee)}',
                 ),
               Bouncy(
-                onTap: () => launchUrl(
-                  Uri.parse(
-                    'https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}',
-                  ),
-                  mode: LaunchMode.externalApplication,
-                ),
+                onTap: () =>
+                    openRouteTo(context, shop.name, shop.lat, shop.lng),
                 child: _HeaderChip(Glyph.pin, 'Rute'),
               ),
               Bouncy(
