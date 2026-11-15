@@ -69,7 +69,7 @@ class CategoryRow extends StatelessWidget {
         children: [
           for (final item in items)
             Padding(
-              padding: const EdgeInsets.only(right: 10, bottom: 4),
+              padding: const EdgeInsets.only(right: 10, bottom: 6),
               child: _CategoryChip(
                 item: item,
                 active: selected == item.key,
@@ -102,10 +102,11 @@ class _CategoryChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 240),
         curve: Curves.easeOutBack,
-        padding: const EdgeInsets.fromLTRB(10, 9, 15, 9),
+        width: 90,
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 9),
         decoration: BoxDecoration(
           color: active ? item.color : Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: active ? edgeOf(item.color) : line,
             width: 2,
@@ -117,21 +118,25 @@ class _CategoryChip extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SpotIcon(
-              item.glyph,
-              size: 22,
-              color: active ? Colors.white : ink,
-              accent: active ? edgeOf(item.color) : item.color,
+            Mascot(
+              kind: item.mascot,
+              size: 46,
+              mood: active ? MascotMood.laugh : MascotMood.happy,
+              wave: active,
+              bounce: active,
+              interactive: false,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(height: 4),
             Text(
               item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 14,
+                fontSize: 12,
                 color: active ? Colors.white : ink,
               ),
             ),
@@ -140,6 +145,30 @@ class _CategoryChip extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Petunjuk singkat isi kategori yang sedang dipilih.
+class CategoryHint extends StatelessWidget {
+  const CategoryHint(this.category, {super.key});
+  final String? category;
+  @override
+  Widget build(BuildContext context) {
+    final hint = category == null ? '' : categoryOf(category!).hint;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.centerLeft,
+        children: [...previous, ?current],
+      ),
+      child: hint.isEmpty
+          ? const SizedBox(width: double.infinity)
+          : Padding(
+              key: ValueKey(hint),
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(hint, style: small.copyWith(fontSize: 12.5)),
+            ),
+    );
+  }
 }
 
 class Avatar extends StatelessWidget {
@@ -285,12 +314,14 @@ class EmptyState extends StatelessWidget {
     this.onAction,
     this.mood = PikoMood.sleepy,
     this.color = piko,
+    this.kind = MascotKind.piko,
   });
   final String title;
   final String? action;
   final VoidCallback? onAction;
   final PikoMood mood;
   final Color color;
+  final MascotKind kind;
 
   @override
   Widget build(BuildContext context) => Center(
@@ -299,7 +330,7 @@ class EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Piko(size: 120, mood: mood),
+          Piko(size: 120, mood: mood, kind: kind, wave: action != null),
           const SizedBox(height: 18),
           Text(
             title,

@@ -28,7 +28,16 @@ enum MascotKind {
   pino('Pino'),
 
   /// Cici, bintang kilau. Muncul saat dapat XP dan misi.
-  cici('Cici');
+  cici('Cici'),
+
+  /// Bobi, bola tenis. Teman kategori olahraga.
+  bobi('Bobi'),
+
+  /// Tika, tiket. Teman kategori aktivitas.
+  tika('Tika'),
+
+  /// Rumi, rumah mungil. Teman kategori menginap.
+  rumi('Rumi');
 
   const MascotKind(this.label);
   final String label;
@@ -37,7 +46,10 @@ enum MascotKind {
     'kuliner' => mimi,
     'kafe' => jojo,
     'destinasi' => gugu,
-    'lainnya' => tote,
+    'olahraga' => bobi,
+    'aktivitas' => tika,
+    'belanja' || 'lainnya' => tote,
+    'menginap' => rumi,
     _ => piko,
   };
 }
@@ -493,6 +505,76 @@ class MascotPainter extends CustomPainter {
           3 + math.cos(w * 3) * 1.2,
           fill(const Color(0xFF416CF4)),
         );
+      case MascotKind.bobi:
+        final seam = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4.4
+          ..strokeCap = StrokeCap.round;
+        canvas.drawArc(
+          Rect.fromCircle(center: const Offset(14, 70), radius: 34),
+          -.95,
+          1.9,
+          false,
+          seam,
+        );
+        canvas.drawArc(
+          Rect.fromCircle(center: const Offset(106, 70), radius: 34),
+          math.pi - .95,
+          1.9,
+          false,
+          seam,
+        );
+        canvas.drawArc(
+          Rect.fromLTWH(30, 34, 30, 34),
+          math.pi * 1.05,
+          .9,
+          false,
+          shine,
+        );
+      case MascotKind.tika:
+        final dash = Paint()
+          ..color = Colors.white.withValues(alpha: .7)
+          ..strokeWidth = 3
+          ..strokeCap = StrokeCap.round;
+        for (var y = 40.0; y < 108; y += 9) {
+          canvas.drawLine(Offset(90, y), Offset(90, y + 4), dash);
+        }
+        final star = Path()
+          ..moveTo(98, 60)
+          ..lineTo(100, 66)
+          ..lineTo(106, 67)
+          ..lineTo(101, 71)
+          ..lineTo(103, 77)
+          ..lineTo(98, 73)
+          ..lineTo(93, 77)
+          ..lineTo(95, 71)
+          ..lineTo(90, 67)
+          ..lineTo(96, 66)
+          ..close();
+        canvas.drawPath(star, fill(const Color(0xFFFFCE3B)));
+      case MascotKind.rumi:
+        final roof = Path()
+          ..moveTo(8, 60)
+          ..lineTo(60, 16)
+          ..lineTo(112, 60)
+          ..quadraticBezierTo(114, 64, 108, 64)
+          ..lineTo(12, 64)
+          ..quadraticBezierTo(6, 64, 8, 60)
+          ..close();
+        final chimney = RRect.fromRectAndRadius(
+          const Rect.fromLTWH(80, 20, 13, 24),
+          const Radius.circular(3),
+        );
+        canvas.drawRRect(chimney, fill(const Color(0xFFB9C3E6)));
+        canvas.drawRRect(chimney, line);
+        final puff = still ? 0.0 : (w / (math.pi * 2) * 3) % 1;
+        canvas.drawCircle(
+          Offset(87 + puff * 6, 14 - puff * 14),
+          4 + puff * 4,
+          Paint()..color = const Color(0xFFB9C3E6).withValues(alpha: 1 - puff),
+        );
+        shape(canvas, roof, const Color(0xFFF27B8E));
     }
   }
 
@@ -831,6 +913,62 @@ class _Spec {
         mouth: const Offset(60, 72),
         leftShoulder: const Offset(30, 60),
         rightShoulder: const Offset(90, 60),
+      ),
+      MascotKind.bobi => _Spec(
+        color: const Color(0xFFA6E04B),
+        body: Path()
+          ..addOval(Rect.fromCircle(center: const Offset(60, 70), radius: 44)),
+        eyes: (const Offset(45, 64), const Offset(75, 64)),
+        eyeRadius: 12.5,
+        mouth: const Offset(60, 88),
+        leftShoulder: const Offset(19, 78),
+        rightShoulder: const Offset(101, 78),
+      ),
+      MascotKind.tika => _Spec(
+        color: const Color(0xFF8B6CF3),
+        body: Path()
+          ..moveTo(22, 34)
+          ..lineTo(98, 34)
+          ..quadraticBezierTo(106, 34, 106, 42)
+          ..lineTo(106, 62)
+          ..arcToPoint(
+            const Offset(106, 82),
+            radius: const Radius.circular(10),
+            clockwise: false,
+          )
+          ..lineTo(106, 104)
+          ..quadraticBezierTo(106, 112, 98, 112)
+          ..lineTo(22, 112)
+          ..quadraticBezierTo(14, 112, 14, 104)
+          ..lineTo(14, 82)
+          ..arcToPoint(
+            const Offset(14, 62),
+            radius: const Radius.circular(10),
+            clockwise: false,
+          )
+          ..lineTo(14, 42)
+          ..quadraticBezierTo(14, 34, 22, 34)
+          ..close(),
+        eyes: (const Offset(40, 64), const Offset(68, 64)),
+        eyeRadius: 12,
+        mouth: const Offset(54, 88),
+        leftShoulder: const Offset(16, 92),
+        rightShoulder: const Offset(104, 92),
+      ),
+      MascotKind.rumi => _Spec(
+        color: const Color(0xFF3BB4E8),
+        body: Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              const Rect.fromLTWH(20, 50, 80, 64),
+              const Radius.circular(12),
+            ),
+          ),
+        eyes: (const Offset(45, 80), const Offset(75, 80)),
+        eyeRadius: 11.5,
+        mouth: const Offset(60, 100),
+        leftShoulder: const Offset(22, 86),
+        rightShoulder: const Offset(98, 86),
       ),
     },
   );

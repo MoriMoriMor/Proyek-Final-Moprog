@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'mascots.dart';
 import 'spot_icons.dart';
 
 // Warna inti Spots. Biru, coral, dan kuning diambil dari logo.
@@ -20,24 +21,100 @@ const danger = Color(0xFFD9475E);
 /// Warna tepi bawah untuk tombol "chunky".
 Color edgeOf(Color color) => Color.lerp(color, ink, .28)!;
 
+const lime = Color(0xFF8FD43A);
+const sky = Color(0xFF3BB4E8);
+
 class SpotCategory {
-  const SpotCategory(this.key, this.label, this.color, this.glyph);
+  const SpotCategory(
+    this.key,
+    this.label,
+    this.color,
+    this.glyph,
+    this.mascot, [
+    this.hint = '',
+  ]);
   final String? key;
   final String label;
   final Color color;
   final Glyph glyph;
+  final MascotKind mascot;
+
+  /// Contoh tempat, supaya orang tidak ragu memilih kategori.
+  final String hint;
 }
 
-const allCategory = SpotCategory(null, 'Semua', piko, Glyph.sparkle);
+const allCategory = SpotCategory(
+  null,
+  'Semua',
+  piko,
+  Glyph.sparkle,
+  MascotKind.piko,
+);
+
+/// Tujuh kategori besar. Kunci `kafe` dan `destinasi` dipertahankan
+/// supaya data lama tetap cocok; labelnya yang berubah.
 const spotCategories = [
-  SpotCategory('kuliner', 'Kuliner', tomato, Glyph.bowl),
-  SpotCategory('kafe', 'Kafe', caramel, Glyph.cup),
-  SpotCategory('destinasi', 'Destinasi', mint, Glyph.mountain),
+  SpotCategory(
+    'kuliner',
+    'Kuliner',
+    tomato,
+    Glyph.bowl,
+    MascotKind.mimi,
+    'Resto, warung, jajanan, street food',
+  ),
+  SpotCategory(
+    'kafe',
+    'Nongkrong',
+    caramel,
+    Glyph.cup,
+    MascotKind.jojo,
+    'Kafe, taman, rooftop, spot sunset',
+  ),
+  SpotCategory(
+    'destinasi',
+    'Wisata',
+    mint,
+    Glyph.mountain,
+    MascotKind.gugu,
+    'Alam, pantai, museum, seni & budaya',
+  ),
+  SpotCategory(
+    'olahraga',
+    'Olahraga',
+    lime,
+    Glyph.ball,
+    MascotKind.bobi,
+    'Lapangan, skatepark, jogging track, gym',
+  ),
+  SpotCategory(
+    'aktivitas',
+    'Aktivitas',
+    grape,
+    Glyph.ticket,
+    MascotKind.tika,
+    'Workshop, karaoke, arcade, kelas seru',
+  ),
+  SpotCategory(
+    'belanja',
+    'Belanja',
+    yellow,
+    Glyph.bag,
+    MascotKind.tote,
+    'Thrift, pasar, toko lokal, oleh-oleh',
+  ),
+  SpotCategory(
+    'menginap',
+    'Menginap',
+    sky,
+    Glyph.house,
+    MascotKind.rumi,
+    'Glamping, villa, homestay unik',
+  ),
 ];
 
 SpotCategory categoryOf(String key) => spotCategories.firstWhere(
-  (item) => item.key == key,
-  orElse: () => spotCategories.last,
+  (item) => item.key == (key == 'lainnya' ? 'belanja' : key),
+  orElse: () => spotCategories[2],
 );
 
 const fontBody = 'Nunito';

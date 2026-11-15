@@ -110,6 +110,62 @@ class DemoSpotsRepository extends SpotsRepository {
       5.0,
       3,
     ),
+    _row(
+      'd7',
+      'Raka',
+      'Skatepark Kolong Layang',
+      'Bandung',
+      'olahraga',
+      'Rampnya mulus, sore-sore ramai anak skate. Gratis dan ada lampu sampai malam.',
+      -6.899,
+      107.605,
+      88,
+      31,
+      4.6,
+      2,
+    ),
+    _row(
+      'd8',
+      'Tasya',
+      'Workshop Tanah Liat Pojok',
+      'Bandung',
+      'aktivitas',
+      'Dua jam bikin mangkuk sendiri, hasilnya dibakar dan bisa diambil minggu depan.',
+      -6.874,
+      107.62,
+      143,
+      97,
+      4.8,
+      2,
+    ),
+    _row(
+      'd9',
+      'Bimo',
+      'Thrift Gang Kenanga',
+      'Bandung',
+      'belanja',
+      'Jaket denim 50 ribuan, kemeja vintage numpuk. Datang pagi biar kebagian.',
+      -6.93,
+      107.64,
+      176,
+      120,
+      4.5,
+      2,
+    ),
+    _row(
+      'd10',
+      'Nadia',
+      'Glamping Lembah Kabut',
+      'Lembang',
+      'menginap',
+      'Tenda hangat menghadap lembah, sarapan diantar. Bintangnya jelas kalau cerah.',
+      -6.815,
+      107.62,
+      231,
+      188,
+      4.9,
+      3,
+    ),
   ];
 
   static Map<String, dynamic> _row(
@@ -150,6 +206,8 @@ class DemoSpotsRepository extends SpotsRepository {
     'd4': 's3',
     'd5': 's5',
     'd6': 's4',
+    'd8': 's7',
+    'd9': 's6',
   };
 
   final _stores = <Store>[
@@ -201,10 +259,37 @@ class DemoSpotsRepository extends SpotsRepository {
       paymentInfo: 'Transfer Mandiri 1122334455',
     ),
     const Store(
+      id: 's6',
+      ownerId: 'u-Bimo',
+      name: 'Thrift Gang Kenanga',
+      category: 'belanja',
+      address: 'Gg. Kenanga No. 12, Bandung',
+      lat: -6.93,
+      lng: 107.64,
+      contact: '0812-8800-6666',
+      description: 'Baju bekas pilihan, sudah dicuci dan disetrika.',
+      onlineOrders: true,
+      pickup: true,
+      delivery: true,
+      deliveryFee: 9000,
+      paymentInfo: 'Transfer BSI 7788990011',
+    ),
+    const Store(
+      id: 's7',
+      ownerId: 'u-Tasya',
+      name: 'Workshop Tanah Liat Pojok',
+      category: 'aktivitas',
+      address: 'Jl. Bukit Dago No. 7, Bandung',
+      lat: -6.874,
+      lng: 107.62,
+      contact: '0813-7700-7777',
+      description: 'Kelas keramik 2 jam, alat disediakan.',
+    ),
+    const Store(
       id: 's4',
       ownerId: 'u-Dimas',
       name: 'Suvenir Batu Nona',
-      category: 'destinasi',
+      category: 'belanja',
       address: 'Pantai Batu Nona, Lombok Utara',
       lat: -8.39,
       lng: 116.04,
@@ -301,7 +386,7 @@ class DemoSpotsRepository extends SpotsRepository {
       name: 'Kain Tenun Sasak',
       price: 175000,
       stock: 5,
-      imagePath: 'demo:destinasi:p9',
+      imagePath: 'demo:belanja:p9',
     ),
     const Product(
       id: 'p10',
@@ -309,7 +394,7 @@ class DemoSpotsRepository extends SpotsRepository {
       name: 'Gelang Kerang',
       price: 15000,
       stock: 40,
-      imagePath: 'demo:destinasi:p10',
+      imagePath: 'demo:belanja:p10',
     ),
     const Product(
       id: 'p11',
@@ -326,6 +411,30 @@ class DemoSpotsRepository extends SpotsRepository {
       price: 70000,
       stock: 6,
       imagePath: 'demo:kafe:p12',
+    ),
+    const Product(
+      id: 'p13',
+      storeId: 's6',
+      name: 'Jaket Denim Vintage',
+      price: 85000,
+      stock: 3,
+      imagePath: 'demo:belanja:p13',
+    ),
+    const Product(
+      id: 'p14',
+      storeId: 's6',
+      name: 'Kemeja Flanel',
+      price: 55000,
+      stock: 7,
+      imagePath: 'demo:belanja:p14',
+    ),
+    const Product(
+      id: 'p15',
+      storeId: 's7',
+      name: 'Kelas Keramik 2 Jam',
+      price: 150000,
+      stock: 8,
+      imagePath: 'demo:aktivitas:p15',
     ),
   ];
 
@@ -403,7 +512,7 @@ class DemoSpotsRepository extends SpotsRepository {
     StoreApplication(
       id: 'a2',
       storeName: 'Oleh-oleh Curug Cikaso',
-      category: 'destinasi',
+      category: 'belanja',
       address: 'Desa Ciniti, Sukabumi',
       lat: -7.35,
       lng: 106.62,
@@ -512,6 +621,15 @@ class DemoSpotsRepository extends SpotsRepository {
             math.cos(rad(bLat)) *
             math.pow(math.sin(dLng / 2), 2);
     return 2 * r * math.asin(math.sqrt(h));
+  }
+
+  @override
+  Future<Spot?> spotById(String id) async {
+    final all = await feed(mode: 'popular');
+    for (final spot in all) {
+      if (spot.id == id) return spot;
+    }
+    return null;
   }
 
   @override
