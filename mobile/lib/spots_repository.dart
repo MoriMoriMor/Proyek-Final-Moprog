@@ -63,7 +63,9 @@ class SpotsRepository {
 
   Future<void> signOut() => client.auth.signOut();
   String publicMediaUrl(String path) =>
-      client.storage.from('spot-media').getPublicUrl(path);
+      path.startsWith('https://upload.wikimedia.org/')
+      ? path
+      : client.storage.from('spot-media').getPublicUrl(path);
 
   Future<List<Spot>> feed({
     double? lat,

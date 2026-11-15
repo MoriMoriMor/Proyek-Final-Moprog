@@ -8,3 +8,4 @@ mobile/config.json
 .DS_Store
 .idea/
 .vscode/
+supabase/seed/
