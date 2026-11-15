@@ -53,9 +53,6 @@ begin
   update public.profiles set username = 'fajarngopi', display_name = 'Fajar', bio = 'nongkrong itu ibadah', streak = 120, best_streak = 120, streak_day = current_date, created_at = now() - interval '72 days' where id = 'a5b0c000-0000-4000-8000-000000000006';
   delete from public.posts where owner_id in ('a5b0c000-0000-4000-8000-000000000001', 'a5b0c000-0000-4000-8000-000000000002', 'a5b0c000-0000-4000-8000-000000000003', 'a5b0c000-0000-4000-8000-000000000004', 'a5b0c000-0000-4000-8000-000000000005', 'a5b0c000-0000-4000-8000-000000000006');
   img := pg_temp.wiki_img(array['id:Rawon', 'en:Rawon']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Rawon Setan Mbak Endang';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000001', 'Rawon Setan Mbak Endang', 'Surabaya', 'kuliner', 'Rawonnya hitam pekat, dagingnya empuk, sambalnya jangan diremehkan. Paling enak datang malam, sekalian lihat antreannya yang nggak ada habisnya. Tambah telur asin sama kerupuk udang, wajib.
 
@@ -73,12 +70,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.2614, 112.7386, now() - interval '2 day
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'save') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 5) on conflict do nothing;
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Sate klopo', 'id:Sate', 'en:Satay']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Sate Klopo Ondomohen';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000001', 'Sate Klopo Ondomohen', 'Surabaya', 'kuliner', 'Satenya dibalur kelapa parut sebelum dibakar, jadi gurih dan agak garing di luar. Asapnya kecium dari ujung jalan. Pesan campur sapi + ayam biar nggak bingung.
 
@@ -93,12 +86,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.2585, 112.7471, now() - interval '9 day
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000004', pid, 5) on conflict do nothing;
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000004', 'parkirnya gampang ga?', now() - interval '184 hours');
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Taman Bungkul', 'en:Bungkul Park']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Taman Bungkul';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000006', 'Taman Bungkul', 'Surabaya', 'kafe', 'Tempat nongkrong sejuta umat. Sore-sore duduk di bawah pohon, jajan di sentra PKL belakang, terus jalan muter taman. Minggu pagi rame banget sama yang olahraga.
 
@@ -117,12 +106,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.2913, 112.7398, now() - interval '1 day
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000005', pid, 'save') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000005', pid, 5) on conflict do nothing;
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000005', 'wajib nyoba', now() - interval '25 hours');
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Tugu Pahlawan', 'en:Heroes Monument']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Tugu Pahlawan';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000002', 'Tugu Pahlawan', 'Surabaya', 'destinasi', 'Ikonnya Surabaya. Di bawah tanahnya ada Museum 10 Nopember, isinya lumayan bikin merinding. Datang pas sore biar foto tugunya kena cahaya hangat.
 
@@ -140,12 +125,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.2458, 112.7378, now() - interval '14 da
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'save') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 5) on conflict do nothing;
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000006', 'besok ke sini ah', now() - interval '286 hours');
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['en:House of Sampoerna', 'id:House of Sampoerna']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'House of Sampoerna';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000002', 'House of Sampoerna', 'Surabaya', 'destinasi', 'Bangunan kolonialnya cakep dari luar sampai dalam. Masuk museumnya gratis, dan dari lantai atas bisa lihat proses linting kretek. Kawasan kota lamanya enak buat jalan kaki.
 
@@ -160,12 +141,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.231, 112.7342, now() - interval '6 days
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 4) on conflict do nothing;
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000006', 'baru tau ada ini', now() - interval '126 hours');
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Stadion Gelora Bung Tomo', 'en:Gelora Bung Tomo Stadium']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Gelora Bung Tomo';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000004', 'Gelora Bung Tomo', 'Surabaya', 'olahraga', 'Kandangnya Persebaya. Kalau lagi nggak ada pertandingan, area luarnya sering dipakai lari sore sama sepedaan. Pas ada laga, suasananya beda level.
 
@@ -179,12 +156,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.2245, 112.623, now() - interval '3 days
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000005', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000005', pid, 'save') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000005', pid, 5) on conflict do nothing;
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Monumen Kapal Selam', 'en:Submarine Monument']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Monumen Kapal Selam';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000005', 'Monumen Kapal Selam', 'Surabaya', 'aktivitas', 'Kapal selam beneran yang bisa dimasukin, dari ruang torpedo sampai ruang kemudi. Sempit, panas, tapi seru. Cocok buat bawa adik atau ponakan.
 
@@ -199,12 +172,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.2653, 112.7502, now() - interval '11 da
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'save') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 5) on conflict do nothing;
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Kebun Binatang Surabaya', 'en:Surabaya Zoo']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Kebun Binatang Surabaya';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000005', 'Kebun Binatang Surabaya', 'Surabaya', 'aktivitas', 'Klasik, tapi tetap asik buat jalan pagi. Sapa komodonya, terus foto di patung Suro dan Boyo di depan. Datang lebih awal biar belum terlalu terik.
 
@@ -217,12 +186,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.2959, 112.7365, now() - interval '4 day
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000003', pid, 5) on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 5) on conflict do nothing;
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Pasar Atom', 'id:Tunjungan Plaza', 'en:Tunjungan Plaza']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Pasar Atom';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000003', 'Pasar Atom', 'Surabaya', 'belanja', 'Surganya kain, jajanan, sama barang serba ada. Lantai bawah buat camilan, lantai atas buat bahan baju. Siap-siap nawar dan siap-siap nyasar.
 
@@ -237,12 +202,8 @@ Foto: Wikipedia / Wikimedia Commons', -7.24, 112.7428, now() - interval '8 days 
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000004', pid, 'save') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000004', pid, 5) on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Hotel Majapahit', 'en:Hotel Majapahit']);
-  if img is null then
-    raise notice 'lewati %: foto tidak ketemu', 'Hotel Majapahit';
-  else
   insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
   values ('a5b0c000-0000-4000-8000-000000000003', 'Hotel Majapahit', 'Surabaya', 'menginap', 'Hotel bersejarah di Jalan Tunjungan, tempat insiden perobekan bendera tahun 1945. Taman dalamnya tenang banget, kayak lupa lagi di tengah kota. Malamnya tinggal jalan ke Tunjungan.
 
@@ -260,8 +221,7 @@ Foto: Wikipedia / Wikimedia Commons', -7.2604, 112.7392, now() - interval '18 da
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000005', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000005', pid, 'save') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000005', pid, 5) on conflict do nothing;
-  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');
-  end if;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000001', 'a5b0c000-0000-4000-8000-000000000003') on conflict do nothing;
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000001', 'a5b0c000-0000-4000-8000-000000000004') on conflict do nothing;
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000001', 'a5b0c000-0000-4000-8000-000000000006') on conflict do nothing;
@@ -282,6 +242,5 @@ Foto: Wikipedia / Wikimedia Commons', -7.2604, 112.7392, now() - interval '18 da
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000006', 'a5b0c000-0000-4000-8000-000000000002') on conflict do nothing;
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000006', 'a5b0c000-0000-4000-8000-000000000004') on conflict do nothing;
   insert into public.follows (follower_id, following_id) values ('a5b0c000-0000-4000-8000-000000000006', 'a5b0c000-0000-4000-8000-000000000005') on conflict do nothing;
-  if cardinality(posts) = 0 then raise exception 'Foto tidak bisa diambil. Jalankan dulu: dart run tools/seed_surabaya.dart'; end if;
 end
 $$;

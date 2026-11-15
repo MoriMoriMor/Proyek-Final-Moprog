@@ -214,6 +214,7 @@ Future<String?> wikiPhoto(List<String> titles) async {
       );
       final res = await req.close();
       if (res.statusCode != 200) {
+        stdout.writeln('  $t -> HTTP ${res.statusCode}');
         await res.drain<void>();
         continue;
       }
@@ -224,7 +225,9 @@ Future<String?> wikiPhoto(List<String> titles) async {
           RegExp(r'\.(jpe?g|png)$', caseSensitive: false).hasMatch(url)) {
         return url;
       }
-    } catch (_) {}
+    } catch (e) {
+      stdout.writeln('  $t -> $e');
+    }
   }
   return null;
 }
@@ -255,7 +258,7 @@ Future<void> main() async {
     final story = '${place.story}\n\nFoto: Wikipedia / Wikimedia Commons';
     final found = await wikiPhoto(place.queries);
     stdout.writeln(
-      '${found == null ? 'cari di Supabase' : 'foto ok'}  ${place.title}',
+      '${found == null ? 'tanpa foto' : 'foto ok'}  ${place.title}',
     );
     final owner = people[owners[n][0] - 1];
     final ago = owners[n][1];
@@ -265,11 +268,6 @@ Future<void> main() async {
             ? '  img := pg_temp.wiki_img(array[${place.queries.map(sql).join(', ')}]);'
             : '  img := ${sql(found)};',
       )
-      ..writeln('  if img is null then')
-      ..writeln(
-        "    raise notice 'lewati %: foto tidak ketemu', ${sql(place.title)};",
-      )
-      ..writeln('  else')
       ..writeln(
         '  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)',
       )
@@ -301,9 +299,8 @@ Future<void> main() async {
       }
     }
     out.writeln(
-      "  insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image');",
+      "  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;",
     );
-    out.writeln('  end if;');
   }
   for (final a in people) {
     for (final b in people) {
@@ -315,9 +312,6 @@ Future<void> main() async {
     }
   }
   out
-    ..writeln(
-      "  if cardinality(posts) = 0 then raise exception 'Foto tidak bisa diambil. Jalankan dulu: dart run tools/seed_surabaya.dart'; end if;",
-    )
     ..writeln('end')
     ..writeln('\$\$;');
   final file = File('supabase/seed/surabaya.sql');
