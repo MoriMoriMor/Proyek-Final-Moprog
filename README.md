@@ -7,12 +7,14 @@ Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka 
 ## Fitur
 
 - Feed tempat dalam radius 20 km. Kalau lokasi belum diizinkan, yang muncul tempat populer.
-- Jelajah per kategori (kuliner, kafe, destinasi) dan cari berdasarkan nama tempat atau kota.
+- Tujuh kategori: Kuliner, Nongkrong, Wisata, Olahraga, Aktivitas, Belanja, dan Menginap. Bisa juga cari berdasarkan nama tempat atau kota.
 - Peta dengan pin per kategori dan kartu yang bisa digeser.
 - Unggah 1–5 foto atau video, tulis cerita, lalu tandai titiknya di peta.
 - Suka, simpan, komentar, dan kasih bintang setelah masuk.
 - Reels layar penuh: geser ke atas, ketuk dua kali untuk suka, tombol belanja kalau tempatnya punya toko.
 - Streak harian, XP, level, dan misi harian.
+- Sepuluh maskot hidup yang menemani tiap kategori dan momen penting.
+- Bagikan spot, toko, undangan, dan pencapaian sebagai kartu story bergambar atau link.
 - Market: daftar toko dengan persetujuan admin, katalog, keranjang satu toko, ambil atau kirim, dan konfirmasi bayar manual.
 - Profil berisi spot sendiri, simpanan, pesanan, dan dashboard toko.
 
@@ -22,7 +24,7 @@ Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka 
 | --- | --- |
 | [`mobile/`](mobile) | Aplikasi Flutter |
 | [`supabase/`](supabase) | Migrasi SQL (spot dan marketplace), RLS, fungsi, dan uji lokal |
-| [`docs/`](docs) | Panduan setup Supabase |
+| [`docs/`](docs) | Panduan setup Supabase dan [audit desain](docs/DESIGN_AUDIT.md) |
 
 ## Menjalankan
 

@@ -42,6 +42,8 @@ Lihat [panduan setup Supabase](../docs/FLUTTER_SUPABASE.md) untuk rincian tabel,
 | `lib/spots_app.dart` | Navigasi, Beranda, Jelajah, Peta, Profil |
 | `lib/reels.dart` | Reels layar penuh |
 | `lib/game.dart` | Streak, XP, level, misi harian, dan perayaan |
+| `lib/share.dart` | Lembar bagikan, kartu story, dan tautan |
+| `lib/onboarding.dart` | Perkenalan tiga layar untuk pengguna baru |
 | `lib/market.dart` | Model toko, produk, pesanan, dan keranjang |
 | `lib/market_screens.dart` | Market, halaman toko, keranjang, dan pesanan |
 | `lib/seller_screens.dart` | Daftarkan toko, dashboard penjual, dan review admin |
@@ -58,7 +60,8 @@ Komponen visual ada di `lib/ui/`:
 | --- | --- |
 | `theme.dart` | Warna, kategori, dan gaya teks (Nunito untuk isi, Bagel Fat One untuk judul) |
 | `spot_icons.dart` | Ikon Spots yang digambar sendiri dalam SVG |
-| `piko.dart` | Piko, maskot yang bisa berkedip dan berganti ekspresi |
+| `mascots.dart` | Sepuluh maskot yang digambar dengan kode dan bergerak sendiri |
+| `piko.dart` | Pintasan untuk Piko |
 | `motion.dart` | Tombol tebal, efek pantul, animasi muncul, skeleton, dan konfeti |
 | `widgets.dart` | Stiker kategori, avatar, keadaan kosong, dan pesan galat |
 

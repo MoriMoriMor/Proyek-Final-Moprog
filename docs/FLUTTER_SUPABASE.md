@@ -8,7 +8,7 @@ Aplikasi Flutter Spots ada di folder [`mobile`](../mobile). Datanya memakai Supa
 2. Buka **SQL Editor**, buat query baru, salin isi [`202610050001_spots.sql`](../supabase/migrations/202610050001_spots.sql), lalu jalankan sekali.
 3. Buka **Table Editor**. Tabel `profiles`, `posts`, `post_media`, `reactions`, `ratings`, dan `comments` seharusnya terlihat.
 4. Buka **Storage**. Bucket publik `spot-media` seharusnya terlihat. Upload hanya diizinkan ke folder yang diawali ID akun sendiri.
-5. Jalankan juga [`202611150001_marketplace.sql`](../supabase/migrations/202611150001_marketplace.sql) sekali untuk toko, katalog, dan pesanan. Urutannya harus setelah migrasi pertama.
+5. Jalankan juga [`202611150001_marketplace.sql`](../supabase/migrations/202611150001_marketplace.sql) sekali untuk toko, katalog, dan pesanan. Urutannya harus setelah migrasi pertama. Lalu jalankan [`202611160001_categories.sql`](../supabase/migrations/202611160001_categories.sql) untuk tujuh kategori.
 6. Buka **Connect** untuk mengambil Project URL dan publishable key. Salin [`config.example.json`](../mobile/config.example.json) ke `mobile/config.json` dan isi dua nilainya.
 7. Di `mobile`, jalankan `flutter pub get`, lalu `flutter run --dart-define-from-file=config.json`.
 
