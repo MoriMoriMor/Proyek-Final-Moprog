@@ -11,14 +11,17 @@ Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka 
 - Peta dengan pin per kategori dan kartu yang bisa digeser.
 - Unggah 1–5 foto atau video, tulis cerita, lalu tandai titiknya di peta.
 - Suka, simpan, komentar, dan kasih bintang setelah masuk.
-- Profil berisi spot sendiri dan daftar tersimpan.
+- Reels layar penuh: geser ke atas, ketuk dua kali untuk suka, tombol belanja kalau tempatnya punya toko.
+- Streak harian, XP, level, dan misi harian.
+- Market: daftar toko dengan persetujuan admin, katalog, keranjang satu toko, ambil atau kirim, dan konfirmasi bayar manual.
+- Profil berisi spot sendiri, simpanan, pesanan, dan dashboard toko.
 
 ## Struktur
 
 | Folder | Isi |
 | --- | --- |
 | [`mobile/`](mobile) | Aplikasi Flutter |
-| [`supabase/`](supabase) | Migrasi SQL: tabel, RLS, bucket media, dan fungsi feed |
+| [`supabase/`](supabase) | Migrasi SQL (spot dan marketplace), RLS, fungsi, dan uji lokal |
 | [`docs/`](docs) | Panduan setup Supabase |
 
 ## Menjalankan

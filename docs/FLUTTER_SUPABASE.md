@@ -8,8 +8,9 @@ Aplikasi Flutter Spots ada di folder [`mobile`](../mobile). Datanya memakai Supa
 2. Buka **SQL Editor**, buat query baru, salin isi [`202610050001_spots.sql`](../supabase/migrations/202610050001_spots.sql), lalu jalankan sekali.
 3. Buka **Table Editor**. Tabel `profiles`, `posts`, `post_media`, `reactions`, `ratings`, dan `comments` seharusnya terlihat.
 4. Buka **Storage**. Bucket publik `spot-media` seharusnya terlihat. Upload hanya diizinkan ke folder yang diawali ID akun sendiri.
-5. Buka **Connect** untuk mengambil Project URL dan publishable key. Salin [`config.example.json`](../mobile/config.example.json) ke `mobile/config.json` dan isi dua nilainya.
-6. Di `mobile`, jalankan `flutter pub get`, lalu `flutter run --dart-define-from-file=config.json`.
+5. Jalankan juga [`202611150001_marketplace.sql`](../supabase/migrations/202611150001_marketplace.sql) sekali untuk toko, katalog, dan pesanan. Urutannya harus setelah migrasi pertama.
+6. Buka **Connect** untuk mengambil Project URL dan publishable key. Salin [`config.example.json`](../mobile/config.example.json) ke `mobile/config.json` dan isi dua nilainya.
+7. Di `mobile`, jalankan `flutter pub get`, lalu `flutter run --dart-define-from-file=config.json`.
 
 Jangan memakai `service_role`, secret key, password Postgres, atau connection string di Flutter. RLS mengatur siapa yang boleh menulis postingan dan interaksi. SQL Editor hanya dipakai saat memasang atau mengubah skema.
 
@@ -25,8 +26,35 @@ Jangan memakai `service_role`, secret key, password Postgres, atau connection st
 | Rating | Table Editor → `ratings` |
 | Komentar | Table Editor → `comments` |
 | Berkas media | Storage → `spot-media` |
+| Admin aplikasi | Table Editor → `app_admins` |
+| Pengajuan toko | Table Editor → `store_applications` |
+| Toko dan pengaturan online | Table Editor → `stores` |
+| Katalog | Table Editor → `products` |
+| Pesanan dan rinciannya | Table Editor → `orders`, `order_items` |
 
 Postingan tampil di feed jika memiliki baris `posts` dan media yang sesuai di `post_media`. Untuk menyunting data melalui Table Editor, gunakan akun admin dashboard. Mengubah baris secara langsung melewati alur aplikasi, jadi periksa relasi sebelum menghapus data.
+
+## Marketplace
+
+**Menjadikan akun sebagai admin.** Admin meninjau pengajuan toko langsung dari aplikasi (Profil → Review pengajuan toko). Ambil UUID akun di Authentication → Users, lalu jalankan di SQL Editor:
+
+```sql
+insert into public.app_admins (user_id) values ('UUID-AKUN-ADMIN');
+```
+
+**Alurnya:**
+
+1. Pengguna membuka Profil → Daftarkan toko, lalu mengisi data dan pin lokasi. Status awalnya *menunggu*.
+2. Admin menyetujui atau menolak dengan alasan. Persetujuan membuat baris `stores` atas nama pemohon. Pemohon tidak bisa meninjau pengajuannya sendiri.
+3. Pemilik toko mengisi produk dan mengatur pesanan online, ambil/kirim, ongkir, dan cara bayar.
+4. Pembeli memesan dari satu toko per pesanan. Fungsi `place_order` menghitung total dari harga di database, mengecek stok, dan menolak pesanan ganda dengan kunci permintaan yang sama.
+5. Toko menerima pesanan (`accept_order` memotong stok satu kali) atau menolaknya. Pembeli membayar sesuai instruksi, toko mengonfirmasi lunas, lalu pesanan diproses, siap, dan selesai.
+
+Status pesanan dan status pembayaran disimpan terpisah. Aplikasi tidak bisa mengubah harga, stok, atau status lunas secara langsung; semuanya lewat fungsi yang memeriksa pemilik toko. Payment gateway dan pelacakan kurir belum termasuk.
+
+Foto produk disimpan di bucket `spot-media` pada folder `<id akun>/products/`.
+
+**Menguji migrasi tanpa Supabase.** Lihat [`supabase/tests/README.md`](../supabase/tests/README.md).
 
 ## Cara kerja feed
 

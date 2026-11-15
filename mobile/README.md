@@ -35,6 +35,21 @@ Tanpa `config.json`, layar awal juga menampilkan tombol **Coba mode demo**.
 
 Lihat [panduan setup Supabase](../docs/FLUTTER_SUPABASE.md) untuk rincian tabel, Storage, dan izin perangkat.
 
+## Berkas utama
+
+| Berkas | Isi |
+| --- | --- |
+| `lib/spots_app.dart` | Navigasi, Beranda, Jelajah, Peta, Profil |
+| `lib/reels.dart` | Reels layar penuh |
+| `lib/game.dart` | Streak, XP, level, misi harian, dan perayaan |
+| `lib/market.dart` | Model toko, produk, pesanan, dan keranjang |
+| `lib/market_screens.dart` | Market, halaman toko, keranjang, dan pesanan |
+| `lib/seller_screens.dart` | Daftarkan toko, dashboard penjual, dan review admin |
+| `lib/spots_repository.dart` | Akses Supabase |
+| `lib/demo_repository.dart` | Data contoh untuk mode demo |
+
+Di mode demo, akun yang masuk otomatis menjadi pemilik "Kopi Teras Hujan" dan admin, supaya alur penjual dan review bisa dicoba.
+
 ## Tampilan
 
 Komponen visual ada di `lib/ui/`:
