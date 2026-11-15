@@ -20,7 +20,7 @@ Acuan: tiga referensi yang dipakai tim, yaitu aplikasi aktivitas luar ruang bern
 | Pino | Peta dan tautan |
 | Cici | XP, misi, level, streak |
 
-Tempat maskot muncul: onboarding, sapaan di Beranda, halaman detail, Reels, Peta, Market, halaman toko, status pesanan (berubah sesuai status), keadaan kosong, perayaan, dan kartu bagikan. Semua gerak berhenti jika perangkat meminta gerak minimal.
+Tempat maskot muncul: halaman sambutan, sapaan di Beranda, halaman detail, Reels, Peta, Market, halaman toko, status pesanan (berubah sesuai status), keadaan kosong, perayaan, dan kartu bagikan. Semua gerak berhenti jika perangkat meminta gerak minimal.
 
 ### Kategori
 
@@ -45,7 +45,7 @@ Kunci di database `kafe` dan `destinasi` tidak diganti supaya data lama tetap co
 | Navbar hanya memberi label pada tab aktif, membingungkan pengguna baru dan orang tua | Semua tab selalu berlabel |
 | Ukuran huruf sistem yang besar bisa merusak tata letak | Tetap dihormati, dibatasi sampai 1,3× |
 | Beranda terasa datar di bagian atas | Gradasi lembut di latar, sapaan sesuai waktu, dan Piko melambai |
-| Tidak ada perkenalan aplikasi | Onboarding 3 layar dengan rombongan maskot dan tombol pil hitam |
+| Tidak ada perkenalan aplikasi | Halaman sambutan bergaya kolase dengan tombol Google dan email |
 | Kartu "Lagi viral" kurang menonjol | Stiker HOT pada peringkat 1 |
 | Label kategori bisa terpotong | Lebar kartu disesuaikan |
 
@@ -60,7 +60,7 @@ Supaya mudah viral, setiap hal yang menarik bisa dibagikan dalam dua ketukan:
 
 Lembar bagikan selalu menampilkan pratinjau **kartu story 9:16** yang dirender jadi gambar PNG, siap untuk Instagram Story atau WhatsApp. Pilihannya: kirim gambar, salin link, atau bagikan teks. Membagikan memberi XP, dan ada misi harian "Bagikan 1 spot".
 
-Tautan berbentuk `https://spots.app/s/<id>` (spot), `/t/<id>` (toko), dan `/i/<kode>` (undangan). Domainnya bisa diganti lewat `--dart-define=SHARE_BASE_URL=...`. Versi web langsung membuka spot, toko, atau undangan dari tautan tersebut. Orang yang datang lewat undangan mendapat bonus XP satu kali.
+Tautan berbentuk `https://morimorimor.github.io/Proyek-Final-Moprog/s/<id>` (spot), `/t/<id>` (toko), `/u/<username>` (profil), dan `/i/<kode>` (undangan). Kalau dibuka di browser, tautan ini disambut halaman Spots di `site/404.html`. Domainnya bisa diganti lewat `--dart-define=SHARE_BASE_URL=...`. Versi web langsung membuka spot, toko, atau undangan dari tautan tersebut. Orang yang datang lewat undangan mendapat bonus XP satu kali.
 
 ## Yang masih terbuka
 

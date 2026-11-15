@@ -8,7 +8,7 @@ Aplikasi Flutter Spots ada di folder [`mobile`](../mobile). Datanya memakai Supa
 2. Buka **SQL Editor**, buat query baru, salin isi [`202610050001_spots.sql`](../supabase/migrations/202610050001_spots.sql), lalu jalankan sekali.
 3. Buka **Table Editor**. Tabel `profiles`, `posts`, `post_media`, `reactions`, `ratings`, dan `comments` seharusnya terlihat.
 4. Buka **Storage**. Bucket publik `spot-media` seharusnya terlihat. Upload hanya diizinkan ke folder yang diawali ID akun sendiri.
-5. Jalankan juga [`202611150001_marketplace.sql`](../supabase/migrations/202611150001_marketplace.sql) sekali untuk toko, katalog, dan pesanan. Urutannya harus setelah migrasi pertama. Lalu jalankan [`202611160001_categories.sql`](../supabase/migrations/202611160001_categories.sql) untuk tujuh kategori.
+5. Jalankan juga [`202611150001_marketplace.sql`](../supabase/migrations/202611150001_marketplace.sql) sekali untuk toko, katalog, dan pesanan. Urutannya harus setelah migrasi pertama. Lalu jalankan [`202611160001_categories.sql`](../supabase/migrations/202611160001_categories.sql) untuk tujuh kategori dan [`202611170001_profiles_social.sql`](../supabase/migrations/202611170001_profiles_social.sql) untuk username, foto profil, ikuti, dan tag teman.
 6. Buka **Connect** untuk mengambil Project URL dan publishable key. Salin [`config.example.json`](../mobile/config.example.json) ke `mobile/config.json` dan isi dua nilainya.
 7. Di `mobile`, jalankan `flutter pub get`, lalu `flutter run --dart-define-from-file=config.json`.
 
@@ -31,8 +31,35 @@ Jangan memakai `service_role`, secret key, password Postgres, atau connection st
 | Toko dan pengaturan online | Table Editor → `stores` |
 | Katalog | Table Editor → `products` |
 | Pesanan dan rinciannya | Table Editor → `orders`, `order_items` |
+| Ikuti | Table Editor → `follows` |
+| Tag teman di postingan | Table Editor → `post_tags` |
 
 Postingan tampil di feed jika memiliki baris `posts` dan media yang sesuai di `post_media`. Untuk menyunting data melalui Table Editor, gunakan akun admin dashboard. Mengubah baris secara langsung melewati alur aplikasi, jadi periksa relasi sebelum menghapus data.
+
+## Konfirmasi email
+
+Halaman tujuan link konfirmasi ada di [`site/confirm`](../site/confirm/index.html) dan dipasang otomatis ke GitHub Pages oleh workflow [`pages.yml`](../.github/workflows/pages.yml).
+
+1. Pemilik repo membuka **Settings → Pages**, lalu memilih **Source: GitHub Actions**. Setelah push ke `main`, situs tersedia di `https://morimorimor.github.io/Proyek-Final-Moprog/`.
+2. Di Supabase, buka **Authentication → URL Configuration**:
+   - **Site URL:** `https://morimorimor.github.io/Proyek-Final-Moprog/confirm/`
+   - **Redirect URLs:** tambahkan URL yang sama, ditambah `io.spots.app://login-callback` untuk login Google di HP.
+3. Buka **Authentication → Emails → Confirm signup**. Ganti subjek menjadi `Satu langkah lagi buat gabung Spots`, lalu tempel isi [`confirm_signup.html`](../supabase/templates/confirm_signup.html).
+
+Aplikasi mengirim alamat konfirmasi lewat `emailRedirectTo`. Kalau situsnya pindah domain, build dengan `--dart-define=CONFIRM_URL=https://domain-baru/confirm/`.
+
+## Login dengan Google
+
+1. Di [Google Cloud Console](https://console.cloud.google.com/), buat project, lalu buka **APIs & Services → OAuth consent screen** dan isi nama aplikasi Spots.
+2. Buka **Credentials → Create credentials → OAuth client ID**, pilih **Web application**. Pada **Authorized redirect URIs**, isi `https://<id-proyek>.supabase.co/auth/v1/callback` (ada di halaman provider Google di Supabase).
+3. Di Supabase, buka **Authentication → Sign In / Providers → Google**, aktifkan, lalu tempel Client ID dan Client Secret dari langkah 2.
+4. Pastikan `io.spots.app://login-callback` sudah ada di Redirect URLs (lihat bagian konfirmasi email).
+
+Android dan iOS sudah dikonfigurasi untuk membuka aplikasi lagi lewat skema `io.spots.app`. Di versi web, aplikasi kembali ke alamat yang sedang dibuka.
+
+## Profil
+
+Setiap akun punya username unik (huruf kecil, angka, titik, garis bawah), bio maksimal 150 karakter, dan foto profil yang disimpan di bucket `spot-media` pada folder `<id akun>/avatar/`. Akun lama otomatis mendapat username dari namanya. Fungsi `profile_stats` menghitung jumlah spot, pengikut, mengikuti, suka, simpanan, dan kota. Feed punya mode `user`, `tagged`, dan `following`.
 
 ## Marketplace
 

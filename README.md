@@ -16,7 +16,9 @@ Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka 
 - Sepuluh maskot hidup yang menemani tiap kategori dan momen penting.
 - Bagikan spot, toko, undangan, dan pencapaian sebagai kartu story bergambar atau link.
 - Market: daftar toko dengan persetujuan admin, katalog, keranjang satu toko, ambil atau kirim, dan konfirmasi bayar manual.
-- Profil berisi spot sendiri, simpanan, pesanan, dan dashboard toko.
+- Masuk dengan Google atau email.
+- Profil ala Instagram: foto, username, bio, pengikut, grid spot, peta spot, tag teman, dan @mention.
+- Profil juga berisi simpanan, pesanan, dan dashboard toko.
 
 ## Struktur
 
@@ -24,6 +26,7 @@ Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka 
 | --- | --- |
 | [`mobile/`](mobile) | Aplikasi Flutter |
 | [`supabase/`](supabase) | Migrasi SQL (spot dan marketplace), RLS, fungsi, dan uji lokal |
+| [`site/`](site) | Halaman konfirmasi email dan tautan bagikan (GitHub Pages) |
 | [`docs/`](docs) | Panduan setup Supabase dan [audit desain](docs/DESIGN_AUDIT.md) |
 
 ## Menjalankan
