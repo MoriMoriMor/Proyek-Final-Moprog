@@ -142,35 +142,46 @@ alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 
+drop policy if exists admins_read_self on public.app_admins;
 create policy admins_read_self on public.app_admins for select to authenticated
   using (user_id = (select auth.uid()));
 
+drop policy if exists applications_read on public.store_applications;
 create policy applications_read on public.store_applications for select to authenticated
   using (applicant_id = (select auth.uid()) or (select public.is_admin()));
+drop policy if exists applications_insert_self on public.store_applications;
 create policy applications_insert_self on public.store_applications for insert to authenticated
   with check (applicant_id = (select auth.uid()) and status = 'menunggu');
 
+drop policy if exists stores_read on public.stores;
 create policy stores_read on public.stores for select
   using (active or owner_id = (select auth.uid()));
+drop policy if exists stores_update_owner on public.stores;
 create policy stores_update_owner on public.stores for update to authenticated
   using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
 
+drop policy if exists products_read on public.products;
 create policy products_read on public.products for select using (
   (active and exists (select 1 from public.stores s where s.id = store_id and s.active))
   or exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid()))
 );
+drop policy if exists products_insert_owner on public.products;
 create policy products_insert_owner on public.products for insert to authenticated
   with check (exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid())));
+drop policy if exists products_update_owner on public.products;
 create policy products_update_owner on public.products for update to authenticated
   using (exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid())))
   with check (exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid())));
+drop policy if exists products_delete_owner on public.products;
 create policy products_delete_owner on public.products for delete to authenticated
   using (exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid())));
 
+drop policy if exists orders_read on public.orders;
 create policy orders_read on public.orders for select to authenticated using (
   buyer_id = (select auth.uid())
   or exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid()))
 );
+drop policy if exists order_items_read on public.order_items;
 create policy order_items_read on public.order_items for select to authenticated using (
   exists (select 1 from public.orders o where o.id = order_id and (
     o.buyer_id = (select auth.uid())
@@ -412,6 +423,7 @@ grant execute on function public.review_store_application(uuid, boolean, text),
 
 -- Feed yang sama seperti sebelumnya, ditambah store_id agar detail bisa membuka katalog.
 drop function if exists public.feed_spots(double precision, double precision, text, text, text, integer);
+drop function if exists public.feed_spots(double precision, double precision, text, text, text, integer, uuid);
 create function public.feed_spots(
   p_lat double precision default null,
   p_lng double precision default null,

@@ -69,16 +69,22 @@ grant insert, delete on public.follows, public.post_tags to authenticated;
 alter table public.follows enable row level security;
 alter table public.post_tags enable row level security;
 
+drop policy if exists follows_read on public.follows;
 create policy follows_read on public.follows for select using (true);
+drop policy if exists follows_insert_self on public.follows;
 create policy follows_insert_self on public.follows for insert to authenticated
   with check (follower_id = (select auth.uid()));
+drop policy if exists follows_delete_self on public.follows;
 create policy follows_delete_self on public.follows for delete to authenticated
   using (follower_id = (select auth.uid()));
 
+drop policy if exists post_tags_read on public.post_tags;
 create policy post_tags_read on public.post_tags for select using (true);
+drop policy if exists post_tags_insert_owner on public.post_tags;
 create policy post_tags_insert_owner on public.post_tags for insert to authenticated
   with check (exists (select 1 from public.posts p where p.id = post_id and p.owner_id = (select auth.uid())));
 -- Pemilik postingan atau orang yang ditandai boleh melepas tag.
+drop policy if exists post_tags_delete on public.post_tags;
 create policy post_tags_delete on public.post_tags for delete to authenticated
   using (
     user_id = (select auth.uid())
@@ -108,6 +114,7 @@ grant execute on function public.profile_stats(uuid) to anon, authenticated;
 -- Feed dengan mode baru: user (postingan seseorang), tagged (tempat ia ditandai),
 -- dan following (dari akun yang diikuti). Mode lama tetap sama.
 drop function if exists public.feed_spots(double precision, double precision, text, text, text, integer);
+drop function if exists public.feed_spots(double precision, double precision, text, text, text, integer, uuid);
 create function public.feed_spots(
   p_lat double precision default null,
   p_lng double precision default null,
