@@ -83,7 +83,7 @@ class SetupScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 400),
             child: Column(
               children: [
-                SvgPicture.asset('assets/logo.svg', width: 170),
+                SvgPicture.asset('assets/logo.svg', width: 190),
                 const SizedBox(height: 26),
                 const MascotCrew(size: 76, mood: MascotMood.laugh),
                 const SizedBox(height: 22),
@@ -655,7 +655,7 @@ class _SpotsShellState extends State<SpotsShell> {
     child: Row(
       children: [
         if (!wide) ...[
-          SvgPicture.asset('assets/logo.svg', height: 36),
+          SvgPicture.asset('assets/logo.svg', height: 30),
           const Spacer(),
           StreakChip(onTap: () => openQuests(context)),
           const SizedBox(width: 8),

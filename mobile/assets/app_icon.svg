@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
-  <rect width="80" height="80" fill="#4056BD"/>
-  <rect x="8" y="8" width="64" height="64" rx="20" fill="#E9EDFF"/>
-  <path d="M58 25c-5-5-17-6-23 1-7 8-1 14 9 15 10 1 13 8 5 14-5 4-13 3-18-1"
-    stroke="#4056BD" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="58" cy="25" r="6" fill="#F27B8E" stroke="#E9EDFF" stroke-width="2"/>
-  <circle cx="31" cy="54" r="6" fill="#F4C65F" stroke="#E9EDFF" stroke-width="2"/>
+<rect width="80" height="80" fill="#4056BD"/>
+<g transform="translate(9 9) scale(1.069)">
+<path d="M39 0H19C8.50659 0 0 8.50659 0 19V39C0 49.4934 8.50659 58 19 58H39C49.4934 58 58 49.4934 58 39V19C58 8.50659 49.4934 0 39 0Z" fill="#E9EDFF"/>
+<path d="M39.2989 12.9689C33.9999 4.50003 19.7687 19.5158 14.5001 28C12.2051 35.2095 22.4999 33.5302 27.4999 30.5C39.2989 23.3495 45.7587 27.332 39.2989 35.5C35.5691 40.2162 27.7756 49.9082 22.4999 47" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke="#4056BD"/>
+<path d="M42 20C45.3137 20 48 17.3137 48 14C48 10.6863 45.3137 8 42 8C38.6863 8 36 10.6863 36 14C36 17.3137 38.6863 20 42 20Z" fill="#F27B8E" stroke-width="2" stroke="#E9EDFF"/>
+<path d="M19 53C22.3137 53 25 50.3137 25 47C25 43.6863 22.3137 41 19 41C15.6863 41 13 43.6863 13 47C13 50.3137 15.6863 53 19 53Z" fill="#F4C65F" stroke-width="2" stroke="#E9EDFF"/>
+</g>
 </svg>

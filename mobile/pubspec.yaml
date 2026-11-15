@@ -68,6 +68,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.svg
+    - assets/logo_light.svg
     - assets/mascot.svg
   fonts:
     - family: Nunito
