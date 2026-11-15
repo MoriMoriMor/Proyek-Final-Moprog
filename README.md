@@ -29,19 +29,3 @@ Aplikasinya dibangun dengan **Flutter** untuk Android dan iOS (bisa juga dibuka 
 | [`site/`](site) | Halaman konfirmasi email dan tautan bagikan (GitHub Pages) |
 | [`docs/`](docs) | Panduan setup Supabase dan [audit desain](docs/DESIGN_AUDIT.md) |
 
-## Menjalankan
-
-Butuh [Flutter](https://docs.flutter.dev/get-started/install) 3.47 dan Chrome. Dari folder repo:
-
-| Perintah | Windows | macOS/Linux |
-| --- | --- | --- |
-| Mode demo (data contoh) | `.\run` | `./run.sh` |
-| Data Supabase | `.\run live` | `./run.sh live` |
-| Buat `config.json` | `.\run setup` | `./run.sh setup` |
-| HP atau emulator | `.\run demo <ID>` | `./run.sh demo <ID>` |
-
-ID perangkat bisa dilihat dengan `flutter devices`. Selama aplikasi berjalan, tekan `r` untuk memuat ulang dan `q` untuk keluar.
-
-Untuk anggota tim: ikuti [panduan tim](docs/TIM.md) untuk menyambungkan ke Supabase dan alur branch serta pull request.
-
-Mode `live` butuh `mobile/config.json`. Cara cepat membuatnya: `.\run setup` (Windows) atau `./run.sh setup`. Siapkan proyek Supabase lewat [panduan setup](docs/FLUTTER_SUPABASE.md), salin `mobile/config.example.json` menjadi `mobile/config.json`, lalu isi URL dan publishable key. File ini tidak masuk Git, jadi tiap anggota tim membuatnya sendiri.
