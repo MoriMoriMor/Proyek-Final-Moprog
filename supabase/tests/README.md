@@ -10,8 +10,9 @@ psql -v ON_ERROR_STOP=1 -d spots_test \
   -f supabase/tests/supabase_stub.sql \
   -f supabase/migrations/202610050001_spots.sql \
   -f supabase/migrations/202611150001_marketplace.sql \
-  -f supabase/tests/marketplace_test.sql
+  -f supabase/tests/marketplace_test.sql \
+  -f supabase/tests/social_test.sql
 dropdb spots_test
 ```
 
-Kalau semua lulus, baris terakhir berbunyi `SEMUA UJI MARKETPLACE LULUS`.
+Kalau semua lulus, muncul `SEMUA UJI MARKETPLACE LULUS` dan `SEMUA UJI SOSIAL LULUS`.
