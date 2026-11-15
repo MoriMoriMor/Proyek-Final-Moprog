@@ -1,6 +1,7 @@
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'market.dart';
 import 'spot.dart';
 
 class SpotsRepository {
@@ -118,6 +119,7 @@ class SpotsRepository {
     required double lat,
     required double lng,
     required List<XFile> files,
+    String? storeId,
   }) async {
     final id = userId;
     if (id == null) throw StateError('Masuk dulu untuk membagikan spot.');
@@ -134,6 +136,7 @@ class SpotsRepository {
           'story': story.trim(),
           'lat': lat,
           'lng': lng,
+          'store_id': ?storeId,
         })
         .select('id')
         .single();
@@ -194,5 +197,285 @@ class SpotsRepository {
       } catch (_) {}
       rethrow;
     }
+  }
+
+  // ---------- Marketplace ----------
+
+  String _need() {
+    final id = userId;
+    if (id == null) throw StateError('Masuk dulu ya.');
+    return id;
+  }
+
+  Future<List<Store>> stores({String? query, String? category}) async {
+    var request = client.from('stores').select().eq('active', true);
+    if (category != null) request = request.eq('category', category);
+    final q = query?.trim() ?? '';
+    if (q.isNotEmpty) {
+      request = request.or('name.ilike.%$q%,address.ilike.%$q%');
+    }
+    final rows = await request
+        .order('online_orders', ascending: false)
+        .order('created_at', ascending: false)
+        .limit(40);
+    return rows.map(Store.fromJson).toList();
+  }
+
+  Future<List<Store>> storesNear(double lat, double lng) async {
+    final rows = await client
+        .from('stores')
+        .select()
+        .eq('active', true)
+        .gte('lat', lat - .02)
+        .lte('lat', lat + .02)
+        .gte('lng', lng - .02)
+        .lte('lng', lng + .02)
+        .limit(20);
+    return rows.map(Store.fromJson).toList();
+  }
+
+  Future<Store?> store(String id) async {
+    final row = await client.from('stores').select().eq('id', id).maybeSingle();
+    return row == null ? null : Store.fromJson(row);
+  }
+
+  Future<List<Product>> products(String storeId) async {
+    final rows = await client
+        .from('products')
+        .select()
+        .eq('store_id', storeId)
+        .order('active', ascending: false)
+        .order('name');
+    return rows.map(Product.fromJson).toList();
+  }
+
+  Future<List<Product>> featuredProducts() async {
+    final rows = await client
+        .from('products')
+        .select('*, stores!inner(name, online_orders, active)')
+        .eq('active', true)
+        .eq('stores.active', true)
+        .gt('stock', 0)
+        .order('created_at', ascending: false)
+        .limit(12);
+    return rows.map(Product.fromJson).toList();
+  }
+
+  String productImageUrl(String path) => publicMediaUrl(path);
+
+  Future<Store?> myStore() async {
+    final id = userId;
+    if (id == null) return null;
+    final row = await client
+        .from('stores')
+        .select()
+        .eq('owner_id', id)
+        .order('created_at')
+        .limit(1)
+        .maybeSingle();
+    return row == null ? null : Store.fromJson(row);
+  }
+
+  Future<void> updateStore(Store store) =>
+      client.from('stores').update(store.settings()).eq('id', store.id);
+
+  Future<void> saveProduct({
+    required String storeId,
+    String? id,
+    required String name,
+    required String description,
+    required int price,
+    required int stock,
+    required bool active,
+    XFile? image,
+  }) async {
+    final owner = _need();
+    String? imagePath;
+    if (image != null) {
+      final extension = image.name.split('.').last.toLowerCase();
+      if (!const ['jpg', 'jpeg', 'png', 'webp'].contains(extension)) {
+        throw StateError('Foto produk harus JPG, PNG, atau WEBP.');
+      }
+      final bytes = await image.readAsBytes();
+      if (bytes.length > 8000000) {
+        throw StateError('Foto produk maksimal 8 MB.');
+      }
+      imagePath = '$owner/products/${newRequestKey()}.$extension';
+      await client.storage
+          .from('spot-media')
+          .uploadBinary(
+            imagePath,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: extension == 'jpg'
+                  ? 'image/jpeg'
+                  : 'image/$extension',
+            ),
+          );
+    }
+    final values = {
+      'name': name.trim(),
+      'description': description.trim(),
+      'price': price,
+      'stock': stock,
+      'active': active,
+      'image_path': ?imagePath,
+    };
+    if (id == null) {
+      await client.from('products').insert({...values, 'store_id': storeId});
+    } else {
+      await client.from('products').update(values).eq('id', id);
+    }
+  }
+
+  Future<void> deleteProduct(String id) =>
+      client.from('products').delete().eq('id', id);
+
+  Future<List<StoreApplication>> myApplications() async {
+    final id = userId;
+    if (id == null) return [];
+    final rows = await client
+        .from('store_applications')
+        .select()
+        .eq('applicant_id', id)
+        .order('created_at', ascending: false)
+        .limit(10);
+    return rows.map(StoreApplication.fromJson).toList();
+  }
+
+  Future<void> applyStore({
+    required String name,
+    required String category,
+    required String address,
+    required double lat,
+    required double lng,
+    required String contact,
+    required String relation,
+    required String note,
+    String? postId,
+  }) async {
+    _need();
+    await client.from('store_applications').insert({
+      'store_name': name.trim(),
+      'category': category,
+      'address': address.trim(),
+      'lat': lat,
+      'lng': lng,
+      'contact': contact.trim(),
+      'relation': relation,
+      'note': note.trim(),
+      'post_id': ?postId,
+    });
+  }
+
+  Future<bool> isAdmin() async {
+    final id = userId;
+    if (id == null) return false;
+    final row = await client
+        .from('app_admins')
+        .select('user_id')
+        .eq('user_id', id)
+        .maybeSingle();
+    return row != null;
+  }
+
+  Future<List<StoreApplication>> pendingApplications() async {
+    final rows = await client
+        .from('store_applications')
+        .select(
+          '*, profiles!store_applications_applicant_id_fkey(display_name)',
+        )
+        .eq('status', 'menunggu')
+        .order('created_at')
+        .limit(50);
+    return rows.map(StoreApplication.fromJson).toList();
+  }
+
+  Future<void> reviewApplication(String id, bool approve, [String? reason]) =>
+      client.rpc(
+        'review_store_application',
+        params: {'p_application': id, 'p_approve': approve, 'p_reason': reason},
+      );
+
+  /// Mengembalikan id pesanan. Total dihitung ulang oleh database.
+  Future<String> placeOrder({
+    required Cart cart,
+    required String fulfillment,
+    required String address,
+    required String note,
+  }) async {
+    _need();
+    final shop = cart.store;
+    if (shop == null || cart.lines.isEmpty) {
+      throw StateError('Keranjang kosong.');
+    }
+    final fee = fulfillment == 'kirim' ? shop.deliveryFee : 0;
+    final id = await client.rpc(
+      'place_order',
+      params: {
+        'p_store': shop.id,
+        'p_items': [
+          for (final line in cart.lines.values)
+            {'product_id': line.product.id, 'qty': line.qty},
+        ],
+        'p_fulfillment': fulfillment,
+        'p_request_key': cart.requestKey,
+        'p_address': address,
+        'p_note': note,
+        'p_expected_total': cart.subtotal + fee,
+      },
+    );
+    return id as String;
+  }
+
+  static const _orderColumns =
+      '*, stores(name, payment_info), order_items(*), '
+      'profiles!orders_buyer_id_fkey(display_name)';
+
+  Future<List<StoreOrder>> myOrders() async {
+    final id = userId;
+    if (id == null) return [];
+    final rows = await client
+        .from('orders')
+        .select(_orderColumns)
+        .eq('buyer_id', id)
+        .order('created_at', ascending: false)
+        .limit(30);
+    return rows.map(StoreOrder.fromJson).toList();
+  }
+
+  Future<StoreOrder> order(String id) async {
+    final row = await client
+        .from('orders')
+        .select(_orderColumns)
+        .eq('id', id)
+        .single();
+    return StoreOrder.fromJson(row);
+  }
+
+  Future<List<StoreOrder>> storeOrders(String storeId) async {
+    final rows = await client
+        .from('orders')
+        .select(_orderColumns)
+        .eq('store_id', storeId)
+        .order('created_at', ascending: false)
+        .limit(50);
+    return rows.map(StoreOrder.fromJson).toList();
+  }
+
+  /// Aksi pesanan: accept, reject, confirm_payment, advance, report_payment, cancel.
+  Future<void> orderAction(String orderId, String action, [String? reason]) {
+    final function = switch (action) {
+      'accept' => 'accept_order',
+      'reject' => 'reject_order',
+      'confirm_payment' => 'confirm_payment',
+      'advance' => 'advance_order',
+      'report_payment' => 'report_payment',
+      _ => 'cancel_order',
+    };
+    return client.rpc(
+      function,
+      params: {'p_order': orderId, if (action == 'reject') 'p_reason': reason},
+    );
   }
 }

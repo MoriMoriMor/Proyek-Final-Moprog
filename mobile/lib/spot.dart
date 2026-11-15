@@ -28,6 +28,7 @@ class Spot {
     required this.saved,
     this.distanceKm,
     this.rating,
+    this.storeId,
   });
 
   final String id, ownerId, author, title, city, category, story;
@@ -36,6 +37,7 @@ class Spot {
   final int likes, saves, comments;
   final double? distanceKm, rating;
   final bool liked, saved;
+  final String? storeId;
 
   factory Spot.fromJson(Map<String, dynamic> json) => Spot(
     id: json['id'] as String,
@@ -59,6 +61,7 @@ class Spot {
     saved: json['saved'] as bool? ?? false,
     distanceKm: (json['distance_km'] as num?)?.toDouble(),
     rating: (json['rating'] as num?)?.toDouble(),
+    storeId: json['store_id'] as String?,
   );
 }
 
