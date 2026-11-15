@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'game.dart';
@@ -12,6 +11,7 @@ import 'share.dart';
 import 'welcome.dart';
 import 'market.dart';
 import 'market_screens.dart';
+import 'route_page.dart';
 import 'spot.dart';
 import 'spots_repository.dart';
 import 'ui/motion.dart';
@@ -1015,13 +1015,8 @@ class _SpotDetailState extends State<SpotDetail> {
                 child: Chunky(
                   expand: true,
                   color: mint,
-                  label: 'Buka rute di Google Maps',
-                  onTap: () => launchUrl(
-                    Uri.parse(
-                      'https://www.google.com/maps/search/?api=1&query=${spot.lat},${spot.lng}',
-                    ),
-                    mode: LaunchMode.externalApplication,
-                  ),
+                  label: 'Lihat rute',
+                  onTap: () => openRoute(context, spot),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

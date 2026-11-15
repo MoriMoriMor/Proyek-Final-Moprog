@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'game.dart';
 import 'profile_page.dart';
 import 'share.dart';
+import 'route_page.dart';
 import 'spot.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
@@ -517,12 +517,7 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
                     color: sky,
                     count: 'Rute',
                     label: 'Buka rute',
-                    onTap: () => launchUrl(
-                      Uri.parse(
-                        'https://www.google.com/maps/search/?api=1&query=${spot.lat},${spot.lng}',
-                      ),
-                      mode: LaunchMode.externalApplication,
-                    ),
+                    onTap: () => openRoute(context, spot),
                   ),
                 ],
               ),

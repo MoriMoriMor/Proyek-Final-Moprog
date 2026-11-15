@@ -20,6 +20,7 @@ import 'profile_page.dart';
 import 'reels.dart';
 import 'share.dart';
 import 'seller_screens.dart';
+import 'route_page.dart';
 import 'spot.dart';
 import 'spot_views.dart';
 import 'spots_repository.dart';
@@ -1046,26 +1047,27 @@ class _SpotsShellState extends State<SpotsShell> {
             left: 0,
             right: 0,
             bottom: bottomInset,
-            height: 112,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: PageView.builder(
-                  controller: carousel,
-                  itemCount: spots.length,
-                  onPageChanged: (i) {
-                    setState(() => focused = i);
-                    mapController.move(
-                      LatLng(spots[i].lat, spots[i].lng),
-                      math.max(mapController.camera.zoom, 12),
-                    );
-                  },
-                  itemBuilder: (context, i) => Padding(
+            height: 124,
+            child: PageView.builder(
+              controller: carousel,
+              itemCount: spots.length,
+              onPageChanged: (i) {
+                setState(() => focused = i);
+                mapController.move(
+                  LatLng(spots[i].lat, spots[i].lng),
+                  math.max(mapController.camera.zoom, 12),
+                );
+              },
+              itemBuilder: (context, i) => Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: _MiniCard(
                       spot: spots[i],
                       repo: repo,
                       onTap: () => open(spots[i]),
+                      onRoute: () => openRoute(context, spots[i]),
                     ),
                   ),
                 ),
@@ -1942,10 +1944,11 @@ class _MiniCard extends StatelessWidget {
     required this.spot,
     required this.repo,
     required this.onTap,
+    required this.onRoute,
   });
   final Spot spot;
   final SpotsRepository repo;
-  final VoidCallback onTap;
+  final VoidCallback onTap, onRoute;
 
   @override
   Widget build(BuildContext context) => Bouncy(
@@ -2040,6 +2043,37 @@ class _MiniCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          Bouncy(
+            onTap: onRoute,
+            child: Container(
+              width: 58,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: blue,
+                borderRadius: BorderRadius.circular(18),
+                border: Border(
+                  bottom: BorderSide(color: edgeOf(blue), width: 4),
+                ),
+              ),
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SpotIcon(Glyph.route, size: 22, color: Colors.white),
+                  SizedBox(height: 2),
+                  Text(
+                    'Rute',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
     ),
