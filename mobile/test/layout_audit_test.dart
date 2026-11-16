@@ -10,6 +10,8 @@ import 'package:spots/demo_repository.dart';
 import 'package:spots/game.dart';
 import 'package:spots/market_screens.dart';
 import 'package:spots/people_page.dart';
+import 'package:spots/place_page.dart';
+import 'package:spots/spot.dart';
 import 'package:spots/profile_page.dart';
 import 'package:spots/route_page.dart';
 import 'package:spots/seller_screens.dart';
@@ -272,6 +274,35 @@ void main() {
           load: () => r.feed(mode: 'popular'),
           builder: (spots) => SpotDetail(
             spot: (spots as List).first,
+            repo: repo,
+            onChanged: () {},
+          ),
+        );
+      }, textScale: scale);
+    });
+    testWidgets('tempat$s', (t) async {
+      late DemoSpotsRepository repo;
+      await audit(t, 'Halaman tempat', (r) {
+        repo = r;
+        return _Async(
+          load: () => r.placeSpots('p-d1'),
+          builder: (list) => PlacePage(
+            repo: repo,
+            from: (list as List<Spot>).first,
+            initial: list,
+            onChanged: () {},
+          ),
+        );
+      }, textScale: scale);
+    });
+    testWidgets('detail tempat$s', (t) async {
+      late DemoSpotsRepository repo;
+      await audit(t, 'Detail spot + sorotan', (r) {
+        repo = r;
+        return _Async(
+          load: () => r.placeSpots('p-d1'),
+          builder: (list) => SpotDetail(
+            spot: (list as List<Spot>).first,
             repo: repo,
             onChanged: () {},
           ),

@@ -48,7 +48,7 @@ end $$;
 
 select pg_temp.act('00000000-0000-0000-0000-00000000000a');
 insert into public.store_applications (store_name, category, address, lat, lng, contact, relation)
-  values ('Toko Admin', 'lainnya', 'Jl. Admin No. 1, Jakarta', -6.2, 106.8, '0812999000', 'pemilik');
+  values ('Toko Admin', 'belanja', 'Jl. Admin No. 1, Jakarta', -6.2, 106.8, '0812999000', 'pemilik');
 select pg_temp.fails($$select public.review_store_application(
   (select id from public.store_applications where store_name = 'Toko Admin'), true)$$, 'sendiri');
 select public.review_store_application(

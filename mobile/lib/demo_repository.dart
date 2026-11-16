@@ -184,6 +184,71 @@ class DemoSpotsRepository extends SpotsRepository {
       4.9,
       3,
     ),
+    // Orang lain mendokumentasikan tempat yang sama dengan d1 dan d10.
+    _row(
+      'd11',
+      'Gilang',
+      'Mie Kocok Mang Ujang',
+      'Bandung',
+      'kuliner',
+      'Datang jam 7 pagi, masih sepi. Porsi jumbo wajib tambah kikil.',
+      -6.9141,
+      107.6091,
+      212,
+      77,
+      4.9,
+      3,
+      place: 'p-d1',
+      days: 2,
+    ),
+    _row(
+      'd12',
+      'Sekar',
+      'Mie Kocok Mang Ujang',
+      'Bandung',
+      'kuliner',
+      'Kuahnya gurih, sambalnya nendang. Parkir agak susah.',
+      -6.9139,
+      107.6089,
+      54,
+      12,
+      4.6,
+      2,
+      place: 'p-d1',
+      days: 9,
+    ),
+    _row(
+      'd13',
+      'Tasya',
+      'Mie Kocok Mang Ujang',
+      'Bandung',
+      'kuliner',
+      'Langganan dari SMA. Rasanya masih sama.',
+      -6.914,
+      107.609,
+      19,
+      4,
+      4.5,
+      1,
+      place: 'p-d1',
+      days: 30,
+    ),
+    _row(
+      'd14',
+      'Raka',
+      'Glamping Lembah Kabut',
+      'Lembang',
+      'menginap',
+      'Bangun subuh, kabutnya turun ke lembah. Bawa jaket tebal.',
+      -6.8151,
+      107.6201,
+      340,
+      120,
+      4.8,
+      3,
+      place: 'p-d10',
+      days: 1,
+    ),
   ];
 
   static Map<String, dynamic> _row(
@@ -198,9 +263,15 @@ class DemoSpotsRepository extends SpotsRepository {
     int likes,
     int saves,
     double rating,
-    int media,
-  ) => {
+    int media, {
+    String? place,
+    int? days,
+  }) => {
     'id': id,
+    'place_id': place ?? 'p-$id',
+    'created_at': DateTime.now()
+        .subtract(Duration(days: days ?? (likes % 17) + 3))
+        .toIso8601String(),
     'owner_id': 'u-$author',
     'author': author,
     'title': title,
@@ -612,6 +683,7 @@ class DemoSpotsRepository extends SpotsRepository {
       if (mode == 'saved' && !_saves.contains(id)) continue;
       if (mode == 'mine' && row['owner_id'] != _user) continue;
       if (mode == 'user' && row['owner_id'] != user) continue;
+      if (mode == 'place' && row['place_id'] != user) continue;
       if (mode == 'tagged' && !(_tags[id] ?? const {}).contains(user)) continue;
       if (mode == 'following' &&
           !_follows.contains('$_user>${row['owner_id']}')) {
@@ -639,7 +711,12 @@ class DemoSpotsRepository extends SpotsRepository {
         }),
       );
     }
-    if (mode == 'popular') found.sort((a, b) => b.likes.compareTo(a.likes));
+    if (mode == 'popular') {
+      found.sort((a, b) => b.viralScore().compareTo(a.viralScore()));
+    }
+    if (mode == 'place') {
+      found.sort((a, b) => b.engagement.compareTo(a.engagement));
+    }
     return found;
   }
 
@@ -682,6 +759,7 @@ class DemoSpotsRepository extends SpotsRepository {
     (_comments[postId] ??= []).insert(
       0,
       SpotComment(
+        id: 'c${DateTime.now().microsecondsSinceEpoch}',
         author: _name,
         body: body.trim(),
         userId: _user!,
@@ -689,6 +767,14 @@ class DemoSpotsRepository extends SpotsRepository {
         avatar: _profiles[_user]?.avatarPath,
       ),
     );
+  }
+
+  @override
+  Future<void> deleteComment(String commentId) async {
+    if (_user == null) throw StateError('Masuk dulu ya.');
+    for (final list in _comments.values) {
+      list.removeWhere((c) => c.id == commentId && c.userId == _user);
+    }
   }
 
   @override
@@ -714,11 +800,13 @@ class DemoSpotsRepository extends SpotsRepository {
     required double lng,
     required List<XFile> files,
     String? storeId,
+    String? placeId,
     List<String> tags = const [],
   }) async {
     if (_user == null) throw StateError('Masuk dulu untuk membagikan spot.');
     await Future<void>.delayed(const Duration(milliseconds: 900));
     final id = 'n${_rows.length}';
+    final place = placeId ?? 'p-$id';
     _rows.insert(0, {
       ..._row(
         id,
@@ -737,8 +825,75 @@ class DemoSpotsRepository extends SpotsRepository {
       'owner_id': _user,
       'rating': null,
       'store_id': storeId,
+      'place_id': place,
+      'created_at': DateTime.now().toIso8601String(),
     });
     if (tags.isNotEmpty) _tags[id] = tags.toSet();
+  }
+
+  @override
+  Future<List<Place>> nearbyPlaces(
+    double lat,
+    double lng, {
+    String? query,
+  }) async {
+    await _wait();
+    final q = (query ?? '').toLowerCase();
+    final byPlace = <String, List<Map<String, dynamic>>>{};
+    for (final row in _rows) {
+      byPlace.putIfAbsent(row['place_id'] as String, () => []).add(row);
+    }
+    final out = <Place>[];
+    for (final MapEntry(key: id, value: rows) in byPlace.entries) {
+      final first = rows.last;
+      final meters =
+          _km(lat, lng, first['lat'] as double, first['lng'] as double) * 1000;
+      if (meters > 300) continue;
+      if (q.isNotEmpty && !'${first['title']}'.toLowerCase().contains(q)) {
+        continue;
+      }
+      rows.sort((a, b) => (b['likes'] as int).compareTo(a['likes'] as int));
+      out.add(
+        Place(
+          id: id,
+          name: first['title'] as String,
+          category: first['category'] as String,
+          city: first['city'] as String,
+          lat: first['lat'] as double,
+          lng: first['lng'] as double,
+          distanceM: meters,
+          posts: rows.length,
+          people: rows.map((r) => r['owner_id']).toSet().length,
+          cover: ((rows.first['media'] as List).first as Map)['path'] as String,
+        ),
+      );
+    }
+    out.sort((a, b) => a.distanceM.compareTo(b.distanceM));
+    return out;
+  }
+
+  @override
+  Future<List<Spot>> placeSpots(String placeId) =>
+      feed(mode: 'place', user: placeId);
+
+  @override
+  Future<void> updateSpot(
+    String spotId, {
+    required String title,
+    required String story,
+  }) async {
+    await _wait();
+    final row = _rows.firstWhere((r) => r['id'] == spotId);
+    if (row['owner_id'] != _user) throw StateError('Bukan spot kamu.');
+    row['title'] = title.trim();
+    row['story'] = story.trim();
+  }
+
+  @override
+  Future<void> deleteSpot(Spot spot) async {
+    await _wait();
+    if (spot.ownerId != _user) throw StateError('Bukan spot kamu.');
+    _rows.removeWhere((r) => r['id'] == spot.id);
   }
 
   // ---------- Marketplace demo ----------

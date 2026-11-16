@@ -25,7 +25,7 @@ begin
 end $f$;
 
 do $$
-declare pid uuid; img text; posts uuid[] := array[]::uuid[];
+declare pid uuid; plc uuid; img text; posts uuid[] := array[]::uuid[];
 begin
   insert into auth.users (instance_id, id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
   values ('00000000-0000-0000-0000-000000000000', 'a5b0c000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'nadiamakan@seed.spots.local', '', '{"provider":"email","providers":["email"]}', jsonb_build_object('display_name', 'Nadia Putri'), now() - interval '37 days', now())
@@ -52,13 +52,28 @@ begin
   on conflict (id) do nothing;
   update public.profiles set username = 'fajarngopi', display_name = 'Fajar', bio = 'nongkrong itu ibadah', streak = 120, best_streak = 120, streak_day = current_date, created_at = now() - interval '72 days' where id = 'a5b0c000-0000-4000-8000-000000000006';
   delete from public.posts where owner_id in ('a5b0c000-0000-4000-8000-000000000001', 'a5b0c000-0000-4000-8000-000000000002', 'a5b0c000-0000-4000-8000-000000000003', 'a5b0c000-0000-4000-8000-000000000004', 'a5b0c000-0000-4000-8000-000000000005', 'a5b0c000-0000-4000-8000-000000000006');
+  delete from public.places where created_by in ('a5b0c000-0000-4000-8000-000000000001', 'a5b0c000-0000-4000-8000-000000000002', 'a5b0c000-0000-4000-8000-000000000003', 'a5b0c000-0000-4000-8000-000000000004', 'a5b0c000-0000-4000-8000-000000000005', 'a5b0c000-0000-4000-8000-000000000006');
   img := pg_temp.wiki_img(array['id:Rawon', 'en:Rawon']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Rawon Setan Mbak Endang', 'kuliner', 'Surabaya', -7.2614, 112.7386, 'a5b0c000-0000-4000-8000-000000000001') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000001', 'Rawon Setan Mbak Endang', 'Surabaya', 'kuliner', 'Rawonnya hitam pekat, dagingnya empuk, sambalnya jangan diremehkan. Paling enak datang malam, sekalian lihat antreannya yang nggak ada habisnya. Tambah telur asin sama kerupuk udang, wajib.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2614, 112.7386, now() - interval '2 days 2 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2614, 112.7386, now() - interval '2 days 2 hours', plc)
   returning id into pid;
   posts := posts || pid;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
+  values ('a5b0c000-0000-4000-8000-000000000004', 'Rawon Setan Mbak Endang', 'Surabaya', 'kuliner', 'Habis lari pagi langsung ke sini. Kuahnya bikin melek.', -7.26136, 112.73857000000001, now() - interval '5 days', plc) returning id into pid;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000002', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
+  values ('a5b0c000-0000-4000-8000-000000000006', 'Rawon Setan Mbak Endang', 'Surabaya', 'kuliner', 'Datang jam 10 malam masih antre. Worth it.', -7.26132, 112.73854, now() - interval '12 days', plc) returning id into pid;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000002', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000004', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000002', pid, 'like') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000002', pid, 4) on conflict do nothing;
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000002', 'baru tau ada ini', now() - interval '42 hours');
@@ -72,10 +87,11 @@ Foto: Wikipedia / Wikimedia Commons', -7.2614, 112.7386, now() - interval '2 day
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 5) on conflict do nothing;
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Sate klopo', 'id:Sate', 'en:Satay']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Sate Klopo Ondomohen', 'kuliner', 'Surabaya', -7.2585, 112.7471, 'a5b0c000-0000-4000-8000-000000000001') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000001', 'Sate Klopo Ondomohen', 'Surabaya', 'kuliner', 'Satenya dibalur kelapa parut sebelum dibakar, jadi gurih dan agak garing di luar. Asapnya kecium dari ujung jalan. Pesan campur sapi + ayam biar nggak bingung.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2585, 112.7471, now() - interval '9 days 5 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2585, 112.7471, now() - interval '9 days 5 hours', plc)
   returning id into pid;
   posts := posts || pid;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
@@ -88,12 +104,18 @@ Foto: Wikipedia / Wikimedia Commons', -7.2585, 112.7471, now() - interval '9 day
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Taman Bungkul', 'en:Bungkul Park']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Taman Bungkul', 'kafe', 'Surabaya', -7.2913, 112.7398, 'a5b0c000-0000-4000-8000-000000000006') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000006', 'Taman Bungkul', 'Surabaya', 'kafe', 'Tempat nongkrong sejuta umat. Sore-sore duduk di bawah pohon, jajan di sentra PKL belakang, terus jalan muter taman. Minggu pagi rame banget sama yang olahraga.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2913, 112.7398, now() - interval '1 days 8 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2913, 112.7398, now() - interval '1 days 8 hours', plc)
   returning id into pid;
   posts := posts || pid;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
+  values ('a5b0c000-0000-4000-8000-000000000002', 'Taman Bungkul', 'Surabaya', 'kafe', 'Minggu pagi rame, banyak yang jual jajanan.', -7.291259999999999, 112.73977000000001, now() - interval '7 days', plc) returning id into pid;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000001', pid, 5) on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000002', pid, 'like') on conflict do nothing;
@@ -108,12 +130,25 @@ Foto: Wikipedia / Wikimedia Commons', -7.2913, 112.7398, now() - interval '1 day
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000005', 'wajib nyoba', now() - interval '25 hours');
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Tugu Pahlawan', 'en:Heroes Monument']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Tugu Pahlawan', 'destinasi', 'Surabaya', -7.2458, 112.7378, 'a5b0c000-0000-4000-8000-000000000002') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000002', 'Tugu Pahlawan', 'Surabaya', 'destinasi', 'Ikonnya Surabaya. Di bawah tanahnya ada Museum 10 Nopember, isinya lumayan bikin merinding. Datang pas sore biar foto tugunya kena cahaya hangat.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2458, 112.7378, now() - interval '14 days 11 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2458, 112.7378, now() - interval '14 days 11 hours', plc)
   returning id into pid;
   posts := posts || pid;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
+  values ('a5b0c000-0000-4000-8000-000000000005', 'Tugu Pahlawan', 'Surabaya', 'destinasi', 'Ngajak ponakan ke museum bawah tanahnya, mereka betah.', -7.24576, 112.73777, now() - interval '3 days', plc) returning id into pid;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000002', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
+  values ('a5b0c000-0000-4000-8000-000000000004', 'Tugu Pahlawan', 'Surabaya', 'destinasi', 'Sore-sore jogging keliling Tugu, adem.', -7.24572, 112.73773999999999, now() - interval '20 days', plc) returning id into pid;
+  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000002', pid, 'like') on conflict do nothing;
+  insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'save') on conflict do nothing;
@@ -127,10 +162,11 @@ Foto: Wikipedia / Wikimedia Commons', -7.2458, 112.7378, now() - interval '14 da
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000006', 'besok ke sini ah', now() - interval '286 hours');
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['en:House of Sampoerna', 'id:House of Sampoerna']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('House of Sampoerna', 'destinasi', 'Surabaya', -7.231, 112.7342, 'a5b0c000-0000-4000-8000-000000000002') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000002', 'House of Sampoerna', 'Surabaya', 'destinasi', 'Bangunan kolonialnya cakep dari luar sampai dalam. Masuk museumnya gratis, dan dari lantai atas bisa lihat proses linting kretek. Kawasan kota lamanya enak buat jalan kaki.
 
-Foto: Wikipedia / Wikimedia Commons', -7.231, 112.7342, now() - interval '6 days 14 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.231, 112.7342, now() - interval '6 days 14 hours', plc)
   returning id into pid;
   posts := posts || pid;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000003', pid, 'like') on conflict do nothing;
@@ -143,10 +179,11 @@ Foto: Wikipedia / Wikimedia Commons', -7.231, 112.7342, now() - interval '6 days
   insert into public.comments (post_id, user_id, body, created_at) values (pid, 'a5b0c000-0000-4000-8000-000000000006', 'baru tau ada ini', now() - interval '126 hours');
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Stadion Gelora Bung Tomo', 'en:Gelora Bung Tomo Stadium']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Gelora Bung Tomo', 'olahraga', 'Surabaya', -7.2245, 112.623, 'a5b0c000-0000-4000-8000-000000000004') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000004', 'Gelora Bung Tomo', 'Surabaya', 'olahraga', 'Kandangnya Persebaya. Kalau lagi nggak ada pertandingan, area luarnya sering dipakai lari sore sama sepedaan. Pas ada laga, suasananya beda level.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2245, 112.623, now() - interval '3 days 17 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2245, 112.623, now() - interval '3 days 17 hours', plc)
   returning id into pid;
   posts := posts || pid;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
@@ -158,10 +195,11 @@ Foto: Wikipedia / Wikimedia Commons', -7.2245, 112.623, now() - interval '3 days
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000005', pid, 5) on conflict do nothing;
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Monumen Kapal Selam', 'en:Submarine Monument']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Monumen Kapal Selam', 'aktivitas', 'Surabaya', -7.2653, 112.7502, 'a5b0c000-0000-4000-8000-000000000005') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000005', 'Monumen Kapal Selam', 'Surabaya', 'aktivitas', 'Kapal selam beneran yang bisa dimasukin, dari ruang torpedo sampai ruang kemudi. Sempit, panas, tapi seru. Cocok buat bawa adik atau ponakan.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2653, 112.7502, now() - interval '11 days 20 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2653, 112.7502, now() - interval '11 days 20 hours', plc)
   returning id into pid;
   posts := posts || pid;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
@@ -174,10 +212,11 @@ Foto: Wikipedia / Wikimedia Commons', -7.2653, 112.7502, now() - interval '11 da
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 5) on conflict do nothing;
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Kebun Binatang Surabaya', 'en:Surabaya Zoo']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Kebun Binatang Surabaya', 'aktivitas', 'Surabaya', -7.2959, 112.7365, 'a5b0c000-0000-4000-8000-000000000005') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000005', 'Kebun Binatang Surabaya', 'Surabaya', 'aktivitas', 'Klasik, tapi tetap asik buat jalan pagi. Sapa komodonya, terus foto di patung Suro dan Boyo di depan. Datang lebih awal biar belum terlalu terik.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2959, 112.7365, now() - interval '4 days 23 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2959, 112.7365, now() - interval '4 days 23 hours', plc)
   returning id into pid;
   posts := posts || pid;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000002', pid, 'like') on conflict do nothing;
@@ -188,10 +227,11 @@ Foto: Wikipedia / Wikimedia Commons', -7.2959, 112.7365, now() - interval '4 day
   insert into public.ratings (user_id, post_id, score) values ('a5b0c000-0000-4000-8000-000000000006', pid, 5) on conflict do nothing;
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Pasar Atom', 'id:Tunjungan Plaza', 'en:Tunjungan Plaza']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Pasar Atom', 'belanja', 'Surabaya', -7.24, 112.7428, 'a5b0c000-0000-4000-8000-000000000003') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000003', 'Pasar Atom', 'Surabaya', 'belanja', 'Surganya kain, jajanan, sama barang serba ada. Lantai bawah buat camilan, lantai atas buat bahan baju. Siap-siap nawar dan siap-siap nyasar.
 
-Foto: Wikipedia / Wikimedia Commons', -7.24, 112.7428, now() - interval '8 days 26 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.24, 112.7428, now() - interval '8 days 26 hours', plc)
   returning id into pid;
   posts := posts || pid;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;
@@ -204,10 +244,11 @@ Foto: Wikipedia / Wikimedia Commons', -7.24, 112.7428, now() - interval '8 days 
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000006', pid, 'like') on conflict do nothing;
   if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;
   img := pg_temp.wiki_img(array['id:Hotel Majapahit', 'en:Hotel Majapahit']);
-  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)
+  insert into public.places (name, category, city, lat, lng, created_by) values ('Hotel Majapahit', 'menginap', 'Surabaya', -7.2604, 112.7392, 'a5b0c000-0000-4000-8000-000000000003') returning id into plc;
+  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)
   values ('a5b0c000-0000-4000-8000-000000000003', 'Hotel Majapahit', 'Surabaya', 'menginap', 'Hotel bersejarah di Jalan Tunjungan, tempat insiden perobekan bendera tahun 1945. Taman dalamnya tenang banget, kayak lupa lagi di tengah kota. Malamnya tinggal jalan ke Tunjungan.
 
-Foto: Wikipedia / Wikimedia Commons', -7.2604, 112.7392, now() - interval '18 days 29 hours')
+Foto: Wikipedia / Wikimedia Commons', -7.2604, 112.7392, now() - interval '18 days 29 hours', plc)
   returning id into pid;
   posts := posts || pid;
   insert into public.reactions (user_id, post_id, kind) values ('a5b0c000-0000-4000-8000-000000000001', pid, 'like') on conflict do nothing;

@@ -99,6 +99,7 @@ class SpotsRepository {
         .from('posts')
         .select(
           'id, owner_id, title, city, category, story, lat, lng, store_id, '
+          'place_id, created_at, '
           'profiles(display_name, username, avatar_path), '
           'post_media(storage_path, media_type, position)',
         )
@@ -129,11 +130,64 @@ class SpotsRepository {
   Future<List<SpotComment>> comments(String postId) async {
     final rows = await client
         .from('comments')
-        .select('body,user_id,profiles(display_name,username,avatar_path)')
+        .select('id,body,user_id,profiles(display_name,username,avatar_path)')
         .eq('post_id', postId)
         .order('created_at', ascending: false)
         .limit(50);
     return rows.map(SpotComment.fromJson).toList();
+  }
+
+  Future<void> deleteComment(String commentId) async {
+    if (userId == null) throw StateError('Masuk dulu ya.');
+    await client.from('comments').delete().eq('id', commentId);
+  }
+
+  /// Semua dokumentasi di satu tempat, dari yang paling viral.
+  Future<List<Spot>> placeSpots(String placeId) =>
+      feed(mode: 'place', user: placeId);
+
+  /// Tempat terdaftar di sekitar titik, untuk dipilih saat membuat spot.
+  Future<List<Place>> nearbyPlaces(
+    double lat,
+    double lng, {
+    String? query,
+  }) async {
+    final rows = await client.rpc(
+      'nearby_places',
+      params: {'p_lat': lat, 'p_lng': lng, 'p_radius_m': 300, 'p_query': query},
+    ) as List;
+    return rows
+        .map((row) => Place.fromJson(Map<String, dynamic>.from(row as Map)))
+        .toList();
+  }
+
+  Future<void> updateSpot(
+    String spotId, {
+    required String title,
+    required String story,
+  }) async {
+    if (userId == null) throw StateError('Masuk dulu ya.');
+    await client
+        .from('posts')
+        .update({'title': title.trim(), 'story': story.trim()})
+        .eq('id', spotId);
+  }
+
+  /// Hapus spot milik sendiri beserta file fotonya.
+  Future<void> deleteSpot(Spot spot) async {
+    if (userId == null || spot.ownerId != userId) {
+      throw StateError('Hanya pemilik yang bisa menghapus spot ini.');
+    }
+    final files = [
+      for (final m in spot.media)
+        if (!m.path.startsWith('http')) m.path,
+    ];
+    await client.from('posts').delete().eq('id', spot.id);
+    if (files.isNotEmpty) {
+      try {
+        await client.storage.from('spot-media').remove(files);
+      } catch (_) {}
+    }
   }
 
   Future<void> addComment(String postId, String body) async {
@@ -184,6 +238,7 @@ class SpotsRepository {
     required double lng,
     required List<XFile> files,
     String? storeId,
+    String? placeId,
     List<String> tags = const [],
   }) async {
     final id = userId;
@@ -191,6 +246,21 @@ class SpotsRepository {
     if (files.isEmpty || files.length > 5) {
       throw StateError('Pilih 1 sampai 5 foto atau video.');
     }
+    final place =
+        placeId ??
+        (await client
+                .from('places')
+                .insert({
+                  'name': title.trim(),
+                  'category': category,
+                  'city': city.trim(),
+                  'lat': lat,
+                  'lng': lng,
+                  'created_by': id,
+                })
+                .select('id')
+                .single())['id']
+            as String;
     final post = await client
         .from('posts')
         .insert({
@@ -202,6 +272,7 @@ class SpotsRepository {
           'lat': lat,
           'lng': lng,
           'store_id': ?storeId,
+          'place_id': place,
         })
         .select('id')
         .single();

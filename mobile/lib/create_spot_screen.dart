@@ -41,6 +41,12 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
   String? storeId;
   List<UserProfile> tagged = [];
 
+  /// Tempat terdaftar di sekitar pin. Pengguna wajib memilih salah satu atau
+  /// "Tempat baru", supaya dokumentasi masuk ke tempat yang benar.
+  List<Place> places = [];
+  String? placeId;
+  bool newPlace = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +56,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
   Future<void> findStores() async {
     final p = point;
     if (p == null) return;
+    findPlaces(p);
     try {
       final found = await widget.repo.storesNear(p.latitude, p.longitude);
       if (!mounted) return;
@@ -59,6 +66,31 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
       });
     } catch (_) {}
   }
+
+  Future<void> findPlaces(LatLng p) async {
+    try {
+      final found = await widget.repo.nearbyPlaces(p.latitude, p.longitude);
+      if (!mounted) return;
+      setState(() {
+        places = found;
+        if (!found.any((pl) => pl.id == placeId)) placeId = null;
+        if (found.isEmpty) newPlace = true;
+      });
+    } catch (_) {}
+  }
+
+  void choosePlace(Place? place) => setState(() {
+    if (place == null) {
+      placeId = null;
+      newPlace = true;
+      return;
+    }
+    placeId = place.id;
+    newPlace = false;
+    title.text = place.name;
+    if (place.city.isNotEmpty) city.text = place.city;
+    category = place.category;
+  });
 
   bool busy = false, locating = false;
   String? error;
@@ -168,6 +200,9 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
       return 'Ceritain sedikit, minimal 5 huruf.';
     }
     if (point == null) return 'Tandai titik lokasinya di peta.';
+    if (places.isNotEmpty && placeId == null && !newPlace) {
+      return 'Pilih tempatnya: yang sudah ada atau tempat baru.';
+    }
     return null;
   }
 
@@ -191,6 +226,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
         lng: point!.longitude,
         files: files,
         storeId: storeId,
+        placeId: newPlace ? null : placeId,
         tags: [for (final p in tagged) p.id],
       );
       if (!mounted) return;
@@ -211,6 +247,36 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
       if (mounted) setState(() => busy = false);
     }
   }
+
+  Widget _placePicker() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text('Tempat ini sudah ada?', style: display(20)),
+      const SizedBox(height: 2),
+      const Text(
+        'Pilih kalau kamu di tempat yang sama, supaya fotomu masuk ke '
+        'dokumentasinya. Beda tempat? Pilih "Tempat baru".',
+        style: small,
+      ),
+      const SizedBox(height: 10),
+      for (final place in places)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _PlaceOption(
+            place: place,
+            repo: widget.repo,
+            selected: placeId == place.id,
+            onTap: () => choosePlace(place),
+          ),
+        ),
+      _PlaceOption(
+        place: null,
+        repo: widget.repo,
+        selected: newPlace,
+        onTap: () => choosePlace(null),
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -310,6 +376,10 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
               ),
               const SizedBox(height: 14),
               _location(),
+              if (places.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _placePicker(),
+              ],
               if (stores.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 const Text(
@@ -707,4 +777,108 @@ class _CelebrateState extends State<_Celebrate> {
       ),
     ),
   );
+}
+
+/// Satu pilihan tempat: tempat terdaftar di dekat pin, atau "Tempat baru".
+class _PlaceOption extends StatelessWidget {
+  const _PlaceOption({
+    required this.place,
+    required this.repo,
+    required this.selected,
+    required this.onTap,
+  });
+  final Place? place;
+  final SpotsRepository repo;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = place;
+    final meters = p == null ? 0 : p.distanceM.round();
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Bouncy(
+        onTap: onTap,
+        scale: .97,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFEDF1FF) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: selected ? piko : line, width: 2.4),
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox.square(
+                  dimension: 56,
+                  child: p == null || p.cover == null
+                      ? ColoredBox(
+                          color: pale,
+                          child: Center(
+                            child: SpotIcon(
+                              p == null
+                                  ? Glyph.plus
+                                  : categoryOf(p.category).glyph,
+                              size: 26,
+                              accent: yellow,
+                            ),
+                          ),
+                        )
+                      : AbsorbPointer(
+                          child: SpotGallery(
+                            media: [SpotMedia(path: p.cover!, type: 'image')],
+                            repo: repo,
+                            height: 56,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p == null ? 'Tempat baru' : p.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: title.copyWith(fontSize: 15),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      p == null
+                          ? 'Belum ada di Spots, jadi yang pertama'
+                          : '${meters < 1000 ? '$meters m' : '${(meters / 1000).toStringAsFixed(1)} km'}'
+                                ' · ${p.posts} dokumentasi · ${p.people} orang',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: small.copyWith(fontSize: 12.5),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: selected
+                    ? const SpotIcon(
+                        Glyph.check,
+                        key: ValueKey('on'),
+                        size: 22,
+                        color: piko,
+                        accent: yellow,
+                      )
+                    : const SizedBox(key: ValueKey('off'), width: 22),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
