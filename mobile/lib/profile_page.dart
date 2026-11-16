@@ -396,17 +396,22 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _Stat(value: compact(stats.posts), label: 'Spot'),
-                _Stat(
-                  value: compact(stats.followers),
-                  label: 'Pengikut',
-                  onTap: () => openFollows(true),
-                ),
-                _Stat(
-                  value: compact(stats.following),
-                  label: 'Mengikuti',
-                  onTap: () => openFollows(false),
-                ),
+                for (final stat in [
+                  _Stat(value: compact(stats.posts), label: 'Spot'),
+                  _Stat(
+                    value: compact(stats.followers),
+                    label: 'Pengikut',
+                    onTap: () => openFollows(true),
+                  ),
+                  _Stat(
+                    value: compact(stats.following),
+                    label: 'Mengikuti',
+                    onTap: () => openFollows(false),
+                  ),
+                ])
+                  Flexible(
+                    child: FittedBox(fit: BoxFit.scaleDown, child: stat),
+                  ),
               ],
             ),
           ),

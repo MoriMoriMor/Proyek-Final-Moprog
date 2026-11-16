@@ -268,59 +268,63 @@ class _CelebrationState extends State<_Celebration> {
       child: Stack(
         children: [
           Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.elasticOut,
-                  builder: (_, v, child) =>
-                      Transform.scale(scale: v, child: child),
-                  child:
-                      widget.badge ?? const Piko(size: 170, mood: PikoMood.wow),
-                ),
-                const SizedBox(height: 22),
-                Rise(
-                  index: 2,
-                  child: Text(
-                    widget.title,
-                    textAlign: TextAlign.center,
-                    style: display(44, color: Colors.white),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (_, v, child) =>
+                        Transform.scale(scale: v, child: child),
+                    child:
+                        widget.badge ??
+                        const Piko(size: 170, mood: PikoMood.wow),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Rise(
-                  index: 3,
-                  child: Text(
-                    widget.subtitle,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17,
-                    ),
-                  ),
-                ),
-                if (widget.onAction != null) ...[
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 22),
                   Rise(
-                    index: 4,
-                    child: Chunky(
-                      color: ink,
-                      edge: Colors.black,
-                      onTap: () {
-                        Navigator.maybePop(context);
-                        widget.onAction!();
-                      },
-                      child: Text(widget.actionLabel ?? 'Bagikan'),
+                    index: 2,
+                    child: Text(
+                      widget.title,
+                      textAlign: TextAlign.center,
+                      style: display(44, color: Colors.white),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Rise(
+                    index: 3,
+                    child: Text(
+                      widget.subtitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 17,
+                      ),
+                    ),
+                  ),
+                  if (widget.onAction != null) ...[
+                    const SizedBox(height: 26),
+                    Rise(
+                      index: 4,
+                      child: Chunky(
+                        color: ink,
+                        edge: Colors.black,
+                        onTap: () {
+                          Navigator.maybePop(context);
+                          widget.onAction!();
+                        },
+                        child: Text(widget.actionLabel ?? 'Bagikan'),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-          const Positioned.fill(child: Confetti()),
+          const Positioned.fill(child: IgnorePointer(child: Confetti())),
         ],
       ),
     ),

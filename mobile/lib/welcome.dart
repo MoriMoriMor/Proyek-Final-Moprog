@@ -115,7 +115,9 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   Widget build(BuildContext context) {
     final slide = slides[index];
-    final height = MediaQuery.sizeOf(context).height;
+    final screen = MediaQuery.sizeOf(context);
+    final height = screen.height;
+    final landscape = screen.width > screen.height && screen.height < 560;
     return Scaffold(
       backgroundColor: _deep,
       body: DecoratedBox(
@@ -129,118 +131,283 @@ class _WelcomePageState extends State<WelcomePage>
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 14),
-                    child: SvgPicture.asset(
-                      'assets/logo_light.svg',
-                      height: 34,
-                      semanticsLabel: 'Spots',
-                    ),
-                  ),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: pages,
-                      itemCount: slides.length,
-                      onPageChanged: (i) => setState(() => index = i),
-                      itemBuilder: (context, i) => Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
-                        child: AnimatedBuilder(
-                          animation: float,
-                          builder: (_, _) => slides[i].art(float.value),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (var i = 0; i < slides.length; i++)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 260),
-                          width: i == index ? 22 : 7,
-                          height: 7,
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          decoration: BoxDecoration(
-                            color: i == index ? _lime : Colors.white24,
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                        ),
-                    ],
-                  ),
-                  SizedBox(height: height < 700 ? 10 : 18),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 380),
-                    transitionBuilder: (child, a) => FadeTransition(
-                      opacity: a,
-                      child: SlideTransition(
-                        position: Tween(
-                          begin: const Offset(0, .12),
-                          end: Offset.zero,
-                        ).animate(a),
-                        child: child,
-                      ),
-                    ),
-                    child: _Headline(key: ValueKey(index), slide: slide),
-                  ),
-                  SizedBox(height: height < 700 ? 14 : 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: Column(
+              constraints: BoxConstraints(maxWidth: landscape ? 900 : 460),
+              child: landscape
+                  ? Row(
                       children: [
-                        _PillButton(
-                          onTap: busy ? null : google,
-                          color: Colors.black,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        Expanded(
+                          child: Column(
                             children: [
-                              const GoogleMark(size: 22),
-                              const SizedBox(width: 12),
-                              Text(
-                                busy
-                                    ? 'Menghubungkan…'
-                                    : 'Lanjut dengan Google',
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  top: height < 500 ? 6 : 14,
+                                ),
+                                child: SvgPicture.asset(
+                                  'assets/logo_light.svg',
+                                  height: height < 500 ? 24 : 34,
+                                  semanticsLabel: 'Spots',
+                                ),
                               ),
+                              Expanded(
+                                child: PageView.builder(
+                                  controller: pages,
+                                  itemCount: slides.length,
+                                  onPageChanged: (i) =>
+                                      setState(() => index = i),
+                                  itemBuilder: (context, i) => Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      18,
+                                      12,
+                                      18,
+                                      0,
+                                    ),
+                                    child: AnimatedBuilder(
+                                      animation: float,
+                                      builder: (_, _) =>
+                                          slides[i].art(float.value),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  for (var i = 0; i < slides.length; i++)
+                                    AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 260,
+                                      ),
+                                      width: i == index ? 22 : 7,
+                                      height: 7,
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: i == index
+                                            ? _lime
+                                            : Colors.white24,
+                                        borderRadius: BorderRadius.circular(7),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        _PillButton(
-                          onTap: busy ? null : email,
-                          color: Colors.white.withValues(alpha: .12),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SpotIcon(
-                                Glyph.chat,
-                                size: 20,
-                                color: Colors.white,
-                                tint: false,
+                        Expanded(
+                          child: Center(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 380),
+                                    transitionBuilder: (child, a) =>
+                                        FadeTransition(
+                                          opacity: a,
+                                          child: SlideTransition(
+                                            position: Tween(
+                                              begin: const Offset(0, .12),
+                                              end: Offset.zero,
+                                            ).animate(a),
+                                            child: child,
+                                          ),
+                                        ),
+                                    child: _Headline(
+                                      key: ValueKey(index),
+                                      slide: slide,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 28,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        _PillButton(
+                                          onTap: busy ? null : google,
+                                          color: Colors.black,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const GoogleMark(size: 22),
+                                              const SizedBox(width: 12),
+                                              Flexible(
+                                                child: Text(
+                                                  busy
+                                                      ? 'Menghubungkan…'
+                                                      : 'Lanjut dengan Google',
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        _PillButton(
+                                          onTap: busy ? null : email,
+                                          color: Colors.white.withValues(
+                                            alpha: .12,
+                                          ),
+                                          child: const Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              SpotIcon(
+                                                Glyph.chat,
+                                                size: 20,
+                                                color: Colors.white,
+                                                tint: false,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text('Pakai email'),
+                                            ],
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: widget.onDone,
+                                          child: const Text(
+                                            'Lihat-lihat dulu',
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 10),
-                              Text('Pakai email'),
-                            ],
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: widget.onDone,
-                          child: const Text(
-                            'Lihat-lihat dulu',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
                       ],
+                    )
+                  : Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(top: height < 500 ? 6 : 14),
+                          child: SvgPicture.asset(
+                            'assets/logo_light.svg',
+                            height: height < 500 ? 24 : 34,
+                            semanticsLabel: 'Spots',
+                          ),
+                        ),
+                        Expanded(
+                          child: PageView.builder(
+                            controller: pages,
+                            itemCount: slides.length,
+                            onPageChanged: (i) => setState(() => index = i),
+                            itemBuilder: (context, i) => Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+                              child: AnimatedBuilder(
+                                animation: float,
+                                builder: (_, _) => slides[i].art(float.value),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            for (var i = 0; i < slides.length; i++)
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 260),
+                                width: i == index ? 22 : 7,
+                                height: 7,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: i == index ? _lime : Colors.white24,
+                                  borderRadius: BorderRadius.circular(7),
+                                ),
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: height < 700 ? 10 : 18),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 380),
+                          transitionBuilder: (child, a) => FadeTransition(
+                            opacity: a,
+                            child: SlideTransition(
+                              position: Tween(
+                                begin: const Offset(0, .12),
+                                end: Offset.zero,
+                              ).animate(a),
+                              child: child,
+                            ),
+                          ),
+                          child: _Headline(key: ValueKey(index), slide: slide),
+                        ),
+                        SizedBox(height: height < 700 ? 14 : 24),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 28),
+                          child: Column(
+                            children: [
+                              _PillButton(
+                                onTap: busy ? null : google,
+                                color: Colors.black,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const GoogleMark(size: 22),
+                                    const SizedBox(width: 12),
+                                    Flexible(
+                                      child: Text(
+                                        busy
+                                            ? 'Menghubungkan…'
+                                            : 'Lanjut dengan Google',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _PillButton(
+                                onTap: busy ? null : email,
+                                color: Colors.white.withValues(alpha: .12),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SpotIcon(
+                                      Glyph.chat,
+                                      size: 20,
+                                      color: Colors.white,
+                                      tint: false,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text('Pakai email'),
+                                  ],
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: widget.onDone,
+                                child: const Text(
+                                  'Lihat-lihat dulu',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                ],
-              ),
             ),
           ),
         ),

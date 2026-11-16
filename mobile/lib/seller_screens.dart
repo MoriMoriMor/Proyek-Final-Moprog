@@ -615,11 +615,15 @@ class _SellerPageState extends State<SellerPage> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: tab == i ? Colors.white : muted,
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: tab == i ? Colors.white : muted,
+                        ),
                       ),
                     ),
                     if (i == 0 && waiting > 0) ...[
@@ -773,8 +777,16 @@ class _SellerPageState extends State<SellerPage> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Text(rupiah(o.total), style: display(20)),
-              const Spacer(),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(rupiah(o.total), style: display(20)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               if (o.status != 'menunggu' && !o.closed)
                 Pill(
                   color: o.paymentStatus == 'lunas'
@@ -1418,7 +1430,8 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
           ),
         ],
         TextButton.icon(
-          onPressed: () => openRouteTo(context, app.storeName, app.lat, app.lng),
+          onPressed: () =>
+              openRouteTo(context, app.storeName, app.lat, app.lng),
           icon: const SpotIcon(Glyph.pin, size: 18, accent: coral),
           label: const Text(
             'Cek lokasi',

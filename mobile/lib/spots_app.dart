@@ -655,8 +655,16 @@ class _SpotsShellState extends State<SpotsShell> {
     child: Row(
       children: [
         if (!wide) ...[
-          SvgPicture.asset('assets/logo.svg', height: 30),
-          const Spacer(),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SvgPicture.asset('assets/logo.svg', height: 30),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           StreakChip(onTap: () => openQuests(context)),
           const SizedBox(width: 8),
         ] else
@@ -853,7 +861,17 @@ class _SpotsShellState extends State<SpotsShell> {
               ),
               const SizedBox(width: 12),
             ],
-            Rise(child: Text('Jelajah', style: display(40))),
+            Expanded(
+              child: Rise(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Jelajah', style: display(40)),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -994,36 +1012,47 @@ class _SpotsShellState extends State<SpotsShell> {
                 ),
                 const SizedBox(width: 10),
               ],
-              ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(18, 10, 14, 10),
-                    color: Colors.white.withValues(alpha: .86),
-                    child: Row(
-                      children: [
-                        const Mascot(
-                          kind: MascotKind.pino,
-                          size: 40,
-                          wave: true,
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                        color: Colors.white.withValues(alpha: .86),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Mascot(
+                              kind: MascotKind.pino,
+                              size: 36,
+                              wave: true,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Peta', style: display(26)),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Pill(
+                              color: mint,
+                              child: Text(
+                                loading ? '…' : '${spots.length}',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        Text('Peta', style: display(26)),
-                        const SizedBox(width: 10),
-                        Pill(
-                          color: mint,
-                          child: Text(
-                            loading ? '…' : '${spots.length}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 10),
               GlassButton(
                 glyph: Glyph.locate,
                 label: 'Lokasiku',
@@ -1442,8 +1471,16 @@ class _SideRail extends StatelessWidget {
               padding: const EdgeInsets.only(left: 6, bottom: 18),
               child: Row(
                 children: [
-                  SvgPicture.asset('assets/logo.svg', height: 40),
-                  const Spacer(),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: SvgPicture.asset('assets/logo.svg', height: 36),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   StreakChip(onTap: () => openQuests(context)),
                 ],
               ),
@@ -1503,7 +1540,13 @@ class _SideRail extends StatelessWidget {
                 children: [
                   SpotIcon(Glyph.plus, size: 22, color: Colors.white),
                   SizedBox(width: 8),
-                  Text('Bagikan spot'),
+                  Flexible(
+                    child: Text(
+                      'Bagikan spot',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1991,7 +2034,9 @@ class _MiniCard extends StatelessWidget {
               children: [
                 Text(
                   spot.title,
-                  maxLines: 2,
+                  maxLines: MediaQuery.textScalerOf(context).scale(1) > 1.1
+                      ? 1
+                      : 2,
                   overflow: TextOverflow.ellipsis,
                   style: title.copyWith(fontSize: 16),
                 ),
@@ -2007,38 +2052,43 @@ class _MiniCard extends StatelessWidget {
                   style: small,
                 ),
                 const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const SpotIcon(
-                      Glyph.star,
-                      size: 16,
-                      color: Color(0xFFB77A0E),
-                      accent: yellow,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      spot.rating?.toStringAsFixed(1) ?? 'Baru',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SpotIcon(
+                        Glyph.star,
+                        size: 16,
+                        color: Color(0xFFB77A0E),
+                        accent: yellow,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    const SpotIcon(
-                      Glyph.heart,
-                      size: 16,
-                      color: Color(0xFFB8455A),
-                      accent: coral,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      compact(spot.likes),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
+                      const SizedBox(width: 3),
+                      Text(
+                        spot.rating?.toStringAsFixed(1) ?? 'Baru',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      const SpotIcon(
+                        Glyph.heart,
+                        size: 16,
+                        color: Color(0xFFB8455A),
+                        accent: coral,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        compact(spot.likes),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
