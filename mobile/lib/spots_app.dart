@@ -776,7 +776,8 @@ class _SpotsShellState extends State<SpotsShell> {
   }
 
   List<Widget> _homeExtras() {
-    final viral = [...spots]..sort((a, b) => b.likes.compareTo(a.likes));
+    final viral = [...spots]
+      ..sort((a, b) => b.viralScore().compareTo(a.viralScore()));
     return [
       if (spots.length >= 3) ...[
         SectionTitle(

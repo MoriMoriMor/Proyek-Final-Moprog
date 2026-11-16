@@ -50,6 +50,20 @@ const owners = [
   [3, 18],
 ];
 
+/// Orang lain yang juga mendokumentasikan tempat tertentu:
+/// indeks tempat → [(orang, cerita, hari lalu)].
+const extras = <int, List<(int, String, int)>>{
+  0: [
+    (4, 'Habis lari pagi langsung ke sini. Kuahnya bikin melek.', 5),
+    (6, 'Datang jam 10 malam masih antre. Worth it.', 12),
+  ],
+  3: [
+    (5, 'Ngajak ponakan ke museum bawah tanahnya, mereka betah.', 3),
+    (4, 'Sore-sore jogging keliling Tugu, adem.', 20),
+  ],
+  2: [(2, 'Minggu pagi rame, banyak yang jual jajanan.', 7)],
+};
+
 const comments = [
   'sambalnya pedes beneran wkwk',
   'besok ke sini ah',
@@ -238,7 +252,9 @@ Future<void> main() async {
     ..writeln('-- Spot Surabaya + 6 akun warga. Aman dijalankan ulang.')
     ..writeln(wikiImg)
     ..writeln('do \$\$')
-    ..writeln('declare pid uuid; img text; posts uuid[] := array[]::uuid[];')
+    ..writeln(
+      'declare pid uuid; plc uuid; img text; posts uuid[] := array[]::uuid[];',
+    )
     ..writeln('begin');
   for (final p in people) {
     out
@@ -253,7 +269,9 @@ Future<void> main() async {
         "  update public.profiles set username = ${sql(p.username)}, display_name = ${sql(p.name)}, bio = ${sql(p.bio)}, streak = ${p.streak}, best_streak = ${p.streak}, streak_day = current_date, created_at = now() - interval '${30 + p.n * 7} days' where id = '${p.id}';",
       );
   }
-  out.writeln('  delete from public.posts where owner_id in ($ids);');
+  out
+    ..writeln('  delete from public.posts where owner_id in ($ids);')
+    ..writeln('  delete from public.places where created_by in ($ids);');
   for (final (n, place) in places.indexed) {
     final story = '${place.story}\n\nFoto: Wikipedia / Wikimedia Commons';
     final found = await wikiPhoto(place.queries);
@@ -269,13 +287,37 @@ Future<void> main() async {
             : '  img := ${sql(found)};',
       )
       ..writeln(
-        '  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at)',
+        "  insert into public.places (name, category, city, lat, lng, created_by) values (${sql(place.title)}, ${sql(place.category)}, 'Surabaya', ${place.lat}, ${place.lng}, '${owner.id}') returning id into plc;",
       )
       ..writeln(
-        "  values ('${owner.id}', ${sql(place.title)}, 'Surabaya', ${sql(place.category)}, ${sql(story)}, ${place.lat}, ${place.lng}, now() - interval '$ago days ${n * 3 + 2} hours')",
+        '  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)',
+      )
+      ..writeln(
+        "  values ('${owner.id}', ${sql(place.title)}, 'Surabaya', ${sql(place.category)}, ${sql(story)}, ${place.lat}, ${place.lng}, now() - interval '$ago days ${n * 3 + 2} hours', plc)",
       )
       ..writeln('  returning id into pid;')
       ..writeln('  posts := posts || pid;');
+    // Dokumentasi tambahan dari orang lain di tempat yang sama.
+    for (final (j, extra)
+        in (extras[n] ?? const <(int, String, int)>[]).indexed) {
+      final who = people[extra.$1 - 1];
+      out
+        ..writeln(
+          '  insert into public.posts (owner_id, title, city, category, story, lat, lng, created_at, place_id)',
+        )
+        ..writeln(
+          "  values ('${who.id}', ${sql(place.title)}, 'Surabaya', ${sql(place.category)}, ${sql(extra.$2)}, ${place.lat + 0.00004 * (j + 1)}, ${place.lng - 0.00003 * (j + 1)}, now() - interval '${extra.$3} days', plc) returning id into pid;",
+        )
+        ..writeln(
+          "  if img is not null then insert into public.post_media (post_id, position, storage_path, media_type) values (pid, 0, img, 'image'); end if;",
+        );
+      for (final fan in people.take(j + 3)) {
+        if (fan == who) continue;
+        out.writeln(
+          "  insert into public.reactions (user_id, post_id, kind) values ('${fan.id}', pid, 'like') on conflict do nothing;",
+        );
+      }
+    }
     // Reaksi dari akun lain supaya terlihat hidup.
     for (final fan in people) {
       if (fan == owner) continue;

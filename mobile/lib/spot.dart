@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 class SpotMedia {
   const SpotMedia({required this.path, required this.type});
   final String path;
@@ -31,6 +33,8 @@ class Spot {
     this.storeId,
     this.authorUsername = '',
     this.authorAvatar,
+    this.createdAt,
+    this.placeId,
   });
 
   final String id, ownerId, author, title, city, category, story;
@@ -42,6 +46,52 @@ class Spot {
   final String? storeId;
   final String authorUsername;
   final String? authorAvatar;
+  final DateTime? createdAt;
+
+  /// Tempat yang dipilih pengunggah. Beberapa spot bisa berbagi satu tempat.
+  final String? placeId;
+
+  /// Seberapa ramai spot ini: like paling berbobot, lalu simpan, komentar,
+  /// dan rating.
+  double get engagement =>
+      likes * 3 + saves * 2 + comments * 2 + (rating ?? 0) * 2;
+
+  /// Skor viral: keramaian dibagi umur postingan (sama seperti di database),
+  /// supaya spot lama tidak menempati puncak selamanya.
+  double viralScore([DateTime? now]) {
+    final created = createdAt;
+    final days = created == null
+        ? 7.0
+        : ((now ?? DateTime.now()).difference(created).inMinutes / 1440)
+              .clamp(0, 3650)
+              .toDouble();
+    return (engagement + 1) / math.pow(days + 2, .7);
+  }
+
+  Spot copyWith({String? title, String? story}) => Spot(
+    id: id,
+    ownerId: ownerId,
+    author: author,
+    title: title ?? this.title,
+    city: city,
+    category: category,
+    story: story ?? this.story,
+    lat: lat,
+    lng: lng,
+    media: media,
+    likes: likes,
+    saves: saves,
+    comments: comments,
+    liked: liked,
+    saved: saved,
+    distanceKm: distanceKm,
+    rating: rating,
+    storeId: storeId,
+    authorUsername: authorUsername,
+    authorAvatar: authorAvatar,
+    createdAt: createdAt,
+    placeId: placeId,
+  );
 
   factory Spot.fromJson(Map<String, dynamic> json) => Spot(
     id: json['id'] as String,
@@ -68,6 +118,41 @@ class Spot {
     storeId: json['store_id'] as String?,
     authorUsername: json['author_username'] as String? ?? '',
     authorAvatar: json['author_avatar'] as String?,
+    createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
+    placeId: json['place_id'] as String?,
+  );
+}
+
+/// Tempat terdaftar yang bisa dipilih saat membuat spot.
+class Place {
+  const Place({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.lat,
+    required this.lng,
+    this.city = '',
+    this.distanceM = 0,
+    this.posts = 0,
+    this.people = 0,
+    this.cover,
+  });
+  final String id, name, category, city;
+  final double lat, lng, distanceM;
+  final int posts, people;
+  final String? cover;
+
+  factory Place.fromJson(Map<String, dynamic> json) => Place(
+    id: json['id'] as String,
+    name: json['name'] as String? ?? '',
+    category: json['category'] as String? ?? 'destinasi',
+    city: json['city'] as String? ?? '',
+    lat: (json['lat'] as num).toDouble(),
+    lng: (json['lng'] as num).toDouble(),
+    distanceM: (json['distance_m'] as num?)?.toDouble() ?? 0,
+    posts: (json['posts'] as num?)?.toInt() ?? 0,
+    people: (json['people'] as num?)?.toInt() ?? 0,
+    cover: json['cover'] as String?,
   );
 }
 
@@ -75,11 +160,12 @@ class SpotComment {
   const SpotComment({
     required this.author,
     required this.body,
+    this.id = '',
     this.userId = '',
     this.username = '',
     this.avatar,
   });
-  final String author, body, userId, username;
+  final String id, author, body, userId, username;
   final String? avatar;
 
   factory SpotComment.fromJson(Map<String, dynamic> json) {
@@ -87,6 +173,7 @@ class SpotComment {
     return SpotComment(
       author: profile?['display_name'] as String? ?? 'Traveler',
       body: json['body'] as String? ?? '',
+      id: json['id'] as String? ?? '',
       userId: json['user_id'] as String? ?? '',
       username: profile?['username'] as String? ?? '',
       avatar: profile?['avatar_path'] as String?,

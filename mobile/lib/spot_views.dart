@@ -12,6 +12,7 @@ import 'welcome.dart';
 import 'market.dart';
 import 'market_screens.dart';
 import 'route_page.dart';
+import 'place_page.dart';
 import 'spot.dart';
 import 'spots_repository.dart';
 import 'ui/motion.dart';
@@ -753,6 +754,10 @@ class _SpotDetailState extends State<SpotDetail> {
     widget.spot.id,
   );
   late final reactions = Reactions(widget.spot);
+  late Spot spot = widget.spot;
+  late Future<List<Spot>> place = widget.spot.placeId == null
+      ? Future.value(const <Spot>[])
+      : widget.repo.placeSpots(widget.spot.placeId!);
   int myRating = 0;
   int commentCount = 0;
   bool sending = false;
@@ -813,9 +818,157 @@ class _SpotDetailState extends State<SpotDetail> {
     }
   }
 
+  bool get mine =>
+      widget.repo.userId != null && spot.ownerId == widget.repo.userId;
+
+  Future<void> ownerMenu() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                leading: const SpotIcon(Glyph.pencil, accent: yellow),
+                title: const Text(
+                  'Edit judul & cerita',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                onTap: () => Navigator.pop(context, 'edit'),
+              ),
+              ListTile(
+                leading: const SpotIcon(
+                  Glyph.close,
+                  color: danger,
+                  accent: coral,
+                ),
+                title: const Text(
+                  'Hapus spot',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: danger),
+                ),
+                onTap: () => Navigator.pop(context, 'delete'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || choice == null) return;
+    if (choice == 'edit') return edit();
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus spot ini?'),
+        content: const Text(
+          'Foto, suka, dan komentarnya ikut terhapus. Tidak bisa dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus', style: TextStyle(color: danger)),
+          ),
+        ],
+      ),
+    );
+    if (sure != true || !mounted) return;
+    try {
+      await widget.repo.deleteSpot(spot);
+      widget.onChanged();
+      if (!mounted) return;
+      message(context, 'Spot dihapus.');
+      Navigator.maybePop(context);
+    } catch (e) {
+      if (mounted) message(context, friendlyError(e));
+    }
+  }
+
+  Future<void> edit() async {
+    final titleField = TextEditingController(text: spot.title);
+    final storyField = TextEditingController(text: spot.story);
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          18,
+          20,
+          MediaQuery.viewInsetsOf(context).bottom + 20,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Edit spot', style: display(26)),
+              const SizedBox(height: 14),
+              TextField(
+                controller: titleField,
+                maxLength: 100,
+                decoration: const InputDecoration(hintText: 'Nama tempatnya'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: storyField,
+                maxLength: 2000,
+                minLines: 3,
+                maxLines: 7,
+                decoration: const InputDecoration(hintText: 'Ceritanya'),
+              ),
+              const SizedBox(height: 12),
+              Chunky(
+                expand: true,
+                color: blue,
+                onTap: () => Navigator.pop(context, true),
+                child: const Text('Simpan'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final newTitle = titleField.text.trim(), newStory = storyField.text.trim();
+    titleField.dispose();
+    storyField.dispose();
+    if (saved != true || !mounted) return;
+    if (newTitle.length < 3 || newStory.length < 5) {
+      message(context, 'Judul minimal 3 huruf, cerita minimal 5 huruf.');
+      return;
+    }
+    try {
+      await widget.repo.updateSpot(spot.id, title: newTitle, story: newStory);
+      if (!mounted) return;
+      setState(() => spot = spot.copyWith(title: newTitle, story: newStory));
+      widget.onChanged();
+      message(context, 'Tersimpan.');
+    } catch (e) {
+      if (mounted) message(context, friendlyError(e));
+    }
+  }
+
+  Future<void> removeComment(SpotComment c) async {
+    try {
+      await widget.repo.deleteComment(c.id);
+      if (!mounted) return;
+      setState(() {
+        comments = widget.repo.comments(widget.spot.id);
+        commentCount = (commentCount - 1).clamp(0, 1 << 30);
+      });
+      widget.onChanged();
+    } catch (e) {
+      if (mounted) message(context, friendlyError(e));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final spot = widget.spot;
     final category = categoryOf(spot.category);
     final wide = MediaQuery.sizeOf(context).width >= 760;
     final body = ListView(
@@ -844,6 +997,16 @@ class _SpotDetailState extends State<SpotDetail> {
                   onTap: () => Navigator.maybePop(context),
                 ),
               ),
+              if (mine)
+                Positioned(
+                  right: 128,
+                  top: MediaQuery.paddingOf(context).top + 10,
+                  child: GlassButton(
+                    glyph: Glyph.pencil,
+                    label: 'Kelola spot',
+                    onTap: ownerMenu,
+                  ),
+                ),
               Positioned(
                 right: 72,
                 top: MediaQuery.paddingOf(context).top + 10,
@@ -1032,6 +1195,22 @@ class _SpotDetailState extends State<SpotDetail> {
                   ),
                 ),
               ),
+              FutureBuilder<List<Spot>>(
+                future: place,
+                builder: (context, snapshot) {
+                  final list = snapshot.data ?? const <Spot>[];
+                  if (list.length < 2) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 26),
+                    child: PlaceHighlights(
+                      repo: widget.repo,
+                      spot: spot,
+                      spots: list,
+                      onChanged: widget.onChanged,
+                    ),
+                  );
+                },
+              ),
               if (spot.storeId != null) ...[
                 const SizedBox(height: 16),
                 Rise(
@@ -1093,7 +1272,15 @@ class _SpotDetailState extends State<SpotDetail> {
                         Rise(
                           index: i,
                           from: 14,
-                          child: _Bubble(c, widget.repo),
+                          child: _Bubble(
+                            c,
+                            widget.repo,
+                            onDelete:
+                                c.id.isNotEmpty &&
+                                    c.userId == widget.repo.userId
+                                ? () => removeComment(c)
+                                : null,
+                          ),
                         ),
                     ],
                   );
@@ -1265,9 +1452,10 @@ class _StarPicker extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble(this.comment, this.repo);
+  const _Bubble(this.comment, this.repo, {this.onDelete});
   final SpotComment comment;
   final SpotsRepository repo;
+  final VoidCallback? onDelete;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
@@ -1320,6 +1508,23 @@ class _Bubble extends StatelessWidget {
             ),
           ),
         ),
+        if (onDelete != null)
+          Semantics(
+            button: true,
+            label: 'Hapus komentar',
+            child: Bouncy(
+              onTap: onDelete,
+              child: const Padding(
+                padding: EdgeInsets.fromLTRB(6, 8, 0, 8),
+                child: SpotIcon(
+                  Glyph.close,
+                  size: 18,
+                  color: muted,
+                  tint: false,
+                ),
+              ),
+            ),
+          ),
       ],
     ),
   );
