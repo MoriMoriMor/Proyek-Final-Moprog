@@ -426,11 +426,11 @@ class _AsyncState extends State<_Async> {
   void initState() {
     super.initState();
     widget.load().then((v) {
-      if (mounted)
-        setState(() {
-          data = v;
-          done = true;
-        });
+      if (!mounted) return;
+      setState(() {
+        data = v;
+        done = true;
+      });
     });
   }
 
