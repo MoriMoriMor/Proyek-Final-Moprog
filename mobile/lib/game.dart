@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'spots_repository.dart';
 import 'ui/motion.dart';
 import 'ui/piko.dart';
 import 'ui/spot_icons.dart';
@@ -60,12 +61,17 @@ class GameState extends ChangeNotifier {
   static const perLevel = 120;
 
   SharedPreferences? _prefs;
+  SpotsRepository? _repo;
   int xp = 0, streak = 0;
   String _day = '';
   final progress = <String, int>{};
   final claimed = <String>{};
   List<String> activeDays = [];
   bool streakGrewToday = false;
+
+  void bind(SpotsRepository repo) {
+    _repo = repo;
+  }
 
   bool get onboarded => _prefs?.getBool('onboarded') ?? false;
   Future<void> markOnboarded() async => _prefs?.setBool('onboarded', true);
@@ -128,8 +134,44 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sinkronkan XP, streak, dan progres misi harian dari server saat masuk.
+  Future<void> syncFromServer() async {
+    final repo = _repo;
+    if (repo == null || repo.userId == null) return;
+    final today = _key(DateTime.now());
+    try {
+      final state = await repo.fetchGameState(today);
+      if (state == null) return;
+      _day = today;
+      xp = state.xp;
+      if (state.streak > streak) streak = state.streak;
+      progress.clear();
+      claimed.clear();
+      for (final q in quests) {
+        final item = state.quests[q.key];
+        final val = item?.progress ?? 0;
+        final done = item?.claimed ?? false;
+        progress[q.key] = val;
+        if (done) claimed.add(q.key);
+        await _prefs?.setInt('q_${q.key}', val);
+        await _prefs?.setBool('c_${q.key}', done);
+      }
+      await _prefs?.setString('quest_day', today);
+      await _prefs?.setInt('xp', xp);
+      await _prefs?.setInt('streak', streak);
+      notifyListeners();
+    } catch (_) {}
+  }
+
   /// Catat aksi, beri XP, dan rayakan jika misi atau level tercapai.
   void track(String action) {
+    final today = _key(DateTime.now());
+    if (_day != today) {
+      _day = today;
+      progress.clear();
+      claimed.clear();
+      _prefs?.setString('quest_day', today);
+    }
     final before = level;
     var gained = _xpFor[action] ?? 1;
     Quest? finished;
@@ -153,6 +195,21 @@ class GameState extends ChangeNotifier {
     if (level > before) {
       Future.delayed(const Duration(milliseconds: 900), () => _levelUp(level));
     }
+    unawaited(_syncAction(action, today));
+  }
+
+  Future<void> _syncAction(String action, String day) async {
+    final repo = _repo;
+    if (repo == null || repo.userId == null) return;
+    try {
+      final res = await repo.recordGameAction(action, day);
+      if (res == null) return;
+      if (res.xp != xp) {
+        xp = res.xp;
+        await _prefs?.setInt('xp', xp);
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   OverlayState? get _overlay => rootNavigator.currentState?.overlay;

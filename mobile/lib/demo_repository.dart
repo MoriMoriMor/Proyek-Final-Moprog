@@ -1371,6 +1371,32 @@ class DemoSpotsRepository extends SpotsRepository {
   @override
   String? avatarUrl(String? path) => path;
 
+  final Map<String, int> _demoXp = {};
+  final Map<String, bool> _demoInviteClaimed = {};
+  final Map<String, Map<String, QuestProgressItem>> _demoQuests = {};
+
+  static const _demoBaseXp = {
+    'reel': 1,
+    'like': 2,
+    'save': 3,
+    'rate': 3,
+    'comment': 5,
+    'post': 30,
+    'order': 20,
+    'store': 25,
+    'share': 5,
+    'invited': 30,
+    'follow': 1,
+  };
+
+  static const _demoQuestTargets = {
+    'reel': (5, 20),
+    'like': (3, 15),
+    'save': (1, 10),
+    'comment': (1, 15),
+    'share': (1, 25),
+  };
+
   @override
   Future<void> syncStreak(int streak) async {
     final me = _user;
@@ -1384,6 +1410,67 @@ class DemoSpotsRepository extends SpotsRepository {
       avatarPath: p.avatarPath,
       streak: streak,
       bestStreak: streak > p.bestStreak ? streak : p.bestStreak,
+    );
+  }
+
+  @override
+  Future<ServerGameState?> fetchGameState(String day) async {
+    final me = _user;
+    if (me == null) return null;
+    final p = _profiles[me];
+    final key = '$me:$day';
+    return ServerGameState(
+      xp: _demoXp[me] ?? 0,
+      streak: p?.streak ?? 0,
+      bestStreak: p?.bestStreak ?? 0,
+      day: day,
+      quests: Map<String, QuestProgressItem>.from(_demoQuests[key] ?? const {}),
+    );
+  }
+
+  @override
+  Future<GameActionResult?> recordGameAction(String action, String day) async {
+    final me = _user;
+    if (me == null) return null;
+    final base = _demoBaseXp[action];
+    if (base == null) throw ArgumentError('Aksi tidak dikenal.');
+    if (action == 'invited') {
+      if (_demoInviteClaimed[me] == true) {
+        return GameActionResult(xp: _demoXp[me] ?? 0, gained: 0);
+      }
+      _demoInviteClaimed[me] = true;
+      final next = (_demoXp[me] ?? 0) + base;
+      _demoXp[me] = next;
+      return GameActionResult(xp: next, gained: base);
+    }
+
+    var gained = base;
+    String? finished;
+    final rule = _demoQuestTargets[action];
+    if (rule != null) {
+      final key = '$me:$day';
+      final quests = _demoQuests.putIfAbsent(key, () => {});
+      final current = quests[action];
+      if (current == null || !current.claimed) {
+        final nextProgress = (current?.progress ?? 0) + 1;
+        final done = nextProgress >= rule.$1;
+        quests[action] = QuestProgressItem(
+          key: action,
+          progress: nextProgress,
+          claimed: done,
+        );
+        if (done) {
+          gained += rule.$2;
+          finished = action;
+        }
+      }
+    }
+    final nextXp = (_demoXp[me] ?? 0) + gained;
+    _demoXp[me] = nextXp;
+    return GameActionResult(
+      xp: nextXp,
+      gained: gained,
+      finishedQuest: finished,
     );
   }
 

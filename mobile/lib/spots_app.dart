@@ -173,14 +173,17 @@ class _SpotsShellState extends State<SpotsShell> {
   @override
   void initState() {
     super.initState();
+    GameState.instance.bind(repo);
     authSubscription = repo.authChanges.listen((_) {
       if (mounted) refresh(silent: true);
       syncStreak();
+      GameState.instance.syncFromServer();
     });
     locate();
     onShareAchievement = shareAchievement;
     GameState.instance.load().then((_) {
       syncStreak();
+      GameState.instance.syncFromServer();
       welcome();
     });
   }

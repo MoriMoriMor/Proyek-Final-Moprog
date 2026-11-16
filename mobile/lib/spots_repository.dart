@@ -635,6 +635,28 @@ class SpotsRepository {
     await client.rpc('sync_streak', params: {'p_streak': streak});
   }
 
+  /// Ambil XP, streak, dan progres misi harian dari server.
+  Future<ServerGameState?> fetchGameState(String day) async {
+    if (userId == null) return null;
+    final row = await client.rpc(
+      'get_game_state',
+      params: {'p_day': day},
+    );
+    if (row == null) return null;
+    return ServerGameState.fromJson(Map<String, dynamic>.from(row as Map));
+  }
+
+  /// Catat aksi gamifikasi ke server dan terima XP terbaru.
+  Future<GameActionResult?> recordGameAction(String action, String day) async {
+    if (userId == null) return null;
+    final row = await client.rpc(
+      'record_game_action',
+      params: {'p_action': action, 'p_day': day},
+    );
+    if (row == null) return null;
+    return GameActionResult.fromJson(Map<String, dynamic>.from(row as Map));
+  }
+
   Future<UserProfile?> profile(String id) async {
     final row = await client
         .from('profiles')

@@ -236,3 +236,69 @@ class ProfileStats {
 /// Username: huruf kecil, angka, titik, atau garis bawah; 3 sampai 20 karakter.
 final usernamePattern = RegExp(r'^[a-z0-9_.]{3,20}$');
 final mentionPattern = RegExp(r'@([a-z0-9_.]{3,20})');
+
+class QuestProgressItem {
+  const QuestProgressItem({
+    required this.key,
+    required this.progress,
+    required this.claimed,
+  });
+  final String key;
+  final int progress;
+  final bool claimed;
+
+  factory QuestProgressItem.fromJson(Map<String, dynamic> json) =>
+      QuestProgressItem(
+        key: json['key'] as String? ?? '',
+        progress: (json['progress'] as num?)?.toInt() ?? 0,
+        claimed: json['claimed'] as bool? ?? false,
+      );
+}
+
+class ServerGameState {
+  const ServerGameState({
+    required this.xp,
+    required this.streak,
+    required this.bestStreak,
+    required this.day,
+    required this.quests,
+  });
+  final int xp, streak, bestStreak;
+  final String day;
+  final Map<String, QuestProgressItem> quests;
+
+  factory ServerGameState.fromJson(Map<String, dynamic> json) {
+    final rawQuests = (json['quests'] as List?) ?? const [];
+    final map = <String, QuestProgressItem>{};
+    for (final item in rawQuests) {
+      final parsed = QuestProgressItem.fromJson(
+        Map<String, dynamic>.from(item as Map),
+      );
+      if (parsed.key.isNotEmpty) map[parsed.key] = parsed;
+    }
+    return ServerGameState(
+      xp: (json['xp'] as num?)?.toInt() ?? 0,
+      streak: (json['streak'] as num?)?.toInt() ?? 0,
+      bestStreak: (json['best_streak'] as num?)?.toInt() ?? 0,
+      day: json['day'] as String? ?? '',
+      quests: map,
+    );
+  }
+}
+
+class GameActionResult {
+  const GameActionResult({
+    required this.xp,
+    required this.gained,
+    this.finishedQuest,
+  });
+  final int xp, gained;
+  final String? finishedQuest;
+
+  factory GameActionResult.fromJson(Map<String, dynamic> json) =>
+      GameActionResult(
+        xp: (json['xp'] as num?)?.toInt() ?? 0,
+        gained: (json['gained'] as num?)?.toInt() ?? 0,
+        finishedQuest: json['finished_quest'] as String?,
+      );
+}
