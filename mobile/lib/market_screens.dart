@@ -1170,8 +1170,14 @@ class _CartBar extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          const Text('Lihat keranjang'),
-                          const Spacer(),
+                          const Expanded(
+                            child: Text(
+                              'Lihat keranjang',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           Text(rupiah(cart.subtotal)),
                         ],
                       ),
@@ -1480,12 +1486,24 @@ class _Choice extends StatelessWidget {
           children: [
             SpotIcon(glyph, size: 26, accent: active ? yellow : line),
             const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: title.copyWith(fontSize: 15)),
-                Text(sub, style: small.copyWith(fontSize: 12)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: title.copyWith(fontSize: 15),
+                  ),
+                  Text(
+                    sub,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: small.copyWith(fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -1503,13 +1521,23 @@ class _SummaryRow extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(
       children: [
-        Text(label, style: strong ? title : small.copyWith(color: ink)),
-        const Spacer(),
-        Text(
-          value,
-          style: strong
-              ? display(22)
-              : const TextStyle(fontWeight: FontWeight.w900),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: strong ? title : small.copyWith(color: ink),
+          ),
+        ),
+        const SizedBox(width: 8),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: strong
+                ? display(22)
+                : const TextStyle(fontWeight: FontWeight.w900),
+          ),
         ),
       ],
     ),
