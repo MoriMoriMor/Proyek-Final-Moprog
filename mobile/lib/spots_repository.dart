@@ -844,4 +844,56 @@ class SpotsRepository {
       rethrow;
     }
   }
+
+  // ---------- Moderasi ----------
+
+  Future<void> reportContent({
+    required String targetType,
+    required String targetId,
+    required String reason,
+  }) async {
+    final me = userId;
+    if (me == null) throw StateError('Masuk dulu ya.');
+    final text = reason.trim();
+    if (text.length < 3) throw StateError('Alasan terlalu singkat.');
+    await client.from('reports').upsert(
+      {
+        'reporter_id': me,
+        'target_type': targetType,
+        'target_id': targetId,
+        'reason': text,
+      },
+      onConflict: 'reporter_id,target_type,target_id',
+    );
+  }
+
+  Future<void> setBlocked(String targetUserId, bool block) async {
+    final me = userId;
+    if (me == null) throw StateError('Masuk dulu ya.');
+    if (me == targetUserId) throw StateError('Tidak bisa memblokir diri sendiri.');
+    if (block) {
+      await client.from('user_blocks').upsert({
+        'blocker_id': me,
+        'blocked_id': targetUserId,
+      });
+    } else {
+      await client
+          .from('user_blocks')
+          .delete()
+          .eq('blocker_id', me)
+          .eq('blocked_id', targetUserId);
+    }
+  }
+
+  Future<bool> isBlocked(String targetUserId) async {
+    final me = userId;
+    if (me == null || me == targetUserId) return false;
+    final row = await client
+        .from('user_blocks')
+        .select('blocked_id')
+        .eq('blocker_id', me)
+        .eq('blocked_id', targetUserId)
+        .maybeSingle();
+    return row != null;
+  }
 }

@@ -672,9 +672,13 @@ class DemoSpotsRepository extends SpotsRepository {
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 650));
     final q = (query ?? '').toLowerCase();
+    final blocked = _user == null
+        ? const <String>{}
+        : (_demoBlocks[_user!] ?? const <String>{});
     final found = <Spot>[];
     for (final row in _rows) {
       final id = row['id'] as String;
+      if (blocked.contains(row['owner_id'])) continue;
       if (category != null && row['category'] != category) continue;
       if (q.isNotEmpty &&
           !'${row['title']} ${row['city']}'.toLowerCase().contains(q)) {
@@ -750,7 +754,13 @@ class DemoSpotsRepository extends SpotsRepository {
   @override
   Future<List<SpotComment>> comments(String postId) async {
     await Future<void>.delayed(const Duration(milliseconds: 300));
-    return List.of(_comments[postId] ?? const []);
+    final blocked = _user == null
+        ? const <String>{}
+        : (_demoBlocks[_user!] ?? const <String>{});
+    return [
+      for (final c in _comments[postId] ?? const <SpotComment>[])
+        if (!blocked.contains(c.userId)) c,
+    ];
   }
 
   @override
@@ -1602,5 +1612,51 @@ class DemoSpotsRepository extends SpotsRepository {
       streak: _profiles[me]?.streak ?? 0,
       bestStreak: _profiles[me]?.bestStreak ?? 0,
     );
+  }
+
+  final List<({String reporter, String targetType, String targetId, String reason})>
+  _demoReports = [];
+  final Map<String, Set<String>> _demoBlocks = {};
+
+  @override
+  Future<void> reportContent({
+    required String targetType,
+    required String targetId,
+    required String reason,
+  }) async {
+    final me = _me();
+    final text = reason.trim();
+    if (text.length < 3) throw StateError('Alasan terlalu singkat.');
+    _demoReports.removeWhere(
+      (r) =>
+          r.reporter == me &&
+          r.targetType == targetType &&
+          r.targetId == targetId,
+    );
+    _demoReports.add((
+      reporter: me,
+      targetType: targetType,
+      targetId: targetId,
+      reason: text,
+    ));
+  }
+
+  @override
+  Future<void> setBlocked(String targetUserId, bool block) async {
+    final me = _me();
+    if (me == targetUserId) throw StateError('Tidak bisa memblokir diri sendiri.');
+    final set = _demoBlocks.putIfAbsent(me, () => <String>{});
+    if (block) {
+      set.add(targetUserId);
+    } else {
+      set.remove(targetUserId);
+    }
+  }
+
+  @override
+  Future<bool> isBlocked(String targetUserId) async {
+    final me = _user;
+    if (me == null || me == targetUserId) return false;
+    return _demoBlocks[me]?.contains(targetUserId) ?? false;
   }
 }

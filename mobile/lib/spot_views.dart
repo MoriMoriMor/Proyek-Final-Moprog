@@ -889,6 +889,87 @@ class _SpotDetailState extends State<SpotDetail> {
     }
   }
 
+  Future<void> guestMenu() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                leading: const SpotIcon(Glyph.shield, accent: yellow),
+                title: const Text(
+                  'Laporkan spot',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                onTap: () => Navigator.pop(context, 'report'),
+              ),
+              ListTile(
+                leading: const SpotIcon(
+                  Glyph.close,
+                  color: danger,
+                  accent: coral,
+                ),
+                title: const Text(
+                  'Blokir pengguna',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: danger),
+                ),
+                onTap: () => Navigator.pop(context, 'block'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || choice == null) return;
+    if (choice == 'report') {
+      await showReportSheet(
+        context,
+        widget.repo,
+        targetType: 'post',
+        targetId: spot.id,
+        title: 'Laporkan spot',
+      );
+      return;
+    }
+    if (widget.repo.userId == null) {
+      openAuth(context, widget.repo);
+      return;
+    }
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Blokir pengguna ini?'),
+        content: const Text(
+          'Semua spot dan komentarnya tidak akan tampil lagi untukmu.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Blokir', style: TextStyle(color: danger)),
+          ),
+        ],
+      ),
+    );
+    if (sure != true || !mounted) return;
+    try {
+      await widget.repo.setBlocked(spot.ownerId, true);
+      widget.onChanged();
+      if (!mounted) return;
+      message(context, 'Pengguna diblokir.');
+      Navigator.maybePop(context);
+    } catch (e) {
+      if (mounted) message(context, friendlyError(e));
+    }
+  }
+
   Future<void> edit() async {
     final titleField = TextEditingController(text: spot.title);
     final storyField = TextEditingController(text: spot.story);
@@ -1005,6 +1086,16 @@ class _SpotDetailState extends State<SpotDetail> {
                     glyph: Glyph.pencil,
                     label: 'Kelola spot',
                     onTap: ownerMenu,
+                  ),
+                )
+              else
+                Positioned(
+                  right: 128,
+                  top: MediaQuery.paddingOf(context).top + 10,
+                  child: GlassButton(
+                    glyph: Glyph.shield,
+                    label: 'Laporkan atau blokir',
+                    onTap: guestMenu,
                   ),
                 ),
               Positioned(
@@ -1280,6 +1371,17 @@ class _SpotDetailState extends State<SpotDetail> {
                                     c.userId == widget.repo.userId
                                 ? () => removeComment(c)
                                 : null,
+                            onReport:
+                                c.id.isNotEmpty &&
+                                    c.userId != widget.repo.userId
+                                ? () => showReportSheet(
+                                    context,
+                                    widget.repo,
+                                    targetType: 'comment',
+                                    targetId: c.id,
+                                    title: 'Laporkan komentar',
+                                  )
+                                : null,
                           ),
                         ),
                     ],
@@ -1452,10 +1554,11 @@ class _StarPicker extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble(this.comment, this.repo, {this.onDelete});
+  const _Bubble(this.comment, this.repo, {this.onDelete, this.onReport});
   final SpotComment comment;
   final SpotsRepository repo;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
@@ -1524,10 +1627,87 @@ class _Bubble extends StatelessWidget {
                 ),
               ),
             ),
+          )
+        else if (onReport != null)
+          Semantics(
+            button: true,
+            label: 'Laporkan komentar',
+            child: Bouncy(
+              onTap: onReport,
+              child: const Padding(
+                padding: EdgeInsets.fromLTRB(6, 8, 0, 8),
+                child: SpotIcon(
+                  Glyph.shield,
+                  size: 16,
+                  color: muted,
+                  tint: false,
+                ),
+              ),
+            ),
           ),
       ],
     ),
   );
+}
+
+Future<void> showReportSheet(
+  BuildContext context,
+  SpotsRepository repo, {
+  required String targetType,
+  required String targetId,
+  String title = 'Laporkan',
+}) async {
+  if (repo.userId == null) {
+    await openAuth(context, repo);
+    return;
+  }
+  const reasons = [
+    'Spam atau iklan',
+    'Konten tidak pantas',
+    'Informasi palsu',
+    'Mengganggu atau melecehkan',
+  ];
+  final chosen = await showModalBottomSheet<String>(
+    context: context,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(title, style: display(24)),
+            const SizedBox(height: 6),
+            Text('Pilih alasan laporan:', style: small),
+            const SizedBox(height: 12),
+            for (final r in reasons)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const SpotIcon(Glyph.shield, size: 20, accent: yellow),
+                title: Text(
+                  r,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                onTap: () => Navigator.pop(context, r),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (chosen == null || !context.mounted) return;
+  try {
+    await repo.reportContent(
+      targetType: targetType,
+      targetId: targetId,
+      reason: chosen,
+    );
+    if (context.mounted) {
+      message(context, 'Laporan dikirim. Terima kasih sudah menjaga Spots.');
+    }
+  } catch (e) {
+    if (context.mounted) message(context, friendlyError(e));
+  }
 }
 
 Future<void> openAuth(

@@ -153,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage> {
   List<Spot> posts = [];
   List<Spot>? tagged, saved;
   int tab = 0;
-  bool loading = true, busy = false;
+  bool loading = true, busy = false, blocked = false;
   String? error;
 
   @override
@@ -172,12 +172,14 @@ class _ProfilePageState extends State<ProfilePage> {
         repo.profile(widget.userId),
         repo.profileStats(widget.userId),
         repo.feed(mode: 'user', user: widget.userId),
+        if (!self) repo.isBlocked(widget.userId),
       ]);
       if (!mounted) return;
       setState(() {
         profile = results[0] as UserProfile?;
         stats = results[1] as ProfileStats;
         posts = results[2] as List<Spot>;
+        if (!self) blocked = results[3] as bool;
         tagged = null;
         saved = null;
       });
@@ -567,8 +569,94 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         const SizedBox(width: 10),
         share,
+        const SizedBox(width: 10),
+        Semantics(
+          button: true,
+          label: 'Laporkan atau blokir',
+          child: Chunky(
+            color: Colors.white,
+            edge: line,
+            border: line,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            onTap: moderationMenu,
+            child: SpotIcon(
+              Glyph.shield,
+              size: 18,
+              color: blocked ? danger : ink,
+              accent: blocked ? coral : yellow,
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> moderationMenu() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                leading: const SpotIcon(Glyph.shield, accent: yellow),
+                title: const Text(
+                  'Laporkan akun',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                onTap: () => Navigator.pop(context, 'report'),
+              ),
+              ListTile(
+                leading: SpotIcon(
+                  Glyph.close,
+                  color: blocked ? ink : danger,
+                  accent: blocked ? mint : coral,
+                ),
+                title: Text(
+                  blocked ? 'Buka blokir pengguna' : 'Blokir pengguna',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: blocked ? ink : danger,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, 'block'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || choice == null) return;
+    if (choice == 'report') {
+      await showReportSheet(
+        context,
+        repo,
+        targetType: 'user',
+        targetId: widget.userId,
+        title: 'Laporkan akun',
+      );
+      return;
+    }
+    if (repo.userId == null) {
+      await openAuth(context, repo);
+      if (repo.userId == null || !mounted) return;
+    }
+    final next = !blocked;
+    try {
+      await repo.setBlocked(widget.userId, next);
+      if (!mounted) return;
+      setState(() => blocked = next);
+      message(
+        context,
+        next ? 'Pengguna diblokir.' : 'Blokir pengguna dibuka.',
+      );
+      await load();
+    } catch (e) {
+      if (mounted) message(context, friendlyError(e));
+    }
   }
 
   List<(Glyph, String)> get _tabList => [
