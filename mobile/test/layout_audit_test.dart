@@ -162,6 +162,15 @@ void main() {
         signedIn: false,
       );
     });
+    testWidgets('setup$s', (t) async {
+      await audit(
+        t,
+        'Setup',
+        (_) => SetupScreen(onDemo: () {}),
+        textScale: scale,
+        signedIn: false,
+      );
+    });
     const expected = {
       'Beranda': 'Mau ke mana',
       'Reels': 'Simpan',

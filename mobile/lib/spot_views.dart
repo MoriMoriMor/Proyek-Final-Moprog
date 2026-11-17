@@ -31,6 +31,14 @@ String friendlyError(Object error) {
     }
     return error.message;
   }
+  if (error is PlatformException) {
+    if (error.code == 'camera_access_denied') {
+      return 'Izin kamera ditolak. Aktifkan di pengaturan perangkat.';
+    }
+    if (error.code == 'photo_access_denied') {
+      return 'Izin galeri ditolak. Aktifkan di pengaturan perangkat.';
+    }
+  }
   final text = error.toString();
   if (text.contains('SocketException') || text.contains('ClientException')) {
     return 'Koneksi putus. Cek internetmu.';

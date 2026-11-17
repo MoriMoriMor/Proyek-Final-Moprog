@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -51,6 +50,18 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
   void initState() {
     super.initState();
     findStores();
+    _recoverLostMedia();
+  }
+
+  Future<void> _recoverLostMedia() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      final response = await picker.retrieveLostData();
+      if (!mounted || response.isEmpty) return;
+      final recovered = response.files ??
+          [if (response.file != null) response.file!];
+      if (recovered.isNotEmpty) add(recovered);
+    } catch (_) {}
   }
 
   Future<void> findStores() async {

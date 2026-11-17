@@ -1085,25 +1085,28 @@ class MascotCrew extends StatelessWidget {
   final MascotMood mood;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.end,
-    children: [
-      for (final (i, kind) in kinds.indexed)
-        Rise(
-          index: i,
-          from: 40,
-          child: Transform.translate(
-            offset: Offset(0, i.isEven ? 0 : -size * .12),
-            child: Mascot(
-              kind: kind,
-              size: kind == MascotKind.piko ? size * 1.25 : size,
-              mood: kind == MascotKind.piko ? mood : MascotMood.happy,
-              wave: i == kinds.length ~/ 2,
-              delay: i * .17,
+  Widget build(BuildContext context) => FittedBox(
+    fit: BoxFit.scaleDown,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (final (i, kind) in kinds.indexed)
+          Rise(
+            index: i,
+            from: 40,
+            child: Transform.translate(
+              offset: Offset(0, i.isEven ? 0 : -size * .12),
+              child: Mascot(
+                kind: kind,
+                size: kind == MascotKind.piko ? size * 1.25 : size,
+                mood: kind == MascotKind.piko ? mood : MascotMood.happy,
+                wave: i == kinds.length ~/ 2,
+                delay: i * .17,
+              ),
             ),
           ),
-        ),
-    ],
+      ],
+    ),
   );
 }
