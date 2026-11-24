@@ -256,7 +256,7 @@ class _RoutePageState extends State<RoutePage> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: line, width: 2),
+      border: Border.all(color: line),
       boxShadow: [
         BoxShadow(
           color: ink.withValues(alpha: .16),

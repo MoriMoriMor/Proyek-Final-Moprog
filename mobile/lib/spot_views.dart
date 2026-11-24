@@ -109,10 +109,12 @@ class SpotCard extends StatefulWidget {
     required this.repo,
     required this.onChanged,
     required this.onOpen,
+    this.onReactionChanged,
   });
   final Spot spot;
   final SpotsRepository repo;
   final VoidCallback onChanged, onOpen;
+  final ValueChanged<Spot>? onReactionChanged;
 
   @override
   State<SpotCard> createState() => _SpotCardState();
@@ -150,6 +152,7 @@ class _SpotCardState extends State<SpotCard>
       value: true,
     );
     if (ok && !was) GameState.instance.track('like');
+    if (ok) rememberReactions();
   }
 
   Future<void> toggle(String kind) async {
@@ -161,7 +164,25 @@ class _SpotCardState extends State<SpotCard>
       kind,
     );
     if (ok && !was) GameState.instance.track(kind);
+    if (ok) rememberReactions();
     if (ok && kind == 'save') widget.onChanged();
+  }
+
+  void rememberReactions() {
+    widget.onReactionChanged?.call(
+      widget.spot.copyWith(
+        liked: reactions.liked,
+        saved: reactions.saved,
+        likes: reactions.likes,
+        saves:
+            widget.spot.saves +
+            (reactions.saved == widget.spot.saved
+                ? 0
+                : reactions.saved
+                ? 1
+                : -1),
+      ),
+    );
   }
 
   @override
@@ -176,9 +197,9 @@ class _SpotCardState extends State<SpotCard>
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: line, width: 2),
-          boxShadow: const [BoxShadow(color: line, offset: Offset(0, 5))],
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: line),
+          boxShadow: surfaceShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +213,8 @@ class _SpotCardState extends State<SpotCard>
                     child: SpotGallery(
                       media: spot.media,
                       repo: widget.repo,
-                      height: 330,
+                      height: ((MediaQuery.sizeOf(context).width - 48) * .92)
+                          .clamp(248.0, 360.0),
                     ),
                   ),
                   Positioned(
@@ -495,29 +517,11 @@ class _SpotGalleryState extends State<SpotGallery> {
                       url: url,
                       active: current == index,
                     )
-                  : Image.network(
-                      url,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      frameBuilder: (context, child, frame, sync) =>
-                          AnimatedOpacity(
-                            opacity: frame == null && !sync ? 0 : 1,
-                            duration: const Duration(milliseconds: 300),
-                            child: child,
-                          ),
-                      loadingBuilder: (context, child, progress) =>
-                          progress == null
-                          ? child
-                          : const Shimmer(child: Bone(height: double.infinity)),
-                      errorBuilder: (_, _, _) => const ColoredBox(
+                  : SpotImage(
+                      url: url,
+                      fallback: const ColoredBox(
                         color: pale,
-                        child: Center(
-                          child: Piko(
-                            size: 64,
-                            mood: PikoMood.wow,
-                            bounce: false,
-                          ),
-                        ),
+                        child: Center(child: SpotIcon(Glyph.gallery, size: 36)),
                       ),
                     );
             },
@@ -650,16 +654,20 @@ class SpotVideo extends StatefulWidget {
 
 class _SpotVideoState extends State<SpotVideo> {
   late final VideoPlayerController controller;
-  bool ready = false;
+  late final AppLifecycleListener lifecycle;
+  bool ready = false, failed = false;
   @override
   void initState() {
     super.initState();
+    lifecycle = AppLifecycleListener(onInactive: () => controller.pause());
     controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
       ..initialize()
           .then((_) {
             if (mounted) setState(() => ready = true);
           })
-          .catchError((Object _) {});
+          .catchError((Object _) {
+            if (mounted) setState(() => failed = true);
+          });
     controller.setLooping(true);
     controller.setVolume(0);
   }
@@ -672,6 +680,7 @@ class _SpotVideoState extends State<SpotVideo> {
 
   @override
   void dispose() {
+    lifecycle.dispose();
     controller.dispose();
     super.dispose();
   }
@@ -679,7 +688,9 @@ class _SpotVideoState extends State<SpotVideo> {
   @override
   Widget build(BuildContext context) => Container(
     color: ink,
-    child: ready
+    child: failed
+        ? const VideoUnavailable()
+        : ready
         ? Stack(
             fit: StackFit.expand,
             children: [
@@ -719,8 +730,8 @@ Future<void> openSpot(
 ) => Navigator.push(
   context,
   PageRouteBuilder<void>(
-    transitionDuration: const Duration(milliseconds: 420),
-    reverseTransitionDuration: const Duration(milliseconds: 320),
+    transitionDuration: motionTime(context, motionReveal),
+    reverseTransitionDuration: motionTime(context, motionPage),
     pageBuilder: (_, _, _) =>
         SpotDetail(spot: spot, repo: repo, onChanged: onChanged),
     transitionsBuilder: (context, animation, _, child) {

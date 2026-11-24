@@ -68,7 +68,14 @@ class Spot {
     return (engagement + 1) / math.pow(days + 2, .7);
   }
 
-  Spot copyWith({String? title, String? story}) => Spot(
+  Spot copyWith({
+    String? title,
+    String? story,
+    bool? liked,
+    bool? saved,
+    int? likes,
+    int? saves,
+  }) => Spot(
     id: id,
     ownerId: ownerId,
     author: author,
@@ -79,11 +86,11 @@ class Spot {
     lat: lat,
     lng: lng,
     media: media,
-    likes: likes,
-    saves: saves,
+    likes: likes ?? this.likes,
+    saves: saves ?? this.saves,
     comments: comments,
-    liked: liked,
-    saved: saved,
+    liked: liked ?? this.liked,
+    saved: saved ?? this.saved,
     distanceKm: distanceKm,
     rating: rating,
     storeId: storeId,

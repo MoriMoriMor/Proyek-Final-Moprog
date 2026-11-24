@@ -52,7 +52,7 @@ Future<void> loadFonts() async {
     'Nunito-800.ttf',
     'Nunito-900.ttf',
   ]);
-  await load('Bagel Fat One', ['BagelFatOne-Regular.ttf']);
+  await load(fontDisplay, ['BagelFatOne-Regular.ttf']);
 }
 
 final problems = <String>{};
@@ -125,7 +125,12 @@ Future<void> tapText(WidgetTester t, String text) async {
     problems.add('(audit) tidak menemukan tombol "$text"');
     return;
   }
-  await t.tap(f.last, warnIfMissed: false);
+  final visible = f.hitTestable();
+  if (visible.evaluate().isEmpty) {
+    problems.add('(audit) tombol "$text" tidak terjangkau');
+    return;
+  }
+  await t.tap(visible.first);
 }
 
 void main() {
@@ -137,6 +142,11 @@ void main() {
           (_) async => dir,
         );
     SharedPreferences.setMockInitialValues({'onboarded': true});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('flutter.baseflow.com/geolocator'),
+          (_) async => false,
+        );
     TestWidgetsFlutterBinding.ensureInitialized();
     await loadFonts();
     await GameState.instance.load();
@@ -149,6 +159,7 @@ void main() {
       ..writeAsStringSync(out.join('\n'));
     // ignore: avoid_print
     print('OVERFLOW: ${out.length}\n${out.join('\n')}');
+    expect(problems, isEmpty, reason: 'Masih ada tampilan yang terpotong.');
   });
 
   for (final scale in [1.0, 1.3]) {

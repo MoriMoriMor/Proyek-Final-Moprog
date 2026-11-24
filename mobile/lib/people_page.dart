@@ -267,7 +267,7 @@ class _PeoplePageState extends State<PeoplePage> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: line, width: 2),
+      border: Border.all(color: line),
     ),
     child: UserRow(
       profile: person,

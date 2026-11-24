@@ -100,16 +100,21 @@ class _MascotState extends State<Mascot> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     idle.value = widget.delay % 1;
-    scheduleBlink();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (calm(context) || !widget.bounce) {
+    if (calm(context) ||
+        !widget.bounce ||
+        !TickerMode.valuesOf(context).enabled) {
       idle.stop();
+      blinkTimer?.cancel();
+      blinkTimer = null;
+      blinking = false;
     } else if (!idle.isAnimating) {
       idle.repeat();
+      scheduleBlink();
     }
   }
 
@@ -187,7 +192,9 @@ class _MascotState extends State<Mascot> with TickerProviderStateMixin {
         );
       },
     );
-    final box = SizedBox.square(dimension: widget.size, child: painter);
+    final box = RepaintBoundary(
+      child: SizedBox.square(dimension: widget.size, child: painter),
+    );
     if (!widget.interactive) return ExcludeSemantics(child: box);
     return Semantics(
       label: widget.kind.label,

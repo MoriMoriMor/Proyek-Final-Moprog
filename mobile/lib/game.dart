@@ -697,7 +697,17 @@ class _StreakFlameState extends State<StreakFlame>
   late final controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1600),
-  )..repeat();
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context) || !TickerMode.valuesOf(context).enabled) {
+      controller.stop();
+    } else if (!controller.isAnimating) {
+      controller.repeat();
+    }
+  }
 
   @override
   void dispose() {
@@ -853,8 +863,8 @@ class QuestCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: line, width: 2),
-            boxShadow: const [BoxShadow(color: line, offset: Offset(0, 5))],
+            border: Border.all(color: line),
+            boxShadow: surfaceShadow,
           ),
           child: Row(
             children: [

@@ -179,6 +179,7 @@ class _SpotsShellState extends State<SpotsShell> {
       syncStreak();
       GameState.instance.syncFromServer();
     });
+    unawaited(refresh());
     locate();
     onShareAchievement = shareAchievement;
     GameState.instance.load().then((_) {
@@ -292,7 +293,7 @@ class _SpotsShellState extends State<SpotsShell> {
     } finally {
       if (mounted) setState(() => locating = false);
     }
-    await refresh();
+    await refresh(silent: spots.isNotEmpty);
   }
 
   Future<void> refresh({bool silent = false}) async {
@@ -413,14 +414,37 @@ class _SpotsShellState extends State<SpotsShell> {
   void open(Spot spot) =>
       openSpot(context, spot, repo, () => refresh(silent: true));
 
+  void rememberReaction(Spot updated) {
+    if (!mounted) return;
+    setState(() {
+      spots = [
+        for (final spot in spots) spot.id == updated.id ? updated : spot,
+      ];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final wide = width >= 900;
     final page = AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
+      duration: motionTime(context, motionPage),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (current, previous) => Stack(
+        fit: StackFit.expand,
+        children: [
+          for (final child in previous)
+            ExcludeSemantics(
+              child: ExcludeFocus(
+                child: IgnorePointer(
+                  child: TickerMode(enabled: false, child: child),
+                ),
+              ),
+            ),
+          ?current,
+        ],
+      ),
       transitionBuilder: (child, animation) => FadeTransition(
         opacity: animation,
         child: SlideTransition(
@@ -431,7 +455,13 @@ class _SpotsShellState extends State<SpotsShell> {
           child: child,
         ),
       ),
-      child: KeyedSubtree(key: ValueKey(tab), child: _content(wide)),
+      child: KeyedSubtree(
+        key: ValueKey(tab),
+        child: TickerMode(
+          enabled: TickerMode.valuesOf(context).enabled,
+          child: _content(wide),
+        ),
+      ),
     );
     if (wide) {
       return Scaffold(
@@ -482,6 +512,8 @@ class _SpotsShellState extends State<SpotsShell> {
       onRefresh: refresh,
       edgeOffset: top,
       child: CustomScrollView(
+        key: PageStorageKey('feed-$explore'),
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Center(
@@ -497,13 +529,6 @@ class _SpotsShellState extends State<SpotsShell> {
                       _topBar(wide),
                       _greeting(),
                       _stories(),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                        child: Rise(
-                          index: 1,
-                          child: QuestCard(onTap: () => openQuests(context)),
-                        ),
-                      ),
                     ],
                     const SizedBox(height: 18),
                     CategoryRow(selected: category, onSelected: chooseCategory),
@@ -547,76 +572,59 @@ class _SpotsShellState extends State<SpotsShell> {
               ),
             )
           else
-            SliverToBoxAdapter(child: _cards(spots, wide)),
+            _cards(spots, wide),
           const SliverToBoxAdapter(child: SizedBox(height: 130)),
         ],
       ),
     );
-    return Stack(
-      children: [
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          height: 460,
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: explore
-                      ? const [Color(0xFFFFEFC9), pale]
-                      : const [Color(0xFFD5E2FF), pale],
-                ),
-              ),
+    return SpotsBackdrop(market: explore, child: feed);
+  }
+
+  Widget _cards(List<Spot> items, bool wide) => SliverLayoutBuilder(
+    builder: (context, constraints) {
+      final columns = wide && constraints.crossAxisExtent >= 940 ? 2 : 1;
+      final contentWidth = math.min(
+        constraints.crossAxisExtent,
+        columns == 2 ? 1100.0 : 600.0,
+      );
+      final inset = (constraints.crossAxisExtent - contentWidth) / 2 + 16;
+      return SliverPadding(
+        padding: EdgeInsets.symmetric(horizontal: inset),
+        sliver: SliverList.builder(
+          itemCount: (items.length / columns).ceil(),
+          itemBuilder: (context, row) => Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var column = 0; column < columns; column++) ...[
+                  if (column > 0) const SizedBox(width: 20),
+                  Expanded(
+                    child: row * columns + column >= items.length
+                        ? const SizedBox()
+                        : RepaintBoundary(
+                            child: Rise(
+                              index: row,
+                              child: SpotCard(
+                                key: ValueKey(items[row * columns + column].id),
+                                spot: items[row * columns + column],
+                                repo: repo,
+                                onReactionChanged: rememberReaction,
+                                onChanged: () => refresh(silent: true),
+                                onOpen: () =>
+                                    open(items[row * columns + column]),
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),
-        feed,
-      ],
-    );
-  }
-
-  Widget _cards(List<Spot> items, bool wide) {
-    Widget card(int i) => Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Rise(
-        index: i,
-        child: SpotCard(
-          key: ValueKey(items[i].id),
-          spot: items[i],
-          repo: repo,
-          onChanged: () => refresh(silent: true),
-          onOpen: () => open(items[i]),
-        ),
-      ),
-    );
-    final columns = wide && MediaQuery.sizeOf(context).width >= 1180 ? 2 : 1;
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: columns == 2 ? 1100 : 560),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var c = 0; c < columns; c++) ...[
-                if (c > 0) const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    children: [
-                      for (var i = c; i < items.length; i += columns) card(i),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+      );
+    },
+  );
 
   Widget _skeleton(bool wide) => Center(
     child: ConstrainedBox(
@@ -719,7 +727,36 @@ class _SpotsShellState extends State<SpotsShell> {
                 const SizedBox(height: 2),
                 Text(
                   'Mau ke mana\nhari ini?',
-                  style: display(30, height: 1.02),
+                  style: display(34, height: 1.08),
+                ),
+                const SizedBox(height: 12),
+                Bouncy(
+                  onTap: () => chooseTab(2),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SpotIcon(Glyph.pin, size: 18, color: blue, tint: false),
+                        SizedBox(width: 6),
+                        Text(
+                          'Buka peta sekitar',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            color: blue,
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        SpotIcon(
+                          Glyph.route,
+                          size: 16,
+                          color: blue,
+                          tint: false,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -824,7 +861,7 @@ class _SpotsShellState extends State<SpotsShell> {
           ),
         ),
         SizedBox(
-          height: 112,
+          height: 128 * MediaQuery.textScalerOf(context).scale(1),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
@@ -847,6 +884,10 @@ class _SpotsShellState extends State<SpotsShell> {
           ),
         ),
       ],
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+        child: QuestCard(onTap: () => openQuests(context)),
+      ),
     ];
   }
 
@@ -1172,7 +1213,7 @@ class _LocationChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: line, width: 2),
+          border: Border.all(color: line),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1211,7 +1252,27 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
   late final controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1600),
-  )..repeat();
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    syncMotion();
+  }
+
+  @override
+  void didUpdateWidget(_Pulse old) {
+    super.didUpdateWidget(old);
+    syncMotion();
+  }
+
+  void syncMotion() {
+    if (!widget.on || calm(context) || !TickerMode.valuesOf(context).enabled) {
+      controller.stop();
+    } else if (!controller.isAnimating) {
+      controller.repeat();
+    }
+  }
 
   @override
   void dispose() {
@@ -1265,7 +1326,7 @@ class _TwinkleState extends State<_Twinkle>
   late final controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 2400),
-  )..repeat();
+  );
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -1287,6 +1348,16 @@ class _TwinkleState extends State<_Twinkle>
       );
     },
   );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context) || !TickerMode.valuesOf(context).enabled) {
+      controller.stop();
+    } else if (!controller.isAnimating) {
+      controller.repeat();
+    }
+  }
 
   @override
   void dispose() {
@@ -1315,13 +1386,13 @@ class _FloatingNav extends StatelessWidget {
   Widget build(BuildContext context) => SafeArea(
     minimum: const EdgeInsets.fromLTRB(14, 0, 14, 12),
     child: AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      height: 74,
+      duration: motionTime(context, motionPage),
+      height: 76,
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
-        color: dark ? const Color(0xF0141B3D) : Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: dark ? Colors.white12 : line, width: 2),
+        color: dark ? ink : Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: dark ? Colors.white12 : line),
         boxShadow: [
           BoxShadow(
             color: ink.withValues(alpha: .12),
@@ -1347,9 +1418,9 @@ class _FloatingNav extends StatelessWidget {
               message: 'Bagikan spot',
               child: Chunky(
                 onTap: onCreate,
-                color: coral,
-                radius: 22,
-                depth: 5,
+                color: piko,
+                radius: 20,
+                depth: 3,
                 label: 'Bagikan spot',
                 padding: const EdgeInsets.all(13),
                 child: const SpotIcon(
@@ -1398,21 +1469,18 @@ class _NavItem extends StatelessWidget {
         message: item.label,
         child: Bouncy(
           onTap: onTap,
-          scale: .82,
+          scale: .94,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TweenAnimationBuilder<double>(
                 key: ValueKey(active),
                 tween: Tween(begin: active ? 0 : 1, end: 1),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.elasticOut,
-                builder: (_, v, child) => Transform.rotate(
-                  angle: active ? (1 - v) * .5 : 0,
-                  child: Transform.scale(
-                    scale: active ? .7 + v * .3 : 1,
-                    child: child,
-                  ),
+                duration: motionTime(context, motionPage),
+                curve: motionCurve,
+                builder: (_, v, child) => Transform.scale(
+                  scale: active ? .92 + v * .08 : 1,
+                  child: child,
                 ),
                 child: SpotIcon(
                   item.glyph,
@@ -1422,19 +1490,15 @@ class _NavItem extends StatelessWidget {
                   tint: active,
                 ),
               ),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 3),
-                  child: Text(
-                    item.label,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11.5,
-                      color: active ? on : idle,
-                    ),
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11.5,
+                    color: active ? on : idle,
                   ),
                 ),
               ),
@@ -1592,7 +1656,7 @@ class _RoundButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: line, width: 2),
+            border: Border.all(color: line),
           ),
           child: SpotIcon(glyph, size: 22, accent: accent),
         ),
@@ -1615,11 +1679,9 @@ class _Cover extends StatelessWidget {
         media.type == 'video') {
       return DemoCover(seed: media?.path ?? 'demo:${spot.category}:${spot.id}');
     }
-    return Image.network(
-      repo.publicMediaUrl(media.path),
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) =>
-          DemoCover(seed: 'demo:${spot.category}:${spot.id}'),
+    return SpotImage(
+      url: repo.publicMediaUrl(media.path),
+      fallback: DemoCover(seed: 'demo:${spot.category}:${spot.id}'),
     );
   }
 }
@@ -1709,7 +1771,7 @@ class _ViralCard extends StatelessWidget {
       width: 172,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        boxShadow: const [BoxShadow(color: line, offset: Offset(0, 5))],
+        boxShadow: surfaceShadow,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
@@ -1727,45 +1789,19 @@ class _ViralCard extends StatelessWidget {
               ),
             ),
             Positioned(
-              left: 10,
-              top: 6,
-              child: Text(
-                '#$rank',
-                style: display(38, color: Colors.white).copyWith(
-                  shadows: const [Shadow(color: ink, offset: Offset(2, 3))],
+              left: 12,
+              top: 12,
+              child: Pill(
+                color: ink.withValues(alpha: .65),
+                child: Text(
+                  '#$rank',
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ),
-            if (rank == 1)
-              Positioned(
-                right: 10,
-                top: 14,
-                child: Transform.rotate(
-                  angle: .12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: yellow,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: ink, width: 2),
-                    ),
-                    child: const Text(
-                      'HOT',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        color: ink,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             Positioned(
               right: 10,
-              top: 54,
+              top: 12,
               child: Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
@@ -1846,7 +1882,17 @@ class _MeDotState extends State<_MeDot> with SingleTickerProviderStateMixin {
   late final controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1800),
-  )..repeat();
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context) || !TickerMode.valuesOf(context).enabled) {
+      controller.stop();
+    } else if (!controller.isAnimating) {
+      controller.repeat();
+    }
+  }
 
   @override
   void dispose() {
@@ -1903,15 +1949,21 @@ class _MapPin extends StatefulWidget {
 class _MapPinState extends State<_MapPin> with SingleTickerProviderStateMixin {
   late final controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 700),
+    duration: motionReveal,
   );
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(milliseconds: 60 * math.min(widget.index, 12)), () {
+    Future.delayed(Duration(milliseconds: 30 * math.min(widget.index, 4)), () {
       if (mounted) controller.forward();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context)) controller.value = 1;
   }
 
   @override
@@ -1933,33 +1985,32 @@ class _MapPinState extends State<_MapPin> with SingleTickerProviderStateMixin {
           builder: (context, child) => Transform.scale(
             alignment: Alignment.bottomCenter,
             scale:
-                Curves.elasticOut.transform(controller.value) *
-                (widget.active ? 1.18 : 1),
+                (.86 + motionCurve.transform(controller.value) * .14) *
+                (widget.active ? 1.1 : 1),
             child: child,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
+                duration: motionTime(context, motionPage),
                 width: 48,
                 height: 48,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: widget.active ? category.color : Colors.white,
+                  color: widget.active ? blue : Colors.white,
                   borderRadius: BorderRadius.circular(17),
-                  border: Border.all(color: ink, width: 2.4),
-                  boxShadow: const [
-                    BoxShadow(color: ink, offset: Offset(0, 4)),
-                  ],
+                  border: Border.all(
+                    color: widget.active ? ink : line,
+                    width: 2,
+                  ),
+                  boxShadow: surfaceShadow,
                 ),
                 child: SpotIcon(
                   category.glyph,
                   size: 28,
                   color: widget.active ? Colors.white : ink,
-                  accent: widget.active
-                      ? edgeOf(category.color)
-                      : category.color,
+                  accent: widget.active ? yellow : category.color,
                 ),
               ),
               CustomPaint(size: const Size(14, 10), painter: _Tail()),
@@ -2006,7 +2057,7 @@ class _MiniCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: line, width: 2),
+        border: Border.all(color: line),
         boxShadow: [
           BoxShadow(
             color: ink.withValues(alpha: .14),

@@ -7,6 +7,18 @@ import 'theme.dart';
 
 bool calm(BuildContext context) => MediaQuery.disableAnimationsOf(context);
 
+const motionQuick = Duration(milliseconds: 140);
+const motionPage = Duration(milliseconds: 280);
+const motionReveal = Duration(milliseconds: 380);
+const motionCurve = Cubic(.2, 0, 0, 1);
+const activationKeys = <ShortcutActivator, Intent>{
+  SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+  SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+};
+
+Duration motionTime(BuildContext context, Duration duration) =>
+    calm(context) ? Duration.zero : duration;
+
 /// Tombol tebal dengan tepi bawah. Saat ditekan, mukanya turun menutup tepi.
 class Chunky extends StatefulWidget {
   const Chunky({
@@ -16,7 +28,7 @@ class Chunky extends StatefulWidget {
     this.color = piko,
     this.edge,
     this.radius = 20,
-    this.depth = 5,
+    this.depth = 3,
     this.padding = const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
     this.expand = false,
     this.label,
@@ -39,6 +51,7 @@ class Chunky extends StatefulWidget {
 
 class _ChunkyState extends State<Chunky> {
   bool down = false;
+  bool focused = false;
 
   void set(bool value) {
     if (widget.onTap != null && down != value) setState(() => down = value);
@@ -53,62 +66,90 @@ class _ChunkyState extends State<Chunky> {
         : const Color(0xFFC3C8D9);
     final radius = BorderRadius.circular(widget.radius);
     final shift = down ? widget.depth : 0.0;
-    return Semantics(
-      button: true,
+    return FocusableActionDetector(
       enabled: enabled,
-      label: widget.label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => set(true),
-        onTapCancel: () => set(false),
-        onTapUp: (_) => set(false),
-        onTap: enabled
-            ? () {
-                HapticFeedback.lightImpact();
-                widget.onTap!();
-              }
-            : null,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              top: widget.depth,
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: edge, borderRadius: radius),
-              ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 70),
-              curve: Curves.easeOut,
-              width: widget.expand ? double.infinity : null,
-              margin: EdgeInsets.only(bottom: widget.depth),
-              transform: Matrix4.translationValues(0, shift, 0),
-              padding: widget.padding,
-              decoration: BoxDecoration(
-                color: face,
-                borderRadius: radius,
-                border: widget.border == null
-                    ? null
-                    : Border.all(color: widget.border!, width: 2),
-              ),
-              child: DefaultTextStyle.merge(
-                style: TextStyle(
-                  color: enabled ? Colors.white : muted,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  letterSpacing: .2,
+      includeFocusSemantics: false,
+      shortcuts: activationKeys,
+      mouseCursor: enabled
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      onShowFocusHighlight: (value) => setState(() => focused = value),
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) {
+            widget.onTap?.call();
+            return null;
+          },
+        ),
+      },
+      child: Semantics(
+        button: true,
+        enabled: enabled,
+        focusable: enabled,
+        focused: focused,
+        label: widget.label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => set(true),
+          onTapCancel: () => set(false),
+          onTapUp: (_) => set(false),
+          onTap: enabled
+              ? () {
+                  HapticFeedback.lightImpact();
+                  widget.onTap!();
+                }
+              : null,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                top: widget.depth,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: edge, borderRadius: radius),
                 ),
-                textAlign: TextAlign.center,
-                child: IconTheme.merge(
-                  data: IconThemeData(color: enabled ? Colors.white : muted),
-                  child: Center(
-                    widthFactor: widget.expand ? null : 1,
-                    heightFactor: 1,
-                    child: widget.child,
+              ),
+              AnimatedContainer(
+                duration: motionTime(context, motionQuick),
+                curve: Curves.easeOut,
+                width: widget.expand ? double.infinity : null,
+                margin: EdgeInsets.only(bottom: widget.depth),
+                transform: Matrix4.translationValues(0, shift, 0),
+                padding: widget.padding,
+                foregroundDecoration: BoxDecoration(
+                  borderRadius: radius,
+                  border: focused ? Border.all(color: ink, width: 2) : null,
+                ),
+                decoration: BoxDecoration(
+                  color: face,
+                  gradient: enabled && widget.color == piko
+                      ? brandGradient
+                      : null,
+                  borderRadius: radius,
+                  border: widget.border == null
+                      ? null
+                      : Border.all(color: widget.border!, width: 2),
+                ),
+                child: DefaultTextStyle.merge(
+                  style: TextStyle(
+                    color: enabled ? foregroundOn(face) : muted,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    letterSpacing: .2,
+                  ),
+                  textAlign: TextAlign.center,
+                  child: IconTheme.merge(
+                    data: IconThemeData(
+                      color: enabled ? foregroundOn(face) : muted,
+                    ),
+                    child: Center(
+                      widthFactor: widget.expand ? null : 1,
+                      heightFactor: 1,
+                      child: widget.child,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -135,27 +176,68 @@ class Bouncy extends StatefulWidget {
 
 class _BouncyState extends State<Bouncy> {
   bool down = false;
+  bool focused = false;
+  bool hovered = false;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTapDown: (_) => setState(() => down = true),
-    onTapCancel: () => setState(() => down = false),
-    onTapUp: (_) => setState(() => down = false),
-    onTap: widget.onTap,
-    onDoubleTap: widget.onDoubleTap,
-    child: AnimatedScale(
-      scale: down ? widget.scale : 1,
-      duration: Duration(milliseconds: down ? 90 : 420),
-      curve: down ? Curves.easeOut : Curves.elasticOut,
-      child: widget.child,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null || widget.onDoubleTap != null;
+    return FocusableActionDetector(
+      enabled: enabled,
+      includeFocusSemantics: false,
+      shortcuts: activationKeys,
+      mouseCursor: enabled
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      onShowFocusHighlight: (value) => setState(() => focused = value),
+      onShowHoverHighlight: (value) => setState(() => hovered = value),
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) {
+            widget.onTap?.call();
+            return null;
+          },
+        ),
+      },
+      child: Semantics(
+        button: enabled ? true : null,
+        focusable: enabled,
+        focused: focused,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: enabled ? (_) => setState(() => down = true) : null,
+          onTapCancel: enabled ? () => setState(() => down = false) : null,
+          onTapUp: enabled ? (_) => setState(() => down = false) : null,
+          onTap: widget.onTap,
+          onDoubleTap: widget.onDoubleTap,
+          child: AnimatedScale(
+            scale: calm(context)
+                ? 1
+                : down
+                ? widget.scale
+                : hovered
+                ? 1.015
+                : 1,
+            duration: motionTime(context, down ? motionQuick : motionPage),
+            curve: down ? Curves.easeOut : motionCurve,
+            child: DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: focused ? Border.all(color: blue, width: 2) : null,
+              ),
+              child: widget.child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Muncul dari bawah dengan sedikit pantulan, bergiliran sesuai [index].
 class Rise extends StatefulWidget {
-  const Rise({super.key, required this.child, this.index = 0, this.from = 28});
+  const Rise({super.key, required this.child, this.index = 0, this.from = 16});
   final Widget child;
   final int index;
   final double from;
@@ -167,17 +249,14 @@ class Rise extends StatefulWidget {
 class _RiseState extends State<Rise> with SingleTickerProviderStateMixin {
   late final controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 620),
+    duration: motionReveal,
   );
-  late final curve = CurvedAnimation(
-    parent: controller,
-    curve: Curves.easeOutBack,
-  );
+  late final curve = CurvedAnimation(parent: controller, curve: motionCurve);
 
   @override
   void initState() {
     super.initState();
-    final delay = Duration(milliseconds: 55 * math.min(widget.index, 8));
+    final delay = Duration(milliseconds: 35 * math.min(widget.index, 4));
     Future.delayed(delay, () {
       if (mounted) controller.forward();
     });
@@ -199,11 +278,14 @@ class _RiseState extends State<Rise> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: curve,
     child: widget.child,
-    builder: (context, child) => Opacity(
-      opacity: controller.value.clamp(0, 1),
-      child: Transform.translate(
-        offset: Offset(0, (1 - curve.value) * widget.from),
-        child: child,
+    builder: (context, child) => IgnorePointer(
+      ignoring: controller.value < .15,
+      child: Opacity(
+        opacity: controller.value.clamp(0, 1),
+        child: Transform.translate(
+          offset: Offset(0, (1 - curve.value) * widget.from),
+          child: child,
+        ),
       ),
     ),
   );
@@ -221,7 +303,17 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
   late final controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1300),
-  )..repeat();
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context) || !TickerMode.valuesOf(context).enabled) {
+      controller.stop();
+    } else if (!controller.isAnimating) {
+      controller.repeat();
+    }
+  }
 
   @override
   void dispose() {
@@ -406,6 +498,13 @@ class _ConfettiState extends State<Confetti>
     vsync: this,
     duration: const Duration(milliseconds: 2600),
   )..forward();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context)) controller.value = 1;
+  }
+
   final random = math.Random(7);
   late final pieces = List.generate(
     46,

@@ -58,8 +58,8 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
     try {
       final response = await picker.retrieveLostData();
       if (!mounted || response.isEmpty) return;
-      final recovered = response.files ??
-          [if (response.file != null) response.file!];
+      final recovered =
+          response.files ?? [if (response.file != null) response.file!];
       if (recovered.isNotEmpty) add(recovered);
     } catch (_) {}
   }
@@ -503,7 +503,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: line, width: 2),
+        border: Border.all(color: line),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -663,7 +663,7 @@ class _Thumb extends StatelessWidget {
             color: ink,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white, width: 3),
-            boxShadow: const [BoxShadow(color: line, offset: Offset(0, 4))],
+            boxShadow: surfaceShadow,
           ),
           clipBehavior: Clip.antiAlias,
           child: bytes == null

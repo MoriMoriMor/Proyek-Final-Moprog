@@ -42,7 +42,7 @@ class _WelcomePageState extends State<WelcomePage>
   late final float = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 6),
-  )..repeat();
+  );
   Timer? auto;
   int index = 0;
   bool busy = false;
@@ -72,17 +72,31 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   void initState() {
     super.initState();
-    auto = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!pages.hasClients) return;
-      pages.animateToPage(
-        (index + 1) % slides.length,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOutCubic,
-      );
-    });
     // Masuk lewat Google kembali ke aplikasi; tutup halaman ini begitu ada akun.
     auth = widget.repo.authChanges.listen((_) {
       if (widget.repo.userId != null && mounted) widget.onDone();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    auto?.cancel();
+    if (calm(context) || !TickerMode.valuesOf(context).enabled) {
+      float.stop();
+      return;
+    }
+    if (!float.isAnimating) float.repeat();
+    auto = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (!pages.hasClients ||
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.paused) {
+        return;
+      }
+      pages.animateToPage(
+        (index + 1) % slides.length,
+        duration: motionReveal,
+        curve: motionCurve,
+      );
     });
   }
 

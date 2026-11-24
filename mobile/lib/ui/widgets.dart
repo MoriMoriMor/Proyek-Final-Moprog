@@ -10,7 +10,7 @@ import 'theme.dart';
 
 /// Label kategori berbentuk stiker yang sedikit miring.
 class CategorySticker extends StatelessWidget {
-  const CategorySticker(this.category, {super.key, this.tilt = -.05});
+  const CategorySticker(this.category, {super.key, this.tilt = -.025});
   final SpotCategory category;
   final double tilt;
 
@@ -20,10 +20,10 @@ class CategorySticker extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.fromLTRB(7, 5, 11, 5),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: .96),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ink, width: 2),
-        boxShadow: const [BoxShadow(color: ink, offset: Offset(2, 3))],
+        border: Border.all(color: line),
+        boxShadow: surfaceShadow,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -101,22 +101,15 @@ class _CategoryChip extends StatelessWidget {
     child: Bouncy(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOutBack,
-        padding: const EdgeInsets.fromLTRB(10, 9, 15, 9),
+        duration: motionTime(context, motionPage),
+        curve: motionCurve,
+        padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
         decoration: BoxDecoration(
-          color: active ? item.color : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: active ? edgeOf(item.color) : line,
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: active ? edgeOf(item.color) : line,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: active ? blue : Colors.white.withValues(alpha: .88),
+          gradient: active ? brandGradient : null,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: active ? blue : line),
+          boxShadow: active ? surfaceShadow : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -125,13 +118,13 @@ class _CategoryChip extends StatelessWidget {
               item.glyph,
               size: 22,
               color: active ? Colors.white : ink,
-              accent: active ? edgeOf(item.color) : item.color,
+              accent: active ? yellow : item.color,
             ),
             const SizedBox(width: 6),
             Text(
               item.label,
               style: TextStyle(
-                fontWeight: FontWeight.w900,
+                fontWeight: active ? FontWeight.w900 : FontWeight.w800,
                 fontSize: 14,
                 color: active ? Colors.white : ink,
               ),
@@ -170,6 +163,129 @@ class CategoryHint extends StatelessWidget {
 /// Gambar yang hanya ada di memori (dipakai mode demo), dengan kunci `mem:...`.
 final memoryImages = <String, Uint8List>{};
 
+/// Ukuran foto tetap selama dimuat, dengan resolusi sesuai layar.
+class SpotImage extends StatelessWidget {
+  const SpotImage({
+    super.key,
+    required this.url,
+    required this.fallback,
+    this.fit = BoxFit.cover,
+  });
+  final String url;
+  final Widget fallback;
+  final BoxFit fit;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final width = constraints.hasBoundedWidth ? constraints.maxWidth : 640.0;
+      final decodeWidth = (width * MediaQuery.devicePixelRatioOf(context))
+          .round()
+          .clamp(64, 1600);
+      return Image.network(
+        url,
+        width: double.infinity,
+        height: double.infinity,
+        cacheWidth: decodeWidth,
+        fit: fit,
+        gaplessPlayback: true,
+        frameBuilder: (context, child, frame, synchronous) {
+          if (synchronous) return child;
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: pale),
+              AnimatedOpacity(
+                opacity: frame == null ? 0 : 1,
+                duration: motionTime(context, motionPage),
+                curve: motionCurve,
+                child: child,
+              ),
+            ],
+          );
+        },
+        errorBuilder: (_, _, _) => fallback,
+      );
+    },
+  );
+}
+
+class VideoUnavailable extends StatelessWidget {
+  const VideoUnavailable({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SpotIcon(Glyph.video, color: Colors.white, size: 32, tint: false),
+        SizedBox(height: 12),
+        Text(
+          'Video tidak tersedia',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Latar berwarna yang dicat terpisah dari konten.
+class SpotsBackdrop extends StatelessWidget {
+  const SpotsBackdrop({super.key, required this.child, this.market = false});
+  final Widget child;
+  final bool market;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    children: [
+      Positioned.fill(
+        child: ExcludeSemantics(
+          child: RepaintBoundary(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: .72, end: 1),
+              duration: motionTime(context, const Duration(milliseconds: 900)),
+              curve: motionCurve,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: market ? marketGradient : discoveryGradient,
+                ),
+                child: CustomPaint(painter: _BackdropLines(market)),
+              ),
+              builder: (_, value, child) =>
+                  Opacity(opacity: value, child: child),
+            ),
+          ),
+        ),
+      ),
+      child,
+    ],
+  );
+}
+
+class _BackdropLines extends CustomPainter {
+  const _BackdropLines(this.market);
+  final bool market;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * .94, 120);
+    final paint = Paint()
+      ..color = (market ? coral : blue).withValues(alpha: .07)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    for (final radius in [100.0, 170.0, 240.0]) {
+      canvas.drawCircle(center, radius, paint);
+    }
+    final path = Path()
+      ..moveTo(size.width * .6, 0)
+      ..cubicTo(size.width * .4, 160, size.width, 140, size.width * .8, 360);
+    canvas.drawPath(path, paint..strokeWidth = 1.5);
+  }
+
+  @override
+  bool shouldRepaint(_BackdropLines old) => old.market != market;
+}
+
 class Avatar extends StatelessWidget {
   const Avatar(
     this.name, {
@@ -195,10 +311,11 @@ class Avatar extends StatelessWidget {
     final tone = _tones[name.hashCode.abs() % _tones.length];
     final radius = BorderRadius.circular(size * .38);
     final source = url;
-    Widget face = Text(
+    final initials = Text(
       letter,
       style: display(size * .46, color: Colors.white, height: 1),
     );
+    Widget face = initials;
     if (source != null && source.isNotEmpty) {
       final bytes = memoryImages[source];
       face = ClipRRect(
@@ -210,7 +327,9 @@ class Avatar extends StatelessWidget {
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Center(child: face),
+                cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                    .round(),
+                errorBuilder: (_, _, _) => Center(child: initials),
               ),
       );
     }
@@ -395,10 +514,15 @@ class SectionTitle extends StatelessWidget {
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
+    padding: const EdgeInsets.fromLTRB(20, 28, 20, 14),
     child: Row(
       children: [
-        Expanded(child: Text(text, style: display(26))),
+        Expanded(
+          child: Text(
+            text,
+            style: title.copyWith(fontSize: 22, letterSpacing: -.6),
+          ),
+        ),
         ?trailing,
       ],
     ),

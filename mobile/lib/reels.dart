@@ -133,13 +133,15 @@ class _ReelsViewState extends State<ReelsView> {
             child: StreakChip(dark: true, onTap: () => openQuests(context)),
           ),
           IgnorePointer(
-            child: AnimatedOpacity(
-              opacity: hint ? 1 : 0,
-              duration: const Duration(milliseconds: 400),
-              child: const Align(
-                alignment: Alignment(0, .25),
-                child: _SwipeHint(),
-              ),
+            child: AnimatedSwitcher(
+              duration: motionTime(context, motionPage),
+              child: hint
+                  ? const Align(
+                      key: ValueKey('petunjuk'),
+                      alignment: Alignment(0, .25),
+                      child: _SwipeHint(),
+                    )
+                  : const SizedBox.expand(key: ValueKey('selesai')),
             ),
           ),
         ],
@@ -159,7 +161,17 @@ class _SwipeHintState extends State<_SwipeHint>
   late final controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context)) {
+      controller.stop();
+    } else if (!controller.isAnimating) {
+      controller.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {
@@ -180,7 +192,7 @@ class _SwipeHintState extends State<_SwipeHint>
         AnimatedBuilder(
           animation: controller,
           builder: (_, child) => Transform.translate(
-            offset: Offset(0, 10 - controller.value * 20),
+            offset: Offset(0, calm(context) ? 0 : 10 - controller.value * 20),
             child: child,
           ),
           child: Transform.rotate(
@@ -243,13 +255,22 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
     progress.addStatusListener((status) {
       if (status == AnimationStatus.completed) next(loop: true);
     });
-    if (widget.active) progress.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context) || !widget.active || paused) {
+      progress.stop();
+    } else {
+      progress.forward();
+    }
   }
 
   @override
   void didUpdateWidget(ReelPage old) {
     super.didUpdateWidget(old);
-    if (widget.active && !old.active) {
+    if (widget.active && !old.active && !calm(context)) {
       progress.forward(from: 0);
     } else if (!widget.active && old.active) {
       progress.stop();
@@ -266,12 +287,14 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
 
   void next({bool loop = false}) {
     setState(() => index = index + 1 < count ? index + 1 : (loop ? 0 : index));
-    progress.forward(from: 0);
+    progress.reset();
+    if (!calm(context)) progress.forward();
   }
 
   void previous() {
     setState(() => index = index > 0 ? index - 1 : 0);
-    progress.forward(from: 0);
+    progress.reset();
+    if (!calm(context)) progress.forward();
   }
 
   Future<void> like({bool fromDoubleTap = false}) async {
@@ -319,7 +342,7 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
       },
       onLongPressEnd: (_) {
         setState(() => paused = false);
-        progress.forward();
+        if (!calm(context)) progress.forward();
       },
       onTapUp: (details) {
         final width = context.size?.width ?? 1;
@@ -329,7 +352,7 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
         fit: StackFit.expand,
         children: [
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 350),
+            duration: motionTime(context, motionPage),
             child: KeyedSubtree(
               key: ValueKey('${spot.id}-$index'),
               child: media == null || media.path.startsWith('demo:')
@@ -346,11 +369,11 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
                     )
                   : _KenBurns(
                       active: widget.active && !paused,
-                      child: Image.network(
-                        widget.repo.publicMediaUrl(media.path),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            DemoCover(seed: 'demo:${spot.category}:${spot.id}'),
+                      child: SpotImage(
+                        url: widget.repo.publicMediaUrl(media.path),
+                        fallback: DemoCover(
+                          seed: 'demo:${spot.category}:${spot.id}',
+                        ),
                       ),
                     ),
             ),
@@ -609,7 +632,13 @@ class _ShopPillState extends State<_ShopPill>
   late final controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
-  )..repeat();
+  )..forward();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context)) controller.value = 1;
+  }
 
   @override
   void dispose() {
@@ -723,15 +752,19 @@ class _KenBurnsState extends State<_KenBurns>
   );
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.active) controller.forward();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context) || !widget.active) {
+      controller.stop();
+    } else {
+      controller.forward();
+    }
   }
 
   @override
   void didUpdateWidget(_KenBurns old) {
     super.didUpdateWidget(old);
-    widget.active ? controller.forward() : controller.stop();
+    widget.active && !calm(context) ? controller.forward() : controller.stop();
   }
 
   @override
@@ -746,7 +779,9 @@ class _KenBurnsState extends State<_KenBurns>
       animation: controller,
       child: SizedBox.expand(child: widget.child),
       builder: (_, child) => Transform.scale(
-        scale: 1 + Curves.easeOut.transform(controller.value) * .14,
+        scale: calm(context)
+            ? 1
+            : 1 + Curves.easeOut.transform(controller.value) * .06,
         alignment: const Alignment(.2, -.1),
         child: child,
       ),
@@ -764,11 +799,18 @@ class _ReelVideo extends StatefulWidget {
 
 class _ReelVideoState extends State<_ReelVideo> {
   late final VideoPlayerController controller;
-  bool ready = false;
+  late final AppLifecycleListener lifecycle;
+  bool ready = false, failed = false, visible = true, foreground = true;
 
   @override
   void initState() {
     super.initState();
+    lifecycle = AppLifecycleListener(
+      onStateChange: (state) {
+        foreground = state == AppLifecycleState.resumed;
+        syncPlayback();
+      },
+    );
     controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
     unawaited(
       controller
@@ -778,21 +820,37 @@ class _ReelVideoState extends State<_ReelVideo> {
             await controller.setVolume(0);
             if (!mounted) return;
             setState(() => ready = true);
-            if (widget.playing) await controller.play();
+            syncPlayback();
           })
-          .catchError((Object _) {}),
+          .catchError((Object _) {
+            if (mounted) setState(() => failed = true);
+          }),
     );
   }
 
   @override
   void didUpdateWidget(_ReelVideo old) {
     super.didUpdateWidget(old);
+    syncPlayback();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    visible = TickerMode.valuesOf(context).enabled;
+    syncPlayback();
+  }
+
+  void syncPlayback() {
     if (!ready) return;
-    widget.playing ? controller.play() : controller.pause();
+    widget.playing && visible && foreground
+        ? controller.play()
+        : controller.pause();
   }
 
   @override
   void dispose() {
+    lifecycle.dispose();
     controller.dispose();
     super.dispose();
   }
@@ -800,7 +858,9 @@ class _ReelVideoState extends State<_ReelVideo> {
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: Colors.black,
-    child: ready
+    child: failed
+        ? const VideoUnavailable()
+        : ready
         ? FittedBox(
             fit: BoxFit.cover,
             child: SizedBox(

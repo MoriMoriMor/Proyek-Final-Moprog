@@ -6,7 +6,7 @@ import 'spot_icons.dart';
 // Warna inti Spots. Biru, coral, dan kuning diambil dari logo.
 const ink = Color(0xFF192553);
 const blue = Color(0xFF4056BD);
-const piko = Color(0xFF416CF4);
+const piko = Color(0xFF4068EC);
 const pale = Color(0xFFF3F5FC);
 const coral = Color(0xFFF27B8E);
 const yellow = Color(0xFFF4C65F);
@@ -23,6 +23,34 @@ Color edgeOf(Color color) => Color.lerp(color, ink, .28)!;
 
 const lime = Color(0xFF8FD43A);
 const sky = Color(0xFF3BB4E8);
+
+const discoveryGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [Color(0xFFE8EDFF), Color(0xFFF4F6FF), Color(0xFFFFF6EF)],
+  stops: [0, .65, 1],
+);
+const brandGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [piko, blue, ink],
+);
+const marketGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [Color(0xFFFFF2E6), Color(0xFFFFF9F4), pale],
+);
+const surfaceShadow = [
+  BoxShadow(color: Color(0x0A192553), blurRadius: 24, offset: Offset(0, 8)),
+];
+
+Color foregroundOn(Color color) {
+  final luminance = color.computeLuminance();
+  final whiteContrast = 1.05 / (luminance + .05);
+  final inkContrast = (luminance + .05) / (ink.computeLuminance() + .05);
+  if (whiteContrast >= 4.5) return Colors.white;
+  return inkContrast >= 4.5 ? ink : Colors.black;
+}
 
 class SpotCategory {
   const SpotCategory(
@@ -158,6 +186,21 @@ ThemeData spotsTheme() {
   return base.copyWith(
     textTheme: base.textTheme.apply(bodyColor: ink, displayColor: ink),
     splashFactory: InkSparkle.splashFactory,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: pale,
+      foregroundColor: ink,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+    ),
+    tooltipTheme: TooltipThemeData(
+      waitDuration: const Duration(milliseconds: 500),
+      decoration: BoxDecoration(
+        color: ink,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      textStyle: const TextStyle(fontFamily: fontBody, color: Colors.white),
+    ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       backgroundColor: ink,
@@ -180,7 +223,7 @@ ThemeData spotsTheme() {
     progressIndicatorTheme: const ProgressIndicatorThemeData(color: piko),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: pale,
+      fillColor: Colors.white,
       hintStyle: const TextStyle(color: muted, fontWeight: FontWeight.w600),
       labelStyle: const TextStyle(color: muted, fontWeight: FontWeight.w700),
       floatingLabelStyle: const TextStyle(
@@ -189,16 +232,16 @@ ThemeData spotsTheme() {
       ),
       counterStyle: const TextStyle(color: muted, fontSize: 11),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: const BorderSide(color: line, width: 2),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: line),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: const BorderSide(color: line, width: 2),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: line),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: const BorderSide(color: piko, width: 2.4),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: blue, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     ),

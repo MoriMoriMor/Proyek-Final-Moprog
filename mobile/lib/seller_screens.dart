@@ -295,7 +295,7 @@ class _ApplyStorePageState extends State<ApplyStorePage> {
     height: 200,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(26),
-      border: Border.all(color: line, width: 2),
+      border: Border.all(color: line),
     ),
     clipBehavior: Clip.antiAlias,
     child: Stack(
@@ -596,7 +596,7 @@ class _SellerPageState extends State<SellerPage> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: line, width: 2),
+      border: Border.all(color: line),
     ),
     child: Row(
       children: [
@@ -828,7 +828,7 @@ class _SellerPageState extends State<SellerPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: line, width: 2),
+                  border: Border.all(color: line),
                 ),
                 child: Row(
                   children: [
@@ -1215,7 +1215,7 @@ class _StoreSettingsState extends State<_StoreSettings> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: line, width: 2),
+      border: Border.all(color: line),
     ),
     child: SwitchListTile(
       value: value,
@@ -1405,7 +1405,7 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(26),
-      border: Border.all(color: line, width: 2),
+      border: Border.all(color: line),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1607,8 +1607,8 @@ class _EntryTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: line, width: 2),
-          boxShadow: const [BoxShadow(color: line, offset: Offset(0, 4))],
+          border: Border.all(color: line),
+          boxShadow: surfaceShadow,
         ),
         child: Row(
           children: [

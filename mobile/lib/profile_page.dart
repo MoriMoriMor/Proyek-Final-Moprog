@@ -649,10 +649,7 @@ class _ProfilePageState extends State<ProfilePage> {
       await repo.setBlocked(widget.userId, next);
       if (!mounted) return;
       setState(() => blocked = next);
-      message(
-        context,
-        next ? 'Pengguna diblokir.' : 'Blokir pengguna dibuka.',
-      );
+      message(context, next ? 'Pengguna diblokir.' : 'Blokir pengguna dibuka.');
       await load();
     } catch (e) {
       if (mounted) message(context, friendlyError(e));
@@ -887,9 +884,9 @@ class _GridTile extends StatelessWidget {
                 ? DemoCover(
                     seed: media?.path ?? 'demo:${spot.category}:${spot.id}',
                   )
-                : Image.network(
-                    repo.publicMediaUrl(media.path),
-                    fit: BoxFit.cover,
+                : SpotImage(
+                    url: repo.publicMediaUrl(media.path),
+                    fallback: const ColoredBox(color: pale),
                   ),
             const DecoratedBox(
               decoration: BoxDecoration(

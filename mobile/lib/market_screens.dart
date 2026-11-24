@@ -43,10 +43,9 @@ class ProductImage extends StatelessWidget {
       );
     }
     if (path.startsWith('demo:')) return DemoCover(seed: path);
-    return Image.network(
-      repo.productImageUrl(path),
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => const ColoredBox(color: pale),
+    return SpotImage(
+      url: repo.productImageUrl(path),
+      fallback: const ColoredBox(color: pale),
     );
   }
 }
@@ -76,7 +75,7 @@ class CartButton extends StatelessWidget {
                     ? Colors.white.withValues(alpha: .85)
                     : Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: line, width: 2),
+                border: Border.all(color: line),
               ),
               child: const SpotIcon(Glyph.bag, size: 24, accent: yellow),
             ),
@@ -175,164 +174,174 @@ class _MarketTabState extends State<MarketTab> {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
-    final wide = MediaQuery.sizeOf(context).width >= 900;
-    return RefreshIndicator(
-      color: piko,
-      edgeOffset: top,
-      onRefresh: load,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(0, top + 10, 0, 140),
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1000),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 16, 0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Rise(
-                            child: Text('Market', style: display(40)),
-                          ),
-                        ),
-                        CartButton(repo: widget.repo),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Rise(index: 1, child: _promo()),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      controller: search,
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (_) => load(),
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                      decoration: const InputDecoration(
-                        hintText: 'Cari toko atau alamat',
-                        fillColor: Colors.white,
-                        prefixIcon: Padding(
-                          padding: EdgeInsets.all(13),
-                          child: SpotIcon(
-                            Glyph.search,
-                            size: 22,
-                            accent: yellow,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  CategoryRow(
-                    selected: category,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    onSelected: (value) {
-                      setState(() => category = value);
-                      load();
-                    },
-                  ),
-                  if (featured.isNotEmpty) ...[
-                    SectionTitle(
-                      'Lagi laris',
-                      trailing: const SpotIcon(
-                        Glyph.fire,
-                        size: 28,
-                        color: Color(0xFFD9541E),
-                        accent: Color(0xFFFFB648),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 222,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        clipBehavior: Clip.none,
-                        itemCount: featured.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 12),
-                        itemBuilder: (context, i) => Rise(
-                          index: i,
-                          child: _FeaturedProduct(
-                            product: featured[i],
-                            repo: widget.repo,
-                            onTap: () => openStore(
-                              context,
-                              widget.repo,
-                              featured[i].storeId,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  SectionTitle(
-                    'Toko',
-                    trailing: loading
-                        ? null
-                        : Pill(
-                            color: const Color(0xFFEDF1FF),
-                            child: Text('${stores.length}'),
-                          ),
-                  ),
-                  if (error != null) Notice(error!, onRetry: load),
-                  if (loading)
+    return SpotsBackdrop(
+      market: true,
+      child: RefreshIndicator(
+        color: piko,
+        edgeOffset: top,
+        onRefresh: load,
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(0, top + 10, 0, 140),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Shimmer(
-                        child: Column(
-                          children: List.generate(
-                            3,
-                            (_) => const Padding(
-                              padding: EdgeInsets.only(bottom: 12),
-                              child: Bone(height: 104, radius: 26),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (stores.isEmpty)
-                    const EmptyState(
-                      title: 'Belum ada toko\ndi sini.',
-                      mood: PikoMood.wow,
-                      kind: MascotKind.tote,
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
+                      padding: const EdgeInsets.fromLTRB(20, 0, 16, 0),
+                      child: Row(
                         children: [
-                          for (final (i, store) in stores.indexed)
-                            SizedBox(
-                              width: wide ? 480 : double.infinity,
-                              child: Rise(
-                                index: i,
-                                child: StoreCard(
-                                  store: store,
-                                  onTap: () => openStore(
-                                    context,
-                                    widget.repo,
-                                    store.id,
-                                    initial: store,
-                                  ),
-                                ),
-                              ),
+                          Expanded(
+                            child: Rise(
+                              child: Text('Market', style: display(36)),
                             ),
+                          ),
+                          CartButton(repo: widget.repo),
                         ],
                       ),
                     ),
-                ],
+                    const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Rise(index: 1, child: _promo()),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: search,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => load(),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        decoration: const InputDecoration(
+                          hintText: 'Cari toko atau alamat',
+                          fillColor: Colors.white,
+                          prefixIcon: Padding(
+                            padding: EdgeInsets.all(13),
+                            child: SpotIcon(
+                              Glyph.search,
+                              size: 22,
+                              accent: yellow,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    CategoryRow(
+                      selected: category,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      onSelected: (value) {
+                        setState(() => category = value);
+                        load();
+                      },
+                    ),
+                    if (featured.isNotEmpty) ...[
+                      SectionTitle(
+                        'Lagi laris',
+                        trailing: const SpotIcon(
+                          Glyph.fire,
+                          size: 28,
+                          color: Color(0xFFD9541E),
+                          accent: Color(0xFFFFB648),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 222,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          clipBehavior: Clip.none,
+                          itemCount: featured.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 12),
+                          itemBuilder: (context, i) => Rise(
+                            index: i,
+                            child: _FeaturedProduct(
+                              product: featured[i],
+                              repo: widget.repo,
+                              onTap: () => openStore(
+                                context,
+                                widget.repo,
+                                featured[i].storeId,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    SectionTitle(
+                      'Toko',
+                      trailing: loading
+                          ? null
+                          : Pill(
+                              color: const Color(0xFFEDF1FF),
+                              child: Text('${stores.length}'),
+                            ),
+                    ),
+                    if (error != null) Notice(error!, onRetry: load),
+                    if (loading)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Shimmer(
+                          child: Column(
+                            children: List.generate(
+                              3,
+                              (_) => const Padding(
+                                padding: EdgeInsets.only(bottom: 12),
+                                child: Bone(height: 104, radius: 26),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (stores.isEmpty)
+                      const EmptyState(
+                        title: 'Belum ada toko\ndi sini.',
+                        mood: PikoMood.wow,
+                        kind: MascotKind.tote,
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final columns = constraints.maxWidth >= 760 ? 2 : 1;
+                            final cardWidth =
+                                (constraints.maxWidth - (columns - 1) * 12) /
+                                columns;
+                            return Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: [
+                                for (final (i, store) in stores.indexed)
+                                  SizedBox(
+                                    width: cardWidth,
+                                    child: Rise(
+                                      index: i,
+                                      child: StoreCard(
+                                        store: store,
+                                        onTap: () => openStore(
+                                          context,
+                                          widget.repo,
+                                          store.id,
+                                          initial: store,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -342,10 +351,8 @@ class _MarketTabState extends State<MarketTab> {
     width: double.infinity,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(30),
-      gradient: const LinearGradient(colors: [coral, Color(0xFFFFA46B)]),
-      boxShadow: const [
-        BoxShadow(color: Color(0xFFD45E73), offset: Offset(0, 6)),
-      ],
+      gradient: brandGradient,
+      boxShadow: surfaceShadow,
     ),
     clipBehavior: Clip.antiAlias,
     child: Stack(
@@ -422,8 +429,8 @@ class _FeaturedProduct extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: line, width: 2),
-        boxShadow: const [BoxShadow(color: line, offset: Offset(0, 4))],
+        border: Border.all(color: line),
+        boxShadow: surfaceShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,8 +501,8 @@ class StoreCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: line, width: 2),
-          boxShadow: const [BoxShadow(color: line, offset: Offset(0, 4))],
+          border: Border.all(color: line),
+          boxShadow: surfaceShadow,
         ),
         child: Row(
           children: [
@@ -959,8 +966,8 @@ class _ProductCard extends StatelessWidget {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(26),
-      border: Border.all(color: line, width: 2),
-      boxShadow: const [BoxShadow(color: line, offset: Offset(0, 4))],
+      border: Border.all(color: line),
+      boxShadow: surfaceShadow,
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1588,7 +1595,7 @@ class OrderTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: line, width: 2),
+        border: Border.all(color: line),
       ),
       child: Row(
         children: [
@@ -1820,7 +1827,7 @@ class _OrderPageState extends State<OrderPage> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: line, width: 2),
+      border: Border.all(color: line),
     ),
     child: Column(
       children: [
