@@ -1,5 +1,55 @@
 # Audit desain dan sistem
 
+## Pembaruan 25 November 2026
+
+Antarmuka memakai identitas Spots yang sama, dengan fokus lebih besar pada tempat, foto, dan tindakan yang bisa dilakukan. Bagel dipakai untuk judul utama; judul bagian memakai Nunito agar daftar konten lebih mudah dipindai. Latar biru dan krem diberi garis lingkaran seperti peta. Warna kategori tetap ada pada ikon.
+
+| Area | Temuan | Perubahan |
+| --- | --- | --- |
+| Beranda | Kartu level bersaing dengan tempat yang ingin ditemukan | Konten viral dan toko muncul lebih dulu; misi harian tetap bisa dibuka dari kartu level dan streak |
+| Penemuan tempat | Akses peta hanya berupa ikon | Ada tindakan berlabel “Buka peta sekitar” di sapaan beranda |
+| Feed | Semua kartu dibuat sekaligus | Daftar memakai sliver yang membangun baris sesuai viewport, satu kolom di HP dan dua kolom saat ruang cukup |
+| Izin lokasi | Feed menunggu jawaban GPS sebelum mengambil konten | Tempat populer dimuat segera; hasil terdekat diperbarui setelah lokasi tersedia |
+| Reaksi | Kartu yang dibuat ulang perlu membawa status suka terbaru | Hasil reaksi memperbarui model spot di feed, tanpa mengambil ulang seluruh daftar untuk setiap suka |
+| Kategori | Setiap pilihan memakai warna dan bayangan yang sama kuat | Pilihan aktif memakai biru Spots; warna kategori menjadi aksen ikon |
+| Kartu | Banyak garis tebal dan bayangan keras | Garis permukaan ditipiskan dan bayangan kartu disatukan |
+| Market | Lebar toko mengikuti ukuran layar keseluruhan | Kolom mengikuti ruang konten yang benar-benar tersedia, termasuk saat sidebar terbuka |
+| Media | Foto besar didekode penuh pada thumbnail | `SpotImage` menyesuaikan lebar decode dengan layar, dibatasi 1600 px, dengan fade setelah frame tersedia |
+| Avatar | Fallback foto dapat merujuk kembali ke widget gambar | Kegagalan foto langsung menampilkan inisial |
+| Video | Kegagalan pemuatan berakhir dengan indikator tanpa akhir | Ada status video tidak tersedia; pemutar Reels dijeda saat halaman tidak aktif atau aplikasi di latar |
+| Desktop | Kontrol kustom mengandalkan klik | Tombol dan kartu interaktif mendukung Tab, Enter, Space, kursor, serta garis fokus |
+| Aksesibilitas | Beberapa gerak dekoratif tetap berulang | Shimmer, maskot, penanda lokasi, petunjuk geser, dan pembuka mengikuti reduced motion |
+
+### Gerak dan pemuatan
+
+- Respons tombol memakai 140 ms; pergantian konten 280 ms; kemunculan kartu 380 ms.
+- Jeda antar kartu 35 ms, dibatasi empat langkah supaya daftar panjang tetap cepat digunakan.
+- Latar muncul selama 900 ms lalu berhenti. Gerak tidak dijadikan syarat untuk membaca atau memakai kontrol.
+- Saat tab berganti, konten lama tidak menerima sentuhan atau fokus pembaca layar dan tickernya dihentikan selama keluar.
+- Foto mempertahankan bidangnya saat dimuat. Gambar, maskot, dan latar yang bergerak dicat terpisah dari konten sekitarnya.
+- Web menampilkan logo dan indikator ringan sebelum frame Flutter pertama, sehingga pengguna mendapat respons saat aplikasi mulai dimuat.
+- Petunjuk Reels dilepas setelah selesai. Tombol belanja memberi gerak pengenal satu kali.
+- Pilihan warna teks tombol dihitung dari luminans agar memenuhi rasio kontras 4,5 banding 1 terhadap warna tombol.
+
+### Pemeriksaan
+
+Audit ukuran mencakup layar masuk, setup, enam tab utama, detail spot dan tempat, pencarian teman, rute, unggah, profil, toko, keranjang, pesanan, pengajuan toko, penjual, admin, autentikasi, dan misi. Matriksnya memakai 12 ukuran dari 320 px sampai 1920 px, termasuk landscape, dengan skala teks 1 dan 1,3.
+
+Tes layout memakai font aplikasi yang sebenarnya dan menggagalkan pemeriksaan bila laporan overflow berisi temuan. Tes tambahan memeriksa kontrol keyboard, reduced motion, kontras tombol, serta status suka setelah kartu dibuat ulang. Pratinjau Beranda, Market, dan Profil diperiksa pada lebar 390 px dan 1440 px.
+
+Hasil pemeriksaan 25 November 2026 dengan Flutter 3.47.2 dan Dart 3.13.2
+
+- `flutter analyze --no-pub` bersih.
+- `flutter test --no-pub` meloloskan 84 tes, termasuk audit layout. Laporan `build/layout_audit.txt` kosong, dengan 0 overflow.
+- Build web rilis berhasil. Pembuka web, feed tamu tanpa menunggu izin lokasi, dan navigasi Market diperiksa langsung di browser, termasuk lebar 390 px.
+- Tes regresi membuktikan feed tetap dimuat saat permintaan izin lokasi belum dijawab dan status suka bertahan setelah kartu dibuat ulang.
+
+Kelancaran frame, penggunaan memori, konsumsi baterai, dan jaringan lambat tetap perlu diukur di Android dan iPhone fisik. Build web dan widget test memberi bukti kompilasi serta tata letak, sementara pengukuran perangkat diperlukan untuk menetapkan batas performa rilis.
+
+Pemeriksaan manual VoiceOver dan TalkBack masih diperlukan, terutama label pada kontrol yang bertingkat. Build web juga masih mengeluarkan peringatan keluarga font ikon Cupertino bawaan Flutter; ikon antarmuka Spots memakai SVG sendiri. Peringatan ini perlu diperiksa saat menguji widget sistem di iOS.
+
+---
+
 Acuan: tiga referensi yang dipakai tim, yaitu aplikasi aktivitas luar ruang bernuansa lime dengan rombongan maskot, aplikasi kulkas pintar dengan stiker dan karakter 3D, dan aplikasi kencan bernuansa biru langit dengan tombol pil hitam. Tujuannya tetap sama: Spots terasa seru tapi rapi, dan mudah dipakai semua umur.
 
 ## Yang sudah diperbaiki
