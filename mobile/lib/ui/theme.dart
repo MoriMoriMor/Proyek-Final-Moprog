@@ -27,21 +27,33 @@ const sky = Color(0xFF3BB4E8);
 const discoveryGradient = LinearGradient(
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
-  colors: [Color(0xFFE8EDFF), Color(0xFFF4F6FF), Color(0xFFFFF6EF)],
-  stops: [0, .65, 1],
+  colors: [Color(0xFFDCE8FF), Color(0xFFF3F7FF), Color(0xFFFCFBF8)],
+  stops: [0, .58, 1],
+);
+const skyGlassGradient = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [Color(0xFFD6E6FF), Color(0xFFEEF4FF), Color(0xFFFFFFFF)],
+  stops: [0, .52, 1],
 );
 const brandGradient = LinearGradient(
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
-  colors: [piko, blue, ink],
+  colors: [Color(0xFF4F7BFF), piko, blue],
 );
 const marketGradient = LinearGradient(
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
-  colors: [Color(0xFFFFF2E6), Color(0xFFFFF9F4), pale],
+  colors: [Color(0xFFFFEFE2), Color(0xFFFFF8F2), pale],
 );
+const glassFill = Color(0xC9FFFFFF);
+const glassStrong = Color(0xE3FFFFFF);
+const glassBorder = Color(0xB8FFFFFF);
+const darkGlassFill = Color(0xBD15204A);
+const darkGlassBorder = Color(0x38FFFFFF);
 const surfaceShadow = [
-  BoxShadow(color: Color(0x0A192553), blurRadius: 24, offset: Offset(0, 8)),
+  BoxShadow(color: Color(0x10192553), blurRadius: 28, offset: Offset(0, 10)),
+  BoxShadow(color: Color(0x06192553), blurRadius: 6, offset: Offset(0, 2)),
 ];
 
 Color foregroundOn(Color color) {

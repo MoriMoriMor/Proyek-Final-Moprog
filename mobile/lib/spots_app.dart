@@ -631,31 +631,40 @@ class _SpotsShellState extends State<SpotsShell> {
       constraints: const BoxConstraints(maxWidth: 560),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Shimmer(
-          child: Column(
-            children: List.generate(
-              2,
-              (_) => Container(
-                margin: const EdgeInsets.only(bottom: 20),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Bone(height: 330, radius: 25),
-                    SizedBox(height: 14),
-                    Bone(width: 220, height: 20),
-                    SizedBox(height: 10),
-                    Bone(width: 140, height: 14),
-                    SizedBox(height: 16),
-                  ],
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 8, bottom: 22),
+              child: SpotsLogoLoader(compact: true),
+            ),
+            Shimmer(
+              child: Column(
+                children: List.generate(
+                  2,
+                  (_) => Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: glassStrong,
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: glassBorder),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Bone(height: 300, radius: 25),
+                        SizedBox(height: 14),
+                        Bone(width: 220, height: 20),
+                        SizedBox(height: 10),
+                        Bone(width: 140, height: 14),
+                        SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     ),
@@ -1385,62 +1394,63 @@ class _FloatingNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
     minimum: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-    child: AnimatedContainer(
-      duration: motionTime(context, motionPage),
-      height: 76,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: dark ? ink : Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: dark ? Colors.white12 : line),
-        boxShadow: [
-          BoxShadow(
-            color: ink.withValues(alpha: .12),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          for (final i in left)
-            Expanded(
-              child: _NavItem(
-                item: _tabs[i],
-                active: active(i),
-                dark: dark,
-                onTap: () => onTab(i),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Tooltip(
-              message: 'Bagikan spot',
-              child: Chunky(
-                onTap: onCreate,
-                color: piko,
-                radius: 20,
-                depth: 3,
-                label: 'Bagikan spot',
-                padding: const EdgeInsets.all(13),
-                child: const SpotIcon(
-                  Glyph.plus,
-                  size: 28,
-                  color: Colors.white,
+    child: FrostedSurface(
+      radius: 28,
+      sigma: 22,
+      dark: dark,
+      shadows: [
+        BoxShadow(
+          color: ink.withValues(alpha: dark ? .28 : .13),
+          blurRadius: 28,
+          offset: const Offset(0, 12),
+        ),
+      ],
+      child: SizedBox(
+        height: 76,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Row(
+            children: [
+              for (final i in left)
+                Expanded(
+                  child: _NavItem(
+                    item: _tabs[i],
+                    active: active(i),
+                    dark: dark,
+                    onTap: () => onTab(i),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Tooltip(
+                  message: 'Bagikan spot',
+                  child: Chunky(
+                    onTap: onCreate,
+                    color: piko,
+                    radius: 20,
+                    depth: 3,
+                    label: 'Bagikan spot',
+                    padding: const EdgeInsets.all(13),
+                    child: const SpotIcon(
+                      Glyph.plus,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              for (final i in right)
+                Expanded(
+                  child: _NavItem(
+                    item: _tabs[i],
+                    active: active(i),
+                    dark: dark,
+                    onTap: () => onTab(i),
+                  ),
+                ),
+            ],
           ),
-          for (final i in right)
-            Expanded(
-              child: _NavItem(
-                item: _tabs[i],
-                active: active(i),
-                dark: dark,
-                onTap: () => onTab(i),
-              ),
-            ),
-        ],
+        ),
       ),
     ),
   );
@@ -1470,39 +1480,58 @@ class _NavItem extends StatelessWidget {
         child: Bouncy(
           onTap: onTap,
           scale: .94,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TweenAnimationBuilder<double>(
-                key: ValueKey(active),
-                tween: Tween(begin: active ? 0 : 1, end: 1),
-                duration: motionTime(context, motionPage),
-                curve: motionCurve,
-                builder: (_, v, child) => Transform.scale(
-                  scale: active ? .92 + v * .08 : 1,
-                  child: child,
-                ),
-                child: SpotIcon(
-                  item.glyph,
-                  size: 28,
-                  color: active ? on : idle,
-                  accent: item.color,
-                  tint: active,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 3),
-                child: Text(
-                  item.label,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11.5,
+          child: AnimatedContainer(
+            duration: motionTime(context, motionPage),
+            curve: motionCurve,
+            margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
+            decoration: BoxDecoration(
+              color: active
+                  ? (dark
+                        ? Colors.white.withValues(alpha: .14)
+                        : Colors.white.withValues(alpha: .74))
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              border: active
+                  ? Border.all(
+                      color: dark ? darkGlassBorder : glassBorder,
+                    )
+                  : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TweenAnimationBuilder<double>(
+                  key: ValueKey(active),
+                  tween: Tween(begin: active ? 0 : 1, end: 1),
+                  duration: motionTime(context, motionPage),
+                  curve: motionCurve,
+                  builder: (_, v, child) => Transform.scale(
+                    scale: active ? .92 + v * .08 : 1,
+                    child: child,
+                  ),
+                  child: SpotIcon(
+                    item.glyph,
+                    size: 26,
                     color: active ? on : idle,
+                    accent: item.color,
+                    tint: active,
                   ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
+                      color: active ? on : idle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1654,9 +1683,10 @@ class _RoundButton extends StatelessWidget {
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: glassStrong,
             shape: BoxShape.circle,
-            border: Border.all(color: line),
+            border: Border.all(color: glassBorder, width: 1.2),
+            boxShadow: surfaceShadow,
           ),
           child: SpotIcon(glyph, size: 22, accent: accent),
         ),
@@ -2052,20 +2082,18 @@ class _MiniCard extends StatelessWidget {
   Widget build(BuildContext context) => Bouncy(
     scale: .97,
     onTap: onTap,
-    child: Container(
+    child: FrostedSurface(
+      radius: 26,
+      sigma: 18,
+      fill: Colors.white.withValues(alpha: .86),
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: line),
-        boxShadow: [
-          BoxShadow(
-            color: ink.withValues(alpha: .14),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      shadows: [
+        BoxShadow(
+          color: ink.withValues(alpha: .16),
+          blurRadius: 22,
+          offset: const Offset(0, 8),
+        ),
+      ],
       child: Row(
         children: [
           ClipRRect(

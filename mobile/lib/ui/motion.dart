@@ -122,11 +122,24 @@ class _ChunkyState extends State<Chunky> {
                   color: face,
                   gradient: enabled && widget.color == piko
                       ? brandGradient
+                      : enabled && widget.border == null
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color.lerp(face, Colors.white, .14)!,
+                            face,
+                          ],
+                        )
                       : null,
                   borderRadius: radius,
                   border: widget.border == null
-                      ? null
-                      : Border.all(color: widget.border!, width: 2),
+                      ? (enabled
+                            ? Border.all(
+                                color: Colors.white.withValues(alpha: .26),
+                              )
+                            : null)
+                      : Border.all(color: widget.border!, width: 1.6),
                 ),
                 child: DefaultTextStyle.merge(
                   style: TextStyle(

@@ -69,7 +69,12 @@ flutter:
   assets:
     - assets/logo.svg
     - assets/logo_light.svg
+    - assets/app_icon.svg
     - assets/mascot.svg
+    - assets/photos/kuliner.jpg
+    - assets/photos/nongkrong.jpg
+    - assets/photos/taman.jpg
+    - assets/photos/sate.jpg
   fonts:
     - family: Nunito
       fonts:

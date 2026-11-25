@@ -246,21 +246,57 @@ class SpotsRepository {
     if (files.isEmpty || files.length > 5) {
       throw StateError('Pilih 1 sampai 5 foto atau video.');
     }
-    final place =
-        placeId ??
-        (await client
-                .from('places')
-                .insert({
-                  'name': title.trim(),
-                  'category': category,
-                  'city': city.trim(),
-                  'lat': lat,
-                  'lng': lng,
-                  'created_by': id,
-                })
-                .select('id')
-                .single())['id']
-            as String;
+    var createdNewPlace = false;
+    String place;
+    if (placeId != null) {
+      place = placeId;
+    } else {
+      try {
+        place =
+            await client.rpc(
+                  'resolve_or_create_place',
+                  params: {
+                    'p_place_id': null,
+                    'p_name': title.trim(),
+                    'p_category': category,
+                    'p_city': city.trim(),
+                    'p_lat': lat,
+                    'p_lng': lng,
+                  },
+                )
+                as String;
+      } on PostgrestException {
+        final norm = title.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+        final existing = await nearbyPlaces(lat, lng, query: title.trim());
+        final match = existing
+            .where(
+              (p) =>
+                  p.distanceM <= 65 &&
+                  p.name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ') ==
+                      norm,
+            )
+            .firstOrNull;
+        if (match != null) {
+          place = match.id;
+        } else {
+          place =
+              (await client
+                      .from('places')
+                      .insert({
+                        'name': title.trim(),
+                        'category': category,
+                        'city': city.trim(),
+                        'lat': lat,
+                        'lng': lng,
+                        'created_by': id,
+                      })
+                      .select('id')
+                      .single())['id']
+                  as String;
+          createdNewPlace = true;
+        }
+      }
+    }
     final post = await client
         .from('posts')
         .insert({
@@ -336,6 +372,11 @@ class SpotsRepository {
       try {
         await client.from('posts').delete().eq('id', postId);
       } catch (_) {}
+      if (createdNewPlace) {
+        try {
+          await client.from('places').delete().eq('id', place);
+        } catch (_) {}
+      }
       rethrow;
     }
   }

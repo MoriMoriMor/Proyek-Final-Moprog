@@ -250,8 +250,8 @@ class MascotPainter extends CustomPainter {
   Color get _dark => Color.lerp(_spec.color, Colors.black, .16)!;
   Color get _light => Color.lerp(_spec.color, Colors.white, .38)!;
 
-  /// Bentuk datar tanpa garis tepi, dengan gradasi lembut supaya terasa
-  /// sedikit timbul: terang di kiri atas, lebih gelap di kanan bawah.
+  /// Bentuk timbul lembut seperti mainan jelly/plush: gradasi hangat,
+  /// pantulan cahaya atas, dan tepi bawah yang memantulkan warna terang.
   void shape(Canvas canvas, Path path, Color color, {bool shade = true}) {
     canvas.drawPath(path, fill(color));
     if (!shade) return;
@@ -264,14 +264,28 @@ class MascotPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          stops: const [0, .5, 1],
+          stops: const [0, .48, .88, 1],
           colors: [
-            Colors.white.withValues(alpha: .22),
-            Colors.white.withValues(alpha: 0),
-            Colors.black.withValues(alpha: .14),
+            Colors.white.withValues(alpha: .32),
+            Colors.white.withValues(alpha: .02),
+            Colors.black.withValues(alpha: .12),
+            Colors.white.withValues(alpha: .16),
           ],
         ).createShader(b),
     );
+    // Kilau kapsul lembut di kiri atas supaya permukaan terasa kenyal & 3D.
+    canvas.save();
+    canvas.translate(b.left + b.width * .28, b.top + b.height * .2);
+    canvas.rotate(-.42);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: b.width * .24,
+        height: b.height * .11,
+      ),
+      fill(Colors.white.withValues(alpha: .36)),
+    );
+    canvas.restore();
     canvas.restore();
   }
 
@@ -287,57 +301,72 @@ class MascotPainter extends CustomPainter {
     canvas.scale(unit);
     final w = still ? 0.0 : t * math.pi * 2;
 
-    // Lompatan: jongkok, melayang, lalu mendarat dengan sedikit pantulan.
+    // Lompatan ala Duolingo: antisipasi jongkok, melesat kenyal, kilau riang, mendarat empuk.
     var lift = 0.0, squash = 1.0;
     if (hop > 0 && hop < 1) {
       if (hop < .18) {
-        squash = 1 - math.sin(hop / .18 * math.pi) * .14;
-      } else if (hop < .75) {
-        final k = (hop - .18) / .57;
-        lift = math.sin(k * math.pi) * 26;
-        squash = 1 + math.sin(k * math.pi) * .07;
+        squash = 1 - math.sin(hop / .18 * math.pi) * .16;
+      } else if (hop < .74) {
+        final k = (hop - .18) / .56;
+        lift = math.sin(k * math.pi) * 28;
+        squash = 1 + math.sin(k * math.pi) * .09;
       } else {
-        final k = (hop - .75) / .25;
-        squash = 1 - math.sin(k * math.pi) * .1;
+        final k = (hop - .74) / .26;
+        squash = 1 - math.sin(k * math.pi) * .11;
       }
     }
-    final breathe = still ? 1.0 : 1 + math.sin(w * 2) * .025;
-    final bob = still ? 0.0 : math.sin(w * 2) * 1.6;
-    final sway = still ? 0.0 : math.sin(w) * .05;
+    final breathe = still ? 1.0 : 1 + math.sin(w * 2) * .028;
+    final bob = still ? 0.0 : math.sin(w * 2) * 1.8;
+    final sway = still ? 0.0 : math.sin(w) * .055;
+    final lag = still ? 0.0 : w - .22;
 
     // Bayangan di tanah mengecil saat melompat.
-    final shadowScale = 1 - lift / 60;
+    final shadowScale = (1 - lift / 64).clamp(.45, 1.0);
     canvas.drawOval(
       Rect.fromCenter(
         center: const Offset(60, 117),
-        width: 64 * shadowScale,
-        height: 7 * shadowScale,
+        width: 62 * shadowScale,
+        height: 7.5 * shadowScale,
       ),
-      Paint()..color = ink.withValues(alpha: .13),
+      Paint()..color = ink.withValues(alpha: .12 * shadowScale),
     );
+
+    if (lift > 8) {
+      final sparkAlpha = (lift / 28).clamp(0.0, 1.0) * .85;
+      canvas.drawCircle(
+        Offset(16, 36 - lift * .35),
+        3.2,
+        fill(const Color(0xFFFFD25A).withValues(alpha: sparkAlpha)),
+      );
+      canvas.drawCircle(
+        Offset(104, 30 - lift * .4),
+        2.6,
+        fill(const Color(0xFFFF7890).withValues(alpha: sparkAlpha)),
+      );
+    }
 
     canvas.save();
     canvas.translate(60, 116 - lift + bob);
     canvas.rotate(sway);
-    canvas.scale((2 - squash * breathe).clamp(.8, 1.2), squash * breathe);
+    canvas.scale((2 - squash * breathe).clamp(.8, 1.22), squash * breathe);
     canvas.translate(-60, -116);
 
     _feet(canvas, lift);
-    _behind(canvas, w);
+    _behind(canvas, lag);
     _arm(
       canvas,
       _spec.leftShoulder,
-      .55 + math.sin(w * 2 + 1) * .12,
+      .52 + math.sin(lag * 2 + 1) * .15,
       left: true,
     );
     shape(canvas, _spec.body, _spec.color);
-    _details(canvas, w);
+    _details(canvas, lag);
     _arm(
       canvas,
       _spec.rightShoulder,
       wave
-          ? -2.5 + math.sin(t * math.pi * 16) * .45
-          : -.55 - math.sin(w * 2) * .12,
+          ? -2.45 + math.sin(t * math.pi * 16) * .48
+          : -.52 - math.sin(lag * 2) * .15,
       left: false,
     );
     _face(canvas, w);
@@ -641,23 +670,20 @@ class MascotPainter extends CustomPainter {
       patch,
     );
     final blush = Paint()
-      ..color = const Color(0xFFFF8E9B).withValues(alpha: .6);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: l + Offset(-er * .9, er * 1.5),
-        width: er * 1.3,
-        height: er * .8,
-      ),
-      blush,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: r + Offset(er * .9, er * 1.5),
-        width: er * 1.3,
-        height: er * .8,
-      ),
-      blush,
-    );
+      ..color = const Color(0xFFFF7896).withValues(alpha: .68);
+    final leftCheek = l + Offset(-er * .88, er * 1.46);
+    final rightCheek = r + Offset(er * .88, er * 1.46);
+    for (final cheek in [leftCheek, rightCheek]) {
+      canvas.drawOval(
+        Rect.fromCenter(center: cheek, width: er * 1.45, height: er * .88),
+        blush,
+      );
+      canvas.drawCircle(
+        cheek + Offset(-er * .22, -er * .1),
+        er * .14,
+        fill(Colors.white.withValues(alpha: .72)),
+      );
+    }
 
     switch (mood) {
       case MascotMood.cool:
@@ -815,12 +841,17 @@ class MascotPainter extends CustomPainter {
     final pw = r * (big ? .9 : 1.0), ph = r * (big ? 1.08 : 1.2);
     canvas.drawOval(
       Rect.fromCenter(center: pupil, width: pw, height: ph),
-      fill(face),
+      fill(ink),
     );
     canvas.drawCircle(
-      pupil + Offset(-pw * .18, -ph * .22),
-      pw * .22,
+      pupil + Offset(-pw * .2, -ph * .24),
+      pw * .25,
       fill(Colors.white),
+    );
+    canvas.drawCircle(
+      pupil + Offset(pw * .2, ph * .22),
+      pw * .11,
+      fill(Colors.white.withValues(alpha: .85)),
     );
     if (lid > 0) {
       canvas.drawRect(

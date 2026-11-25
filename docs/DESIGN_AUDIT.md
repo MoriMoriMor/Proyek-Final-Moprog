@@ -1,5 +1,14 @@
 # Audit desain dan sistem
 
+## Pembaruan lanjutan 25 November 2026 — Kaca buram, foto nyata, maskot, dan pengamanan
+
+- **Identitas logo & ikon seragam**: lambang Spots diperbarui dengan gradien biru-langit, tepi dalam bercahaya lembut, jalur rute putih dengan pin kuning dan koral, serta diekspor seragam ke SVG (`logo.svg`, `logo_light.svg`, `app_icon.svg`), ikon adaptif Android, ikon web (`Icon-192`, `Icon-512`, maskable, favicon), dan `app_icon.ico` Windows.
+- **Lapisan kaca buram (frosted glass) fungsional**: komponen `FrostedSurface` memakai blur latar + garis tepi putih tipis pada bilah navigasi bawah, kartu apung peta, stiker kategori di atas foto, dan pil pengalih halaman tempat. Saat *reduced motion* aktif, blur dimatikan otomatis dan latar memakai permukaan putih pekat berkontras tinggi.
+- **Halaman sambutan & web yang hangat dengan foto nyata**: latar gelap diganti kanvas langit terang (`#D6E6FF` → `#EEF4FF` → `#FFFFFF`) dengan foto dokumentasi nyata berlisensi terbuka dari Wikimedia Commons (`kuliner.jpg`, `nongkrong.jpg`, `taman.jpg`, `sate.jpg`) agar terasa jujur, netral, dan manusiawi tanpa klaim atau angka buatan.
+- **Animasi pemuatan merek (`SpotsLogoLoader`)**: pembuka web (`mobile/web/index.html`) dan pemuatan awal beranda menampilkan kapsul kaca dengan lambang dan tulisan Spots yang bergerak halus, serta berhenti otomatis saat *reduced motion* aktif.
+- **Maskot kenyal 3D & gerak ikutan**: seluruh 10 maskot diberi pantulan kapsul kiri-atas, pipi merona dengan titik kilau, mata biru-tua dengan dua pantulan cahaya, serta jeda fase (*follow-through*) pada telinga, lengan, dan atribut saat bernapas maupun melompat.
+- **Optimasi tempat, media bersama, & keamanan pesanan**: pencarian nama tempat terdekat saat mengetik judul unggahan, penggabungan otomatis tempat bernama identik dalam radius 65 m (`resolve_or_create_place`), pembersihan tempat yatim bila unggah gagal, tab **Galeri bersama** untuk menelusuri seluruh foto/video pengunjung berdasarkan `viral_score`, indeks komposit database, serta pengamanan `place_order` dari integer overflow, akun terblokir, dan antrean pesanan berlebih.
+
 ## Pembaruan 25 November 2026
 
 Antarmuka memakai identitas Spots yang sama, dengan fokus lebih besar pada tempat, foto, dan tindakan yang bisa dilakukan. Bagel dipakai untuk judul utama; judul bagian memakai Nunito agar daftar konten lebih mudah dipindai. Latar biru dan krem diberi garis lingkaran seperti peta. Warna kategori tetap ada pada ikon.

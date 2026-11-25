@@ -1,79 +1,84 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#4056BD">
+  <meta name="theme-color" content="#3B5BDB">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Temukan dan bagikan tempat yang layak diceritakan.">
 
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Spots">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>Spots</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    body { margin: 0; background: #F3F5FC; }
+    body { margin: 0; background: #EEF4FF; }
     #spots-loading {
       position: fixed; inset: 0; display: grid; place-content: center;
-      justify-items: center; gap: 28px;
-      background: linear-gradient(140deg, #E8EDFF, #F4F6FF 65%, #FFF6EF);
+      justify-items: center; gap: 22px;
+      background: linear-gradient(165deg, #D6E6FF 0%, #EEF4FF 52%, #FFFFFF 100%);
+      transition: opacity 260ms ease;
     }
-    #spots-loading img { width: 152px; height: auto; }
+    .glass-Orb {
+      position: relative;
+      width: 96px; height: 96px;
+      display: grid; place-items: center;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.62);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1.5px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 18px 40px rgba(25, 37, 83, 0.12);
+      animation: floatOrb 2.2s cubic-bezier(.4, 0, .2, 1) infinite;
+    }
+    .glass-Orb img { width: 64px; height: 64px; display: block; }
+    .wordmark { height: 32px; width: auto; }
     .loading-track {
-      width: 96px; height: 3px; border-radius: 3px;
-      overflow: hidden; background: #E2E6F5;
+      width: 108px; height: 4px; border-radius: 99px;
+      overflow: hidden; background: rgba(64, 86, 189, 0.14);
     }
     .loading-track::after {
-      content: ''; display: block; width: 48px; height: 3px;
-      background: #4056BD; border-radius: inherit;
-      animation: loading 1.2s ease-in-out infinite alternate;
+      content: ''; display: block; width: 48px; height: 4px;
+      background: linear-gradient(90deg, #4A7BFF, #FF7890);
+      border-radius: inherit;
+      animation: loading 1.15s cubic-bezier(.4, 0, .2, 1) infinite alternate;
     }
-    @keyframes loading { from { transform: translateX(-24px); } to { transform: translateX(72px); } }
+    @keyframes floatOrb {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-6px) scale(1.03); }
+    }
+    @keyframes loading {
+      from { transform: translateX(-20px); }
+      to { transform: translateX(78px); }
+    }
     @media (prefers-reduced-motion: reduce) {
-      .loading-track::after { animation: none; transform: translateX(24px); }
+      .glass-Orb, .loading-track::after { animation: none; }
+      .loading-track::after { transform: translateX(30px); }
     }
   </style>
 </head>
 <body>
   <div id="spots-loading" role="status" aria-label="Membuka Spots">
-    <img src="assets/assets/logo.svg" alt="Spots" width="152" height="48">
+    <div class="glass-Orb">
+      <img src="assets/assets/app_icon.svg" alt="" width="64" height="64">
+    </div>
+    <img class="wordmark" src="assets/assets/logo.svg" alt="Spots" width="146" height="36">
     <div class="loading-track" aria-hidden="true"></div>
   </div>
   <script>
     window.addEventListener('flutter-first-frame', function () {
-      document.getElementById('spots-loading')?.remove();
+      const el = document.getElementById('spots-loading');
+      if (!el) return;
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 260);
     }, { once: true });
   </script>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

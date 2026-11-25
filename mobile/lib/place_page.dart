@@ -14,10 +14,10 @@ import 'ui/widgets.dart';
 typedef PlacePhoto = ({Spot spot, SpotMedia media});
 
 /// Foto dari semua dokumentasi di satu tempat, diurutkan dari spot paling
-/// viral. Hanya foto (bukan video) supaya sorotan selalu ringan dimuat.
+/// viral (memperhitungkan umur unggahan). Hanya foto supaya sorotan ringan.
 List<PlacePhoto> rankedPhotos(List<Spot> spots, {int limit = 10}) {
   final sorted = [...spots]
-    ..sort((a, b) => b.engagement.compareTo(a.engagement));
+    ..sort((a, b) => b.viralScore().compareTo(a.viralScore()));
   final out = <PlacePhoto>[];
   for (final spot in sorted) {
     for (final media in spot.media) {
@@ -27,6 +27,22 @@ List<PlacePhoto> rankedPhotos(List<Spot> spots, {int limit = 10}) {
     }
   }
   return out;
+}
+
+/// Semua media (foto dan video) dari seluruh pengunjung sebuah tempat,
+/// diurutkan dari spot paling viral.
+List<PlacePhoto> allPlaceMedia(
+  List<Spot> spots, {
+  String? mediaType,
+}) {
+  final sorted = [...spots]
+    ..sort((a, b) => b.viralScore().compareTo(a.viralScore()));
+  return [
+    for (final spot in sorted)
+      for (final media in spot.media)
+        if (mediaType == null || media.type == mediaType)
+          (spot: spot, media: media),
+  ];
 }
 
 Future<void> openPlace(
@@ -261,9 +277,10 @@ class PlacePage extends StatefulWidget {
 
 class _PlacePageState extends State<PlacePage> {
   late List<Spot> spots = _sorted(widget.initial);
+  int viewMode = 0; // 0: cerita per pengunjung, 1: galeri foto & video bersama
 
   static List<Spot> _sorted(List<Spot> list) =>
-      [...list]..sort((a, b) => b.engagement.compareTo(a.engagement));
+      [...list]..sort((a, b) => b.viralScore().compareTo(a.viralScore()));
 
   Future<void> reload() async {
     final id = widget.from.placeId;
@@ -280,67 +297,152 @@ class _PlacePageState extends State<PlacePage> {
   Widget build(BuildContext context) {
     final category = categoryOf(widget.from.category);
     final people = spots.map((s) => s.ownerId).toSet().length;
-    final photos = spots.fold<int>(0, (n, s) => n + s.media.length);
+    final mediaItems = allPlaceMedia(spots);
+    final photoCount = mediaItems.where((m) => m.media.type == 'image').length;
+    final videoCount = mediaItems.where((m) => m.media.type == 'video').length;
     return Scaffold(
       backgroundColor: pale,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: RefreshIndicator(
-              onRefresh: reload,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
-                children: [
-                  Row(
-                    children: [
-                      GlassButton(
-                        glyph: Glyph.back,
-                        label: 'Kembali',
-                        onTap: () => Navigator.maybePop(context),
-                      ),
-                      const Spacer(),
-                      Mascot(kind: category.mascot, size: 52),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: CategorySticker(category),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(widget.from.title, style: display(30, height: 1.05)),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${widget.from.city} · $photos foto · ${spots.length} '
-                    'dokumentasi · $people orang',
-                    style: small.copyWith(fontSize: 13.5),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text('Diurutkan dari yang paling viral.', style: small),
-                  const SizedBox(height: 16),
-                  for (final (i, spot) in spots.indexed)
-                    Rise(
-                      index: i,
-                      from: 14,
-                      child: _Documentation(
-                        spot: spot,
-                        rank: i + 1,
-                        repo: widget.repo,
-                        current: spot.id == widget.from.id,
-                        onOpen: () => openSpot(context, spot, widget.repo, () {
-                          widget.onChanged();
-                          reload();
-                        }),
+      body: SpotsBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: RefreshIndicator(
+                onRefresh: reload,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
+                  children: [
+                    Row(
+                      children: [
+                        GlassButton(
+                          glyph: Glyph.back,
+                          label: 'Kembali',
+                          onTap: () => Navigator.maybePop(context),
+                        ),
+                        const Spacer(),
+                        Mascot(kind: category.mascot, size: 52),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: CategorySticker(category),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(widget.from.title, style: display(30, height: 1.05)),
+                    const SizedBox(height: 6),
+                    Text(
+                      [
+                        if (widget.from.city.isNotEmpty) widget.from.city,
+                        '$photoCount foto',
+                        if (videoCount > 0) '$videoCount video',
+                        '${spots.length} cerita dari $people orang',
+                      ].join(' · '),
+                      style: small.copyWith(fontSize: 13.5),
+                    ),
+                    const SizedBox(height: 14),
+                    FrostedSurface(
+                      radius: 20,
+                      sigma: 14,
+                      padding: const EdgeInsets.all(4),
+                      child: Row(
+                        children: [
+                          for (final (i, label) in [
+                            (0, 'Cerita (${spots.length})'),
+                            (1, 'Galeri bersama (${mediaItems.length})'),
+                          ])
+                            Expanded(
+                              child: Semantics(
+                                selected: viewMode == i,
+                                button: true,
+                                child: Bouncy(
+                                  scale: .98,
+                                  onTap: () => setState(() => viewMode = i),
+                                  child: AnimatedContainer(
+                                    duration: motionTime(context, motionQuick),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 9,
+                                      horizontal: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: viewMode == i
+                                          ? piko
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      label,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        color: viewMode == i
+                                            ? Colors.white
+                                            : ink,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  if (spots.isEmpty)
-                    const EmptyState(
-                      title: 'Belum ada\ndokumentasi.',
-                      mood: PikoMood.wow,
-                      kind: MascotKind.pino,
-                    ),
-                ],
+                    const SizedBox(height: 16),
+                    if (spots.isEmpty)
+                      const EmptyState(
+                        title: 'Belum ada\ndokumentasi.',
+                        mood: PikoMood.wow,
+                        kind: MascotKind.pino,
+                      )
+                    else if (viewMode == 1)
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 210,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              childAspectRatio: .84,
+                            ),
+                        itemCount: mediaItems.length,
+                        itemBuilder: (context, i) => _PhotoTile(
+                          photo: mediaItems[i],
+                          rank: i + 1,
+                          repo: widget.repo,
+                          onTap: () => openSpot(
+                            context,
+                            mediaItems[i].spot,
+                            widget.repo,
+                            () {
+                              widget.onChanged();
+                              reload();
+                            },
+                          ),
+                        ),
+                      )
+                    else
+                      for (final (i, spot) in spots.indexed)
+                        Rise(
+                          index: i,
+                          from: 14,
+                          child: _Documentation(
+                            spot: spot,
+                            rank: i + 1,
+                            repo: widget.repo,
+                            current: spot.id == widget.from.id,
+                            onOpen: () =>
+                                openSpot(context, spot, widget.repo, () {
+                                  widget.onChanged();
+                                  reload();
+                                }),
+                          ),
+                        ),
+                  ],
+                ),
               ),
             ),
           ),

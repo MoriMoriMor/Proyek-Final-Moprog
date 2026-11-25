@@ -82,5 +82,39 @@ void main() {
       files: const [],
     );
     expect((await repo.placeSpots('p-d1')).length, before + 1);
+
+    // Nama identik dalam radius <=65m otomatis bergabung tanpa menduplikasi tempat.
+    final first = (await repo.placeSpots('p-d1')).first;
+    await repo.createSpot(
+      title: '  ${first.title.toUpperCase()}  ',
+      city: 'Bandung',
+      category: first.category,
+      story: 'Foto tambahan dari sudut lain',
+      lat: first.lat + 0.0001,
+      lng: first.lng + 0.0001,
+      files: const [],
+    );
+    expect((await repo.placeSpots('p-d1')).length, before + 2);
+  });
+
+  test('galeri bersama menggabungkan foto dan video dari berbagai pengunggah', () {
+    final withVideo = Spot.fromJson({
+      'id': 'v1',
+      'owner_id': 'uv1',
+      'title': 'Tempat',
+      'category': 'kafe',
+      'lat': -7.0,
+      'lng': 112.0,
+      'likes': 80,
+      'created_at': DateTime.now().toIso8601String(),
+      'media': [
+        {'path': 'v1-0', 'type': 'video'},
+        {'path': 'v1-1', 'type': 'image'},
+      ],
+    });
+    final combined = allPlaceMedia([spot('p1', likes: 20, photos: 2), withVideo]);
+    expect(combined.length, 4);
+    expect(combined.first.spot.id, 'v1');
+    expect(allPlaceMedia([withVideo], mediaType: 'video').length, 1);
   });
 }

@@ -2,34 +2,186 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'motion.dart';
 import 'piko.dart';
 import 'spot_icons.dart';
 import 'theme.dart';
 
-/// Label kategori berbentuk stiker yang sedikit miring.
+/// Permukaan kaca buram (frosted glass) ala iOS untuk bilah apung dan lencana.
+/// Otomatis menjadi lebih pekat tanpa blur saat mode reduced motion aktif.
+class FrostedSurface extends StatelessWidget {
+  const FrostedSurface({
+    super.key,
+    required this.child,
+    this.radius = 24,
+    this.sigma = 18,
+    this.padding,
+    this.dark = false,
+    this.fill,
+    this.borderColor,
+    this.shadows = surfaceShadow,
+  });
+
+  final Widget child;
+  final double radius, sigma;
+  final EdgeInsetsGeometry? padding;
+  final bool dark;
+  final Color? fill, borderColor;
+  final List<BoxShadow>? shadows;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = calm(context);
+    final bg =
+        fill ??
+        (dark
+            ? (reduced ? const Color(0xEB15204A) : darkGlassFill)
+            : (reduced ? Colors.white.withValues(alpha: .96) : glassFill));
+    final rim = borderColor ?? (dark ? darkGlassBorder : glassBorder);
+    final r = BorderRadius.circular(radius);
+    Widget box = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: r,
+        border: Border.all(color: rim, width: 1.2),
+      ),
+      child: child,
+    );
+    if (!reduced && sigma > 0) {
+      box = BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: box,
+      );
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(borderRadius: r, boxShadow: shadows),
+      child: ClipRRect(borderRadius: r, child: box),
+    );
+  }
+}
+
+/// Animasi pemuatan merek dengan ikon & logo Spots terbaru di dalam kapsul kaca.
+class SpotsLogoLoader extends StatefulWidget {
+  const SpotsLogoLoader({super.key, this.compact = false});
+  final bool compact;
+
+  @override
+  State<SpotsLogoLoader> createState() => _SpotsLogoLoaderState();
+}
+
+class _SpotsLogoLoaderState extends State<SpotsLogoLoader>
+    with SingleTickerProviderStateMixin {
+  late final controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (calm(context) || !TickerMode.valuesOf(context).enabled) {
+      controller.stop();
+    } else if (!controller.isAnimating) {
+      controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final iconBox = widget.compact ? 58.0 : 76.0;
+    final iconSize = widget.compact ? 38.0 : 50.0;
+    return RepaintBoundary(
+      child: Semantics(
+        label: 'Memuat Spots',
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final v = Curves.easeInOutSine.transform(controller.value);
+            final dy = calm(context) ? 0.0 : (v - .5) * -7.0;
+            final barX = calm(context) ? 0.0 : (v * 2 - 1) * .72;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Transform.translate(
+                  offset: Offset(0, dy),
+                  child: FrostedSurface(
+                    radius: iconBox * .33,
+                    sigma: 16,
+                    fill: glassStrong,
+                    child: SizedBox.square(
+                      dimension: iconBox,
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/app_icon.svg',
+                          width: iconSize,
+                          height: iconSize,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SvgPicture.asset(
+                  'assets/logo.svg',
+                  height: widget.compact ? 22 : 28,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: 96,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: blue.withValues(alpha: .14),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment(barX, 0),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      gradient: const LinearGradient(
+                        colors: [piko, coral],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Label kategori berbentuk stiker kaca buram yang rapi di atas foto.
 class CategorySticker extends StatelessWidget {
-  const CategorySticker(this.category, {super.key, this.tilt = -.025});
+  const CategorySticker(this.category, {super.key, this.tilt = -.02});
   final SpotCategory category;
   final double tilt;
 
   @override
   Widget build(BuildContext context) => Transform.rotate(
     angle: tilt,
-    child: Container(
-      padding: const EdgeInsets.fromLTRB(7, 5, 11, 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .96),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: line),
-        boxShadow: surfaceShadow,
-      ),
+    child: FrostedSurface(
+      radius: 15,
+      sigma: 14,
+      fill: glassStrong,
+      padding: const EdgeInsets.fromLTRB(8, 5, 11, 5),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           SpotIcon(category.glyph, size: 17, accent: category.color),
-          const SizedBox(width: 4),
+          const SizedBox(width: 5),
           Text(
             category.label,
             style: const TextStyle(
@@ -105,11 +257,14 @@ class _CategoryChip extends StatelessWidget {
         curve: motionCurve,
         padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
         decoration: BoxDecoration(
-          color: active ? blue : Colors.white.withValues(alpha: .88),
+          color: active ? blue : glassStrong,
           gradient: active ? brandGradient : null,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: active ? blue : line),
-          boxShadow: active ? surfaceShadow : null,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: active ? Colors.white.withValues(alpha: .35) : glassBorder,
+            width: 1.2,
+          ),
+          boxShadow: surfaceShadow,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -385,14 +540,24 @@ class GlassButton extends StatelessWidget {
         onTap: onTap,
         child: ClipOval(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            filter: ImageFilter.blur(
+              sigmaX: calm(context) ? 0 : 16,
+              sigmaY: calm(context) ? 0 : 16,
+            ),
             child: Container(
               width: 46,
               height: 46,
               alignment: Alignment.center,
-              color: dark
-                  ? ink.withValues(alpha: .35)
-                  : Colors.white.withValues(alpha: .82),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: dark
+                    ? ink.withValues(alpha: .46)
+                    : Colors.white.withValues(alpha: .82),
+                border: Border.all(
+                  color: dark ? darkGlassBorder : glassBorder,
+                  width: 1.2,
+                ),
+              ),
               child: SpotIcon(
                 glyph,
                 size: 23,

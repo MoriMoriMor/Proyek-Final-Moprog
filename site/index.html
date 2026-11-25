@@ -3,22 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Spots</title>
-  <meta name="description" content="Spots: rekomendasi tempat seru dari orang sekitar, lengkap dengan reels, peta, dan jajan langsung dari spotnya.">
-  <link rel="icon" href="piko.svg">
+  <title>Spots — Rekomendasi Tempat Nyata di Sekitarmu</title>
+  <meta name="description" content="Spots: temukan warung, kedai kopi, dan ruang kota dari dokumentasi warga sekitar, lengkap dengan rute langsung dan pemesanan lokal.">
+  <link rel="icon" href="app_icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="card">
-    <a class="logo" href="./">spots<span>.</span></a>
-    <div class="stage"><img class="piko" src="piko.svg" alt="Piko, maskot Spots"></div>
-    <span class="sticker">Spots to go before we die</span>
-    <h1>Temukan spot wajib datang</h1>
-    <p>Rekomendasi warung, tempat nongkrong, dan wisata dari orang sekitar. Geser reels, simpan favoritmu, dan jajan langsung dari spotnya.</p>
-    <p class="small">Aplikasi Android dan iOS sedang disiapkan.</p>
+  <main class="landing">
+    <header class="brand-bar">
+      <a class="brand-mark" href="./">
+        <img src="app_icon.svg" alt="" width="40" height="40">
+        <span class="logo">spots<span>.</span></span>
+      </a>
+      <span class="glass-chip">Dokumentasi warga sekitar</span>
+    </header>
+
+    <section class="hero-grid">
+      <div class="hero-copy">
+        <h1>Tempat jujur, foto asli dari orang sekitar.</h1>
+        <p>Cari warung langganan, tempat nongkrong sore, sampai taman kota lewat foto dan video pengunjung nyata. Buka rute langsung di peta atau pesan menu dari tokonya.</p>
+        <div class="feature-pills">
+          <span>Foto &amp; Reels nyata</span>
+          <span>Rute motor, mobil &amp; jalan</span>
+          <span>Pesan langsung ke toko</span>
+        </div>
+      </div>
+
+      <div class="photo-mosaic" aria-label="Contoh dokumentasi tempat nyata di Spots">
+        <figure class="shot shot-main">
+          <img src="photos/kuliner.jpg" alt="Hidangan rawon hangat di warung lokal" loading="eager">
+          <figcaption class="shot-badge">Kuliner lokal · Surabaya</figcaption>
+        </figure>
+        <figure class="shot shot-top">
+          <img src="photos/nongkrong.jpg" alt="Secangkir kopi hangat di meja kayu" loading="lazy">
+          <figcaption class="shot-badge">Kedai kopi sore</figcaption>
+        </figure>
+        <figure class="shot shot-bottom">
+          <img src="photos/taman.jpg" alt="Tugu dan taman terbuka hijau di tengah kota" loading="lazy">
+          <figcaption class="shot-badge">Ruang terbuka</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <footer class="credit-line">
+      Foto dokumentasi tempat berlisensi terbuka dari Wikimedia Commons.
+    </footer>
   </main>
 </body>
 </html>

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -45,6 +47,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
   List<Place> places = [];
   String? placeId;
   bool newPlace = false;
+  Timer? _placeDebounce;
 
   @override
   void initState() {
@@ -80,14 +83,59 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
 
   Future<void> findPlaces(LatLng p) async {
     try {
-      final found = await widget.repo.nearbyPlaces(p.latitude, p.longitude);
+      final q = title.text.trim();
+      final results = await Future.wait([
+        widget.repo.nearbyPlaces(p.latitude, p.longitude),
+        if (q.length >= 2)
+          widget.repo.nearbyPlaces(p.latitude, p.longitude, query: q),
+      ]);
       if (!mounted) return;
+      final merged = <String, Place>{};
+      for (final list in results) {
+        for (final item in list) {
+          merged[item.id] = item;
+        }
+      }
+      final norm = q.toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+      final sorted = merged.values.toList()
+        ..sort((a, b) {
+          final aMatch =
+              norm.length >= 2 && a.name.toLowerCase().contains(norm);
+          final bMatch =
+              norm.length >= 2 && b.name.toLowerCase().contains(norm);
+          if (aMatch != bMatch) return aMatch ? -1 : 1;
+          return a.distanceM.compareTo(b.distanceM);
+        });
       setState(() {
-        places = found;
-        if (!found.any((pl) => pl.id == placeId)) placeId = null;
-        if (found.isEmpty) newPlace = true;
+        places = sorted.take(8).toList();
+        if (!places.any((pl) => pl.id == placeId)) placeId = null;
+        if (places.isEmpty) {
+          newPlace = true;
+        } else if (placeId == null &&
+            norm.length >= 3 &&
+            places.any(
+              (pl) =>
+                  pl.distanceM <= 65 &&
+                  pl.name.trim().toLowerCase().replaceAll(
+                        RegExp(r'\s+'),
+                        ' ',
+                      ) ==
+                      norm,
+            )) {
+          // Jangan paksa "Tempat baru" jika ada tempat identik tepat di titik ini.
+          newPlace = false;
+        }
       });
     } catch (_) {}
+  }
+
+  void _onTitleChanged(String _) {
+    _placeDebounce?.cancel();
+    final p = point;
+    if (p == null) return;
+    _placeDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) findPlaces(p);
+    });
   }
 
   void choosePlace(Place? place) => setState(() {
@@ -108,6 +156,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
 
   @override
   void dispose() {
+    _placeDebounce?.cancel();
     title.dispose();
     city.dispose();
     story.dispose();
@@ -335,6 +384,7 @@ class _CreateSpotScreenState extends State<CreateSpotScreen> {
               TextField(
                 controller: title,
                 maxLength: 100,
+                onChanged: _onTitleChanged,
                 textCapitalization: TextCapitalization.words,
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,

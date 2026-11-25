@@ -816,7 +816,23 @@ class DemoSpotsRepository extends SpotsRepository {
     if (_user == null) throw StateError('Masuk dulu untuk membagikan spot.');
     await Future<void>.delayed(const Duration(milliseconds: 900));
     final id = 'n${_rows.length}';
-    final place = placeId ?? 'p-$id';
+    final norm = title.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+    String? autoJoin;
+    if (placeId == null && norm.length >= 2) {
+      for (final row in _rows) {
+        final rNorm = (row['title'] as String)
+            .trim()
+            .toLowerCase()
+            .replaceAll(RegExp(r'\s+'), ' ');
+        final meters =
+            _km(lat, lng, row['lat'] as double, row['lng'] as double) * 1000;
+        if (meters <= 65 && rNorm == norm) {
+          autoJoin = row['place_id'] as String?;
+          break;
+        }
+      }
+    }
+    final place = placeId ?? autoJoin ?? 'p-$id';
     _rows.insert(0, {
       ..._row(
         id,
@@ -858,7 +874,7 @@ class DemoSpotsRepository extends SpotsRepository {
       final first = rows.last;
       final meters =
           _km(lat, lng, first['lat'] as double, first['lng'] as double) * 1000;
-      if (meters > 300) continue;
+      if (meters > (q.isEmpty ? 300 : 1500)) continue;
       if (q.isNotEmpty && !'${first['title']}'.toLowerCase().contains(q)) {
         continue;
       }
