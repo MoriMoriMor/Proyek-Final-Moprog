@@ -456,10 +456,19 @@ class _BackdropLines extends CustomPainter {
       size.shortestSide * .55,
       glow,
     );
-    final cloud = Paint()..color = Colors.white.withValues(alpha: .52);
-    canvas.drawCircle(Offset(size.width * .18, 128), 64, cloud);
-    canvas.drawCircle(Offset(size.width * .26, 136), 48, cloud);
-    canvas.drawCircle(Offset(size.width * .78, 210), 58, cloud);
+    var leftCloud = Path()
+      ..addOval(Rect.fromCircle(center: Offset(size.width * .18, 128), radius: 56));
+    leftCloud = Path.combine(
+      PathOperation.union,
+      leftCloud,
+      Path()
+        ..addOval(
+          Rect.fromCircle(center: Offset(size.width * .26, 138), radius: 42),
+        ),
+    );
+    final cloudPaint = Paint()..color = Colors.white.withValues(alpha: .46);
+    canvas.drawPath(leftCloud, cloudPaint);
+    canvas.drawCircle(Offset(size.width * .78, 210), 54, cloudPaint);
   }
 
   @override

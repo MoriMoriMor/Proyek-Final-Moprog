@@ -454,28 +454,47 @@ class _ScenicIllustrationPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: sunCenter, radius: w * .52));
     canvas.drawCircle(sunCenter, w * .52, sunGlow);
 
-    // Ilustrasi awan berlapis lembut
+    // Ilustrasi awan menyatu tanpa garis tumpang-tindih
     void drawCloud(double cx, double cy, double scale, double alpha) {
-      final p = Paint()..color = Colors.white.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(cx, cy), 38 * scale, p);
-      canvas.drawCircle(Offset(cx - 30 * scale, cy + 8 * scale), 28 * scale, p);
-      canvas.drawCircle(Offset(cx + 32 * scale, cy + 6 * scale), 30 * scale, p);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-            center: Offset(cx, cy + 18 * scale),
-            width: 108 * scale,
-            height: 32 * scale,
+      var cloud = Path()
+        ..addOval(
+          Rect.fromCircle(center: Offset(cx, cy), radius: 36 * scale),
+        );
+      for (final part in [
+        Path()
+          ..addOval(
+            Rect.fromCircle(
+              center: Offset(cx - 28 * scale, cy + 8 * scale),
+              radius: 26 * scale,
+            ),
           ),
-          Radius.circular(18 * scale),
-        ),
-        p,
-      );
+        Path()
+          ..addOval(
+            Rect.fromCircle(
+              center: Offset(cx + 30 * scale, cy + 6 * scale),
+              radius: 28 * scale,
+            ),
+          ),
+        Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromCenter(
+                center: Offset(cx, cy + 17 * scale),
+                width: 104 * scale,
+                height: 30 * scale,
+              ),
+              Radius.circular(15 * scale),
+            ),
+          ),
+      ]) {
+        cloud = Path.combine(PathOperation.union, cloud, part);
+      }
+      canvas.drawPath(cloud, Paint()..color = Colors.white.withValues(alpha: alpha));
     }
 
-    drawCloud(w * .16, h * .14, 1.15, .52);
-    drawCloud(w * .82, h * .22, 1.0, .44);
-    drawCloud(w * .48, h * .09, .82, .36);
+    drawCloud(w * .16, h * .13, 1.1, .55);
+    drawCloud(w * .82, h * .20, .95, .46);
+    drawCloud(w * .48, h * .08, .78, .38);
 
     // Ilustrasi padang bukit hijau-biru lembut di kaki cakrawala
     final backHill = Path()
@@ -626,41 +645,39 @@ class _Headline extends StatelessWidget {
             ],
           ),
         ),
-        Transform.translate(
-          offset: const Offset(0, -3),
-          child: Transform.rotate(
-            angle: -.025,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: compact ? 4 : 5,
+        const SizedBox(height: 5),
+        Transform.rotate(
+          angle: -.02,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: compact ? 4 : 5,
+            ),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF62A2FF), Color(0xFF3B76F6)],
               ),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF62A2FF), Color(0xFF3B76F6)],
-                ),
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: .55),
-                  width: 1.4,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x293B76F6),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: .55),
+                width: 1.4,
               ),
-              child: Text(
-                slide.highlight,
-                style: TextStyle(
-                  fontFamily: fontBody,
-                  fontWeight: FontWeight.w900,
-                  fontSize: compact ? 14 : 16,
-                  height: 1.1,
-                  color: Colors.white,
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x293B76F6),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
                 ),
+              ],
+            ),
+            child: Text(
+              slide.highlight,
+              style: TextStyle(
+                fontFamily: fontBody,
+                fontWeight: FontWeight.w900,
+                fontSize: compact ? 14 : 16,
+                height: 1.1,
+                color: Colors.white,
               ),
             ),
           ),
