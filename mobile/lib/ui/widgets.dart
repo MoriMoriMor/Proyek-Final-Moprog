@@ -111,22 +111,26 @@ class _SpotsLogoLoaderState extends State<SpotsLogoLoader>
               children: [
                 Row(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
                       'spots',
                       style: display(fontSize, color: ink, height: 1),
                     ),
-                    const SizedBox(width: 2),
-                    Transform.scale(
-                      scale: dotScale,
-                      child: Container(
-                        width: fontSize * .24,
-                        height: fontSize * .24,
-                        decoration: const BoxDecoration(
-                          color: coral,
-                          shape: BoxShape.circle,
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 3,
+                        bottom: fontSize * .18,
+                      ),
+                      child: Transform.scale(
+                        scale: dotScale,
+                        child: Container(
+                          width: fontSize * .24,
+                          height: fontSize * .24,
+                          decoration: const BoxDecoration(
+                            color: coral,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
                     ),
