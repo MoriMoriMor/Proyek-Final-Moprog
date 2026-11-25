@@ -465,11 +465,19 @@ class _SpotsShellState extends State<SpotsShell> {
     );
     if (wide) {
       return Scaffold(
-        body: Row(
-          children: [
-            _SideRail(tab: tab, onTab: chooseTab, onCreate: create, repo: repo),
-            Expanded(child: page),
-          ],
+        body: SpotsBackdrop(
+          market: tab == 4,
+          child: Row(
+            children: [
+              _SideRail(
+                tab: tab,
+                onTab: chooseTab,
+                onCreate: create,
+                repo: repo,
+              ),
+              Expanded(child: page),
+            ],
+          ),
         ),
       );
     }
@@ -787,10 +795,17 @@ class _SpotsShellState extends State<SpotsShell> {
           _StoryBubble(
             label: 'Bagikan',
             onTap: create,
-            child: const ColoredBox(
-              color: Color(0xFFFFEDF0),
-              child: Center(
-                child: SpotIcon(Glyph.plus, size: 30, color: coral),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .86),
+              ),
+              child: const Center(
+                child: SpotIcon(
+                  Glyph.plus,
+                  size: 26,
+                  color: piko,
+                  tint: false,
+                ),
               ),
             ),
           ),
@@ -1470,7 +1485,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final idle = dark ? Colors.white60 : muted;
-    final on = dark ? Colors.white : ink;
+    final on = dark ? Colors.white : piko;
     return Semantics(
       selected: active,
       button: true,
@@ -1487,15 +1502,17 @@ class _NavItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: active
                   ? (dark
-                        ? Colors.white.withValues(alpha: .14)
-                        : Colors.white.withValues(alpha: .74))
+                        ? Colors.white.withValues(alpha: .16)
+                        : Colors.white.withValues(alpha: .86))
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(18),
               border: active
                   ? Border.all(
-                      color: dark ? darkGlassBorder : glassBorder,
+                      color: dark ? darkGlassBorder : Colors.white,
+                      width: 1.2,
                     )
                   : null,
+              boxShadow: active && !dark ? surfaceShadow : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1511,9 +1528,9 @@ class _NavItem extends StatelessWidget {
                   ),
                   child: SpotIcon(
                     item.glyph,
-                    size: 26,
+                    size: 24,
                     color: active ? on : idle,
-                    accent: item.color,
+                    accent: piko,
                     tint: active,
                   ),
                 ),
@@ -1526,7 +1543,7 @@ class _NavItem extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 11,
-                      color: active ? on : idle,
+                      color: active ? (dark ? Colors.white : ink) : idle,
                     ),
                   ),
                 ),
@@ -1552,106 +1569,136 @@ class _SideRail extends StatelessWidget {
   final VoidCallback onCreate;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 240,
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(right: BorderSide(color: line, width: 2)),
-    ),
-    child: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 24, 18, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 6, bottom: 18),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: SvgPicture.asset('assets/logo.svg', height: 36),
+  Widget build(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 4, 14),
+      child: SizedBox(
+        width: 244,
+        child: FrostedSurface(
+          radius: 30,
+          sigma: 22,
+          fill: Colors.white.withValues(alpha: .84),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          shadows: [
+            BoxShadow(
+              color: ink.withValues(alpha: .09),
+              blurRadius: 28,
+              offset: const Offset(0, 10),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 18),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: SvgPicture.asset('assets/logo.svg', height: 34),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  StreakChip(onTap: () => openQuests(context)),
-                ],
+                    const SizedBox(width: 8),
+                    StreakChip(onTap: () => openQuests(context)),
+                  ],
+                ),
               ),
-            ),
-            for (final item in _tabs)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Semantics(
-                  selected: tab == item.index,
-                  button: true,
-                  child: Bouncy(
-                    scale: .96,
-                    onTap: () => onTab(item.index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 11,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tab == item.index
-                            ? item.color.withValues(alpha: .16)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        children: [
-                          SpotIcon(
-                            item.glyph,
-                            size: 26,
-                            color: tab == item.index ? ink : muted,
-                            accent: item.color,
-                            tint: tab == item.index,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            item.label,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: tab == item.index ? ink : muted,
+              for (final item in _tabs)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Semantics(
+                    selected: tab == item.index,
+                    button: true,
+                    child: Bouncy(
+                      scale: .97,
+                      onTap: () => onTab(item.index),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: tab == item.index
+                              ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFF62A2FF),
+                                  Color(0xFF3B76F6),
+                                  ],
+                                )
+                              : null,
+                          color: tab == item.index ? piko : Colors.transparent,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: tab == item.index
+                              ? const [
+                                  BoxShadow(
+                                    color: Color(0x2B3B76F6),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 5),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            SpotIcon(
+                              item.glyph,
+                              size: 22,
+                              color: tab == item.index ? Colors.white : muted,
+                              accent: piko,
+                              tint: false,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            Text(
+                              item.label,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: tab == item.index ? Colors.white : ink,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            const SizedBox(height: 14),
-            Chunky(
-              onTap: onCreate,
-              color: coral,
-              expand: true,
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SpotIcon(Glyph.plus, size: 22, color: Colors.white),
-                  SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      'Bagikan spot',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              const SizedBox(height: 12),
+              Chunky(
+                onTap: onCreate,
+                color: piko,
+                radius: 99,
+                expand: true,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SpotIcon(
+                      Glyph.plus,
+                      size: 20,
+                      color: Colors.white,
+                      tint: false,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Bagikan spot',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(child: RailExtras(repo: repo)),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(child: RailExtras(repo: repo)),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -1678,17 +1725,17 @@ class _RoundButton extends StatelessWidget {
       label: label,
       child: Bouncy(
         onTap: onTap,
-        child: Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: glassStrong,
-            shape: BoxShape.circle,
-            border: Border.all(color: glassBorder, width: 1.2),
-            boxShadow: surfaceShadow,
+        child: FrostedSurface(
+          radius: 99,
+          sigma: 16,
+          fill: glassStrong,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Center(
+              child: SpotIcon(glyph, size: 20, color: ink, accent: piko),
+            ),
           ),
-          child: SpotIcon(glyph, size: 22, accent: accent),
         ),
       ),
     ),
@@ -2183,16 +2230,32 @@ class _MiniCard extends StatelessWidget {
               width: 58,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: blue,
-                borderRadius: BorderRadius.circular(18),
-                border: Border(
-                  bottom: BorderSide(color: edgeOf(blue), width: 4),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF62A2FF), Color(0xFF3B76F6)],
                 ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: .36),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x283B76F6),
+                    blurRadius: 12,
+                    offset: Offset(0, 5),
+                  ),
+                ],
               ),
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SpotIcon(Glyph.route, size: 22, color: Colors.white),
+                  SpotIcon(
+                    Glyph.route,
+                    size: 20,
+                    color: Colors.white,
+                    tint: false,
+                  ),
                   SizedBox(height: 2),
                   Text(
                     'Rute',

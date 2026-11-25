@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -196,9 +194,9 @@ class _SpotCardState extends State<SpotCard>
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.white.withValues(alpha: .92),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: line),
+          border: Border.all(color: Colors.white, width: 1.5),
           boxShadow: surfaceShadow,
         ),
         child: Column(
@@ -226,14 +224,29 @@ class _SpotCardState extends State<SpotCard>
                     Positioned(
                       right: 12,
                       top: 12,
-                      child: Pill(
-                        color: Colors.white.withValues(alpha: .9),
+                      child: FrostedSurface(
+                        radius: 99,
+                        sigma: 14,
+                        fill: glassStrong,
+                        padding: const EdgeInsets.fromLTRB(9, 5, 11, 5),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const SpotIcon(Glyph.pin, size: 15, accent: coral),
-                            const SizedBox(width: 3),
-                            Text(distanceLabel(spot.distanceKm!)),
+                            const SpotIcon(
+                              Glyph.pin,
+                              size: 14,
+                              color: blue,
+                              tint: false,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              distanceLabel(spot.distanceKm!),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                                color: ink,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -557,91 +570,56 @@ class _SpotGalleryState extends State<SpotGallery> {
   }
 }
 
-/// Sampul ilustrasi untuk data demo: gradasi, bukit, dan ikon kategori.
+/// Sampul foto kategori untuk data demo dan cadangan media.
 class DemoCover extends StatelessWidget {
   const DemoCover({super.key, required this.seed});
   final String seed;
 
+  static String _assetFor(String categoryKey, int hash) =>
+      switch (categoryKey) {
+        'kuliner' => hash.isEven
+            ? 'assets/photos/kuliner.jpg'
+            : 'assets/photos/sate.jpg',
+        'kafe' => hash.isEven
+            ? 'assets/photos/hangout.jpg'
+            : 'assets/photos/nongkrong.jpg',
+        'belanja' => hash.isEven
+            ? 'assets/photos/nongkrong.jpg'
+            : 'assets/photos/sate.jpg',
+        _ => hash.isEven
+            ? 'assets/photos/taman.jpg'
+            : 'assets/photos/hangout.jpg',
+      };
+
   @override
   Widget build(BuildContext context) {
     final parts = seed.split(':');
-    final category = categoryOf(parts.length > 1 ? parts[1] : 'destinasi');
+    final key = parts.length > 1 ? parts[1] : 'destinasi';
     final hash = seed.hashCode.abs();
-    final palettes = <List<Color>>[
-      [const Color(0xFFFFB199), const Color(0xFFFF6A88)],
-      [const Color(0xFF8EC5FF), const Color(0xFF6A7BFF)],
-      [const Color(0xFFFFE29F), const Color(0xFFFFA36C)],
-      [const Color(0xFFA1F2D3), const Color(0xFF3FB6A8)],
-      [const Color(0xFFD4B8FF), const Color(0xFF8B6CF3)],
-    ];
-    final colors = palettes[hash % palettes.length];
-    return CustomPaint(
-      painter: _CoverPainter(colors, hash),
-      child: Center(
-        child: Transform.rotate(
-          angle: ((hash % 7) - 3) * .05,
-          child: SpotIcon(
-            category.glyph,
-            size: 96,
-            color: Colors.white,
-            accent: edgeOf(colors.last),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          _assetFor(key, hash),
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color(0x18192553),
+                Colors.transparent,
+                ink.withValues(alpha: .18),
+              ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
-}
-
-class _CoverPainter extends CustomPainter {
-  _CoverPainter(this.colors, this.seed);
-  final List<Color> colors;
-  final int seed;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ).createShader(rect),
-    );
-    final random = math.Random(seed);
-    canvas.drawCircle(
-      Offset(size.width * (.2 + random.nextDouble() * .6), size.height * .26),
-      size.shortestSide * .16,
-      Paint()..color = Colors.white.withValues(alpha: .35),
-    );
-    for (var layer = 0; layer < 2; layer++) {
-      final path = Path()..moveTo(0, size.height);
-      final base = size.height * (.68 + layer * .12);
-      path.lineTo(0, base);
-      final waves = 2 + random.nextInt(2);
-      for (var i = 0; i < waves; i++) {
-        final x1 = size.width * (i + .5) / waves;
-        final x2 = size.width * (i + 1) / waves;
-        path.quadraticBezierTo(
-          x1,
-          base - size.height * (.12 + random.nextDouble() * .12),
-          x2,
-          base,
-        );
-      }
-      path
-        ..lineTo(size.width, size.height)
-        ..close();
-      canvas.drawPath(
-        path,
-        Paint()..color = Colors.white.withValues(alpha: .18 + layer * .14),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_CoverPainter old) => old.seed != seed;
 }
 
 class SpotVideo extends StatefulWidget {
@@ -1733,18 +1711,42 @@ Future<void> openAuth(
   BuildContext context,
   SpotsRepository repo, {
   VoidCallback? onSuccess,
-}) => showModalBottomSheet<void>(
-  context: context,
-  isScrollControlled: true,
-  showDragHandle: false,
-  backgroundColor: Colors.transparent,
-  builder: (_) => AuthSheet(repo: repo, onSuccess: onSuccess),
-);
+}) {
+  final wide = MediaQuery.sizeOf(context).width >= 700;
+  if (wide) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: ink.withValues(alpha: .36),
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: AuthSheet(repo: repo, onSuccess: onSuccess, dialog: true),
+        ),
+      ),
+    );
+  }
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: false,
+    backgroundColor: Colors.transparent,
+    builder: (_) => AuthSheet(repo: repo, onSuccess: onSuccess),
+  );
+}
 
 class AuthSheet extends StatefulWidget {
-  const AuthSheet({super.key, required this.repo, this.onSuccess});
+  const AuthSheet({
+    super.key,
+    required this.repo,
+    this.onSuccess,
+    this.dialog = false,
+  });
   final SpotsRepository repo;
   final VoidCallback? onSuccess;
+  final bool dialog;
   @override
   State<AuthSheet> createState() => _AuthSheetState();
 }
@@ -1853,23 +1855,39 @@ class _AuthSheetState extends State<AuthSheet> {
   Widget build(BuildContext context) {
     final canPop = Navigator.of(context).canPop();
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [Color(0xFFCDE3FF), Color(0xFFEAF3FF), Color(0xFFF9FBFF)],
           stops: [0, .42, 1],
         ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+        borderRadius: widget.dialog
+            ? BorderRadius.circular(34)
+            : const BorderRadius.vertical(top: Radius.circular(36)),
+        border: widget.dialog
+            ? Border.all(color: Colors.white, width: 1.5)
+            : null,
+        boxShadow: widget.dialog
+            ? [
+                BoxShadow(
+                  color: ink.withValues(alpha: .18),
+                  blurRadius: 36,
+                  offset: const Offset(0, 18),
+                ),
+              ]
+            : null,
       ),
       child: SafeArea(
         top: false,
+        bottom: !widget.dialog,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             20,
-            14,
+            widget.dialog ? 20 : 14,
             20,
-            MediaQuery.viewInsetsOf(context).bottom + 20,
+            (widget.dialog ? 0.0 : MediaQuery.viewInsetsOf(context).bottom) +
+                20,
           ),
           child: SingleChildScrollView(
             child: Center(
@@ -1880,18 +1898,19 @@ class _AuthSheetState extends State<AuthSheet> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Pegangan atas halus
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: ink.withValues(alpha: .14),
-                            borderRadius: BorderRadius.circular(4),
+                      if (!widget.dialog) ...[
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: ink.withValues(alpha: .14),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
+                        const SizedBox(height: 14),
+                      ],
                       // Baris judul bergaya Recenter: tombol bundar kiri, judul tengah, maskot kanan
                       Row(
                         children: [

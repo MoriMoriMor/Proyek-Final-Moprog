@@ -553,12 +553,17 @@ class StreakChip extends StatelessWidget {
         child: Bouncy(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+            padding: const EdgeInsets.fromLTRB(9, 6, 12, 6),
             decoration: BoxDecoration(
               color: dark
                   ? Colors.white.withValues(alpha: .16)
-                  : const Color(0xFFFFF1E4),
-              borderRadius: BorderRadius.circular(18),
+                  : glassStrong,
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(
+                color: dark ? darkGlassBorder : glassBorder,
+                width: 1.2,
+              ),
+              boxShadow: dark ? null : surfaceShadow,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -861,27 +866,38 @@ class QuestCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.white.withValues(alpha: .90),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: line),
+            border: Border.all(color: Colors.white, width: 1.5),
             boxShadow: surfaceShadow,
           ),
           child: Row(
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 54,
+                height: 54,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: grape,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(color: edgeOf(grape), offset: const Offset(0, 4)),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF62A2FF), Color(0xFF3B76F6)],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: .4),
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x2E3B76F6),
+                      blurRadius: 12,
+                      offset: Offset(0, 5),
+                    ),
                   ],
                 ),
                 child: Text(
                   '${game.level}',
-                  style: display(28, color: Colors.white),
+                  style: display(26, color: Colors.white),
                 ),
               ),
               const SizedBox(width: 14),

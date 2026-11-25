@@ -61,11 +61,11 @@ class _ChunkyState extends State<Chunky> {
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
     final face = enabled ? widget.color : const Color(0xFFDDE1EE);
-    final edge = enabled
-        ? widget.edge ?? edgeOf(widget.color)
-        : const Color(0xFFC3C8D9);
+    final glow = enabled
+        ? (widget.edge ?? face).withValues(alpha: down ? .12 : .24)
+        : Colors.transparent;
     final radius = BorderRadius.circular(widget.radius);
-    final shift = down ? widget.depth : 0.0;
+    final shift = down ? 1.5 : 0.0;
     return FocusableActionDetector(
       enabled: enabled,
       includeFocusSemantics: false,
@@ -99,69 +99,71 @@ class _ChunkyState extends State<Chunky> {
                   widget.onTap!();
                 }
               : null,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                top: widget.depth,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(color: edge, borderRadius: radius),
+          child: AnimatedContainer(
+            duration: motionTime(context, motionQuick),
+            curve: Curves.easeOut,
+            width: widget.expand ? double.infinity : null,
+            transform: Matrix4.translationValues(0, shift, 0),
+            padding: widget.padding,
+            foregroundDecoration: BoxDecoration(
+              borderRadius: radius,
+              border: focused ? Border.all(color: ink, width: 2) : null,
+            ),
+            decoration: BoxDecoration(
+              color: face,
+              gradient: enabled && widget.color == piko
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF62A2FF), Color(0xFF3B76F6)],
+                    )
+                  : enabled && widget.border == null
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color.lerp(face, Colors.white, .16)!,
+                        face,
+                      ],
+                    )
+                  : null,
+              borderRadius: radius,
+              border: widget.border == null
+                  ? (enabled
+                        ? Border.all(
+                            color: Colors.white.withValues(alpha: .34),
+                          )
+                        : null)
+                  : Border.all(color: widget.border!, width: 1.5),
+              boxShadow: enabled
+                  ? [
+                      BoxShadow(
+                        color: glow,
+                        blurRadius: down ? 8 : 18,
+                        offset: Offset(0, down ? 3 : 8),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: DefaultTextStyle.merge(
+              style: TextStyle(
+                color: enabled ? foregroundOn(face) : muted,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                letterSpacing: .2,
+              ),
+              textAlign: TextAlign.center,
+              child: IconTheme.merge(
+                data: IconThemeData(
+                  color: enabled ? foregroundOn(face) : muted,
+                ),
+                child: Center(
+                  widthFactor: widget.expand ? null : 1,
+                  heightFactor: 1,
+                  child: widget.child,
                 ),
               ),
-              AnimatedContainer(
-                duration: motionTime(context, motionQuick),
-                curve: Curves.easeOut,
-                width: widget.expand ? double.infinity : null,
-                margin: EdgeInsets.only(bottom: widget.depth),
-                transform: Matrix4.translationValues(0, shift, 0),
-                padding: widget.padding,
-                foregroundDecoration: BoxDecoration(
-                  borderRadius: radius,
-                  border: focused ? Border.all(color: ink, width: 2) : null,
-                ),
-                decoration: BoxDecoration(
-                  color: face,
-                  gradient: enabled && widget.color == piko
-                      ? brandGradient
-                      : enabled && widget.border == null
-                      ? LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color.lerp(face, Colors.white, .14)!,
-                            face,
-                          ],
-                        )
-                      : null,
-                  borderRadius: radius,
-                  border: widget.border == null
-                      ? (enabled
-                            ? Border.all(
-                                color: Colors.white.withValues(alpha: .26),
-                              )
-                            : null)
-                      : Border.all(color: widget.border!, width: 1.6),
-                ),
-                child: DefaultTextStyle.merge(
-                  style: TextStyle(
-                    color: enabled ? foregroundOn(face) : muted,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    letterSpacing: .2,
-                  ),
-                  textAlign: TextAlign.center,
-                  child: IconTheme.merge(
-                    data: IconThemeData(
-                      color: enabled ? foregroundOn(face) : muted,
-                    ),
-                    child: Center(
-                      widthFactor: widget.expand ? null : 1,
-                      heightFactor: 1,
-                      child: widget.child,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Spots — Spot Terbaik di Sekitarmu</title>
-  <meta name="description" content="Spots: temukan kedai kopi, warung lokal, dan sudut kota dari cerita jujur warga sekitar, lengkap dengan rute langsung dan pemesanan lokal.">
+  <title>Spots — Wajib Datang Mulai dari Sini</title>
+  <meta name="description" content="Spots: temukan kedai kopi, kuliner warga lokal, peta sekitar, dan jajan langsung dari cerita jujur orang sekitar.">
   <link rel="icon" href="app_icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,40 +12,42 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="showcase">
-    <section class="phone-card">
-      <div class="sky-hero">
-        <div class="sky-top">
-          <img src="app_icon.svg" alt="" width="28" height="28">
-          <span>spots<b>.</b></span>
-        </div>
-        <div class="sky-watermark" aria-hidden="true">SPOTS</div>
-        <figure class="hero-photo">
-          <img src="photos/hangout.jpg" alt="Suasana hangat kedai kopi lokal">
-          <div class="photo-pills-top">
-            <span class="glass-pill">Dekat kamu</span>
-            <span class="glass-pill">Populer</span>
-          </div>
-          <div class="photo-headline">KETEMU SPOT<br>FAVORITMU</div>
-          <figcaption class="photo-bottom">
-            <strong>Kopi Sudut Sore</strong>
-            <small>Surabaya · 650 m dari sini</small>
-            <div class="photo-tags">
-              <span>Kopi</span><span>Nongkrong</span><span>Buka</span>
-            </div>
-          </figcaption>
-        </figure>
+  <div class="scenic-bg" aria-hidden="true">
+    <img src="photos/hangout.jpg" alt="">
+    <div class="scenic-veil"></div>
+    <div class="scenic-clouds"></div>
+    <div class="scenic-hills"></div>
+  </div>
+
+  <main class="landing-shell">
+    <section class="glass-hero-card">
+      <div class="brand-pill">
+        <img src="app_icon.svg" alt="" width="28" height="28">
+        <span>spots<b>.</b></span>
       </div>
-      <div class="sheet-panel">
-        <div class="sheet-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
-        <h1>Spot Terbaik Hanya<br>Satu Geseran Saja</h1>
-        <p>Temukan kedai kopi, warung lokal, dan sudut kota dari cerita jujur orang sekitar.</p>
-        <div class="cta-pill">
-          <span class="cta-disc" aria-hidden="true">&rarr;</span>
-          <span class="cta-label">Tersedia di Android, Web &amp; Windows</span>
-        </div>
-        <p class="credit-line">Foto berlisensi terbuka dari Wikimedia Commons.</p>
+      <p class="kicker">Spot berikutnya</p>
+      <h1 class="sticker-title" data-text="Wajib Datang">Wajib Datang</h1>
+      <span class="highlight-pill">mulai dari sini</span>
+      <p class="lead">Temukan kedai kopi, kuliner asli warga lokal, peta sekitar, dan pesan langsung tanpa antre.</p>
+      <div class="cta-dark-pill">
+        <span class="cta-arrow" aria-hidden="true">&rarr;</span>
+        <span>Tersedia di Android, Web &amp; Windows</span>
       </div>
+      <p class="credit-line">Foto berlisensi terbuka dari Wikimedia Commons.</p>
+    </section>
+
+    <section class="collage-stage" aria-label="Kolase tampilan aplikasi Spots">
+      <div class="glass-aura"></div>
+      <figure class="polaroid polaroid-a">
+        <img src="photos/kuliner.jpg" alt="Rawon Setan khas Surabaya">
+        <figcaption>Rawon Setan · Surabaya</figcaption>
+      </figure>
+      <div class="glass-note note-top">Kuahnya asli<br>juara banget!</div>
+      <figure class="polaroid polaroid-b">
+        <img src="photos/taman.jpg" alt="Suasana taman kota sore hari">
+        <figcaption>Tugu Pahlawan · 650 m</figcaption>
+      </figure>
+      <div class="glass-note note-bottom">18 spot seru dekatmu</div>
     </section>
   </main>
 </body>

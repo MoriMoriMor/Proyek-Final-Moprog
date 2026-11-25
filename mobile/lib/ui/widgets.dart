@@ -255,27 +255,42 @@ class _CategoryChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: motionTime(context, motionPage),
         curve: motionCurve,
-        padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
+        padding: const EdgeInsets.fromLTRB(12, 11, 16, 11),
         decoration: BoxDecoration(
           color: active ? blue : glassStrong,
-          gradient: active ? brandGradient : null,
-          borderRadius: BorderRadius.circular(18),
+          gradient: active
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF62A2FF), Color(0xFF3B76F6)],
+                )
+              : null,
+          borderRadius: BorderRadius.circular(99),
           border: Border.all(
-            color: active ? Colors.white.withValues(alpha: .35) : glassBorder,
-            width: 1.2,
+            color: active ? Colors.white.withValues(alpha: .42) : glassBorder,
+            width: 1.3,
           ),
-          boxShadow: surfaceShadow,
+          boxShadow: active
+              ? const [
+                  BoxShadow(
+                    color: Color(0x2E3B76F6),
+                    blurRadius: 14,
+                    offset: Offset(0, 6),
+                  ),
+                ]
+              : surfaceShadow,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SpotIcon(
               item.glyph,
-              size: 22,
+              size: 20,
               color: active ? Colors.white : ink,
-              accent: active ? yellow : item.color,
+              accent: active ? Colors.white : piko,
+              tint: !active,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 7),
             Text(
               item.label,
               style: TextStyle(
@@ -423,18 +438,28 @@ class _BackdropLines extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width * .94, 120);
-    final paint = Paint()
-      ..color = (market ? coral : blue).withValues(alpha: .07)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    for (final radius in [100.0, 170.0, 240.0]) {
-      canvas.drawCircle(center, radius, paint);
-    }
-    final path = Path()
-      ..moveTo(size.width * .6, 0)
-      ..cubicTo(size.width * .4, 160, size.width, 140, size.width * .8, 360);
-    canvas.drawPath(path, paint..strokeWidth = 1.5);
+    final glow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          (market ? const Color(0xFFFFD8C2) : const Color(0xFFB7D6FF))
+              .withValues(alpha: .42),
+          Colors.transparent,
+        ],
+      ).createShader(
+        Rect.fromCircle(
+          center: Offset(size.width * .84, 88),
+          radius: size.shortestSide * .55,
+        ),
+      );
+    canvas.drawCircle(
+      Offset(size.width * .84, 88),
+      size.shortestSide * .55,
+      glow,
+    );
+    final cloud = Paint()..color = Colors.white.withValues(alpha: .52);
+    canvas.drawCircle(Offset(size.width * .18, 128), 64, cloud);
+    canvas.drawCircle(Offset(size.width * .26, 136), 48, cloud);
+    canvas.drawCircle(Offset(size.width * .78, 210), 58, cloud);
   }
 
   @override
@@ -495,20 +520,26 @@ class Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: tone,
         borderRadius: radius,
-        border: Border.all(color: Colors.white, width: size > 60 ? 4 : 2.5),
+        border: Border.all(color: Colors.white, width: size > 60 ? 3.5 : 2),
         boxShadow: ring
             ? null
-            : [BoxShadow(color: edgeOf(tone), offset: const Offset(0, 3))],
+            : [
+                BoxShadow(
+                  color: tone.withValues(alpha: .26),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: face,
     );
     if (!ring) return tile;
     return Container(
-      padding: const EdgeInsets.all(3.5),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(size * .44),
         gradient: const SweepGradient(
-          colors: [coral, yellow, mint, piko, grape, coral],
+          colors: [Color(0xFF5B9BFF), piko, coral, Color(0xFF7CC4FF), Color(0xFF5B9BFF)],
         ),
       ),
       child: tile,

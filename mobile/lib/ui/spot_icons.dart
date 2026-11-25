@@ -143,11 +143,11 @@ enum Glyph {
   String svg(Color stroke, Color accent, {bool tint = true}) {
     final shape = fill ?? outline;
     final inkHex = _hex(stroke);
-    final shadow = tint && shape.isNotEmpty
-        ? '<g transform="translate(1.5 1.7)" fill="${_hex(accent)}" stroke="none">$shape</g>'
+    final duotone = tint && shape.isNotEmpty
+        ? '<g fill="${_hex(accent)}" fill-opacity="0.18" stroke="none">$shape</g>'
         : '';
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
-        '$shadow<g fill="none" stroke="$inkHex" stroke-width="2.1" '
+        '$duotone<g fill="none" stroke="$inkHex" stroke-width="1.9" '
         'stroke-linecap="round" stroke-linejoin="round">'
         '$outline${extra.replaceAll('INK', inkHex)}</g></svg>';
   }
