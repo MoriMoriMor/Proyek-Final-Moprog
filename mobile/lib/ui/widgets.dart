@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'motion.dart';
 import 'piko.dart';
@@ -63,7 +62,7 @@ class FrostedSurface extends StatelessWidget {
   }
 }
 
-/// Animasi pemuatan merek dengan ikon & logo Spots terbaru di dalam kapsul kaca.
+/// Animasi pemuatan bersih hanya dengan tulisan "spots." dan garis progres halus.
 class SpotsLogoLoader extends StatefulWidget {
   const SpotsLogoLoader({super.key, this.compact = false});
   final bool compact;
@@ -76,7 +75,7 @@ class _SpotsLogoLoaderState extends State<SpotsLogoLoader>
     with SingleTickerProviderStateMixin {
   late final controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: const Duration(milliseconds: 1200),
   );
 
   @override
@@ -97,8 +96,7 @@ class _SpotsLogoLoaderState extends State<SpotsLogoLoader>
 
   @override
   Widget build(BuildContext context) {
-    final iconBox = widget.compact ? 58.0 : 76.0;
-    final iconSize = widget.compact ? 38.0 : 50.0;
+    final fontSize = widget.compact ? 30.0 : 38.0;
     return RepaintBoundary(
       child: Semantics(
         label: 'Memuat Spots',
@@ -106,51 +104,49 @@ class _SpotsLogoLoaderState extends State<SpotsLogoLoader>
           animation: controller,
           builder: (context, _) {
             final v = Curves.easeInOutSine.transform(controller.value);
-            final dy = calm(context) ? 0.0 : (v - .5) * -7.0;
-            final barX = calm(context) ? 0.0 : (v * 2 - 1) * .72;
+            final barX = calm(context) ? 0.0 : (v * 2 - 1) * .74;
+            final dotScale = calm(context) ? 1.0 : .9 + v * .22;
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Transform.translate(
-                  offset: Offset(0, dy),
-                  child: FrostedSurface(
-                    radius: iconBox * .33,
-                    sigma: 16,
-                    fill: glassStrong,
-                    child: SizedBox.square(
-                      dimension: iconBox,
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/app_icon.svg',
-                          width: iconSize,
-                          height: iconSize,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      'spots',
+                      style: display(fontSize, color: ink, height: 1),
+                    ),
+                    const SizedBox(width: 2),
+                    Transform.scale(
+                      scale: dotScale,
+                      child: Container(
+                        width: fontSize * .24,
+                        height: fontSize * .24,
+                        decoration: const BoxDecoration(
+                          color: coral,
+                          shape: BoxShape.circle,
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SvgPicture.asset(
-                  'assets/logo.svg',
-                  height: widget.compact ? 22 : 28,
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  width: 96,
-                  height: 4,
+                  width: 88,
+                  height: 3.5,
                   decoration: BoxDecoration(
-                    color: blue.withValues(alpha: .14),
+                    color: blue.withValues(alpha: .13),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment(barX, 0),
                   child: Container(
-                    width: 40,
-                    height: 4,
+                    width: 36,
+                    height: 3.5,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      gradient: const LinearGradient(
-                        colors: [piko, coral],
-                      ),
+                      gradient: const LinearGradient(colors: [piko, coral]),
                     ),
                   ),
                 ),

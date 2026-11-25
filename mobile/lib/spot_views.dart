@@ -1736,6 +1736,8 @@ Future<void> openAuth(
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
+  showDragHandle: false,
+  backgroundColor: Colors.transparent,
   builder: (_) => AuthSheet(repo: repo, onSuccess: onSuccess),
 );
 
@@ -1806,199 +1808,489 @@ class _AuthSheetState extends State<AuthSheet> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.fromLTRB(
-      24,
-      0,
-      24,
-      MediaQuery.viewInsetsOf(context).bottom + 24,
+  Future<void> googleSignIn() async {
+    try {
+      await widget.repo.signInWithGoogle();
+      if (widget.repo.userId != null && mounted) {
+        widget.onSuccess?.call();
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) setState(() => error = friendlyError(e));
+    }
+  }
+
+  InputDecoration _fieldDecoration({
+    required String hint,
+    required Glyph glyph,
+    required Color accent,
+    Widget? suffix,
+  }) => InputDecoration(
+    hintText: hint,
+    filled: true,
+    fillColor: const Color(0xFFF3F7FE),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+    prefixIcon: Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      child: SpotIcon(glyph, size: 20, color: ink, accent: accent),
     ),
-    child: SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: AutofillGroup(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        layoutBuilder: (current, previous) => Stack(
-                          alignment: Alignment.centerLeft,
-                          children: [...previous, ?current],
-                        ),
-                        child: Text(
-                          register ? 'Gabung\nSpots' : 'Hai lagi!',
-                          key: ValueKey(register),
-                          style: display(34),
+    suffixIcon: suffix,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFFE3ECFA)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFF4A88FF), width: 1.8),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final canPop = Navigator.of(context).canPop();
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFCDE3FF), Color(0xFFEAF3FF), Color(0xFFF9FBFF)],
+          stops: [0, .42, 1],
+        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            14,
+            20,
+            MediaQuery.viewInsetsOf(context).bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: AutofillGroup(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Pegangan atas halus
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: ink.withValues(alpha: .14),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ),
-                    ),
-                    Piko(
-                      size: 86,
-                      mood: register ? PikoMood.wow : PikoMood.wink,
-                      wave: true,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Bouncy(
-                  onTap: busy
-                      ? null
-                      : () async {
-                          try {
-                            await widget.repo.signInWithGoogle();
-                            if (widget.repo.userId != null && context.mounted) {
-                              widget.onSuccess?.call();
-                              Navigator.pop(context);
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              setState(() => error = friendlyError(e));
-                            }
-                          }
-                        },
-                  child: Container(
-                    height: 54,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GoogleMark(size: 20),
-                        SizedBox(width: 10),
-                        Text(
-                          'Lanjut dengan Google',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Row(
-                  children: [
-                    Expanded(child: Divider(color: line, thickness: 2)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text('atau pakai email', style: small),
-                    ),
-                    Expanded(child: Divider(color: line, thickness: 2)),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  child: register
-                      ? Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: TextField(
-                            controller: name,
-                            textCapitalization: TextCapitalization.words,
-                            autofillHints: const [AutofillHints.nickname],
-                            decoration: const InputDecoration(
-                              hintText: 'Nama panggilan',
+                      const SizedBox(height: 14),
+                      // Baris judul bergaya Recenter: tombol bundar kiri, judul tengah, maskot kanan
+                      Row(
+                        children: [
+                          if (canPop)
+                            Bouncy(
+                              onTap: () => Navigator.maybePop(context),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: .88),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white),
+                                  boxShadow: surfaceShadow,
+                                ),
+                                child: const SpotIcon(
+                                  Glyph.back,
+                                  size: 18,
+                                  color: ink,
+                                  tint: false,
+                                ),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 40, height: 40),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Column(
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      register
+                                          ? 'Buat Akun Baru'
+                                          : 'Selamat Datang',
+                                      style: title.copyWith(fontSize: 20),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    register
+                                        ? 'Mulai simpan dan bagikan spot favoritmu'
+                                        : 'Lanjutkan petualanganmu di sekitar kota',
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: small.copyWith(fontSize: 12),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        )
-                      : const SizedBox(width: double.infinity),
-                ),
-                TextField(
-                  controller: email,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(hintText: 'Email'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: password,
-                  obscureText: hidden,
-                  onSubmitted: (_) => submit(),
-                  autofillHints: [
-                    register
-                        ? AutofillHints.newPassword
-                        : AutofillHints.password,
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Kata sandi',
-                    suffixIcon: IconButton(
-                      tooltip: hidden ? 'Tampilkan sandi' : 'Sembunyikan sandi',
-                      onPressed: () => setState(() => hidden = !hidden),
-                      icon: Text(
-                        hidden ? 'lihat' : 'tutup',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12,
-                          color: blue,
+                          Container(
+                            width: 40,
+                            height: 40,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: .88),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white),
+                              boxShadow: surfaceShadow,
+                            ),
+                            child: Piko(
+                              size: 30,
+                              mood: register ? PikoMood.wow : PikoMood.happy,
+                              bounce: false,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      // Kapsul pemilih Masuk / Daftar bergaya Recenter
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .9),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                          boxShadow: surfaceShadow,
+                        ),
+                        child: Row(
+                          children: [
+                            for (final (isReg, label, glyph) in [
+                              (false, 'Masuk', Glyph.sparkle),
+                              (true, 'Daftar', Glyph.face),
+                            ])
+                              Expanded(
+                                child: Semantics(
+                                  selected: register == isReg,
+                                  button: true,
+                                  child: Bouncy(
+                                    scale: .98,
+                                    onTap: busy
+                                        ? null
+                                        : () => setState(() {
+                                            register = isReg;
+                                            error = null;
+                                            info = null;
+                                          }),
+                                    child: AnimatedContainer(
+                                      duration: motionTime(context, motionPage),
+                                      curve: motionCurve,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                        horizontal: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: register == isReg
+                                            ? const LinearGradient(
+                                                colors: [
+                                                  Color(0xFF69A8FF),
+                                                  Color(0xFF3E7BF6),
+                                                ],
+                                              )
+                                            : null,
+                                        borderRadius: BorderRadius.circular(99),
+                                        boxShadow: register == isReg
+                                            ? const [
+                                                BoxShadow(
+                                                  color: Color(0x333E7BF6),
+                                                  blurRadius: 12,
+                                                  offset: Offset(0, 4),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SpotIcon(
+                                              glyph,
+                                              size: 16,
+                                              color: register == isReg
+                                                  ? Colors.white
+                                                  : ink,
+                                              tint: false,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              label,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 14,
+                                                color: register == isReg
+                                                    ? Colors.white
+                                                    : ink,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  child: error == null && info == null
-                      ? const SizedBox(width: double.infinity)
-                      : Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Text(
-                            error ?? info!,
-                            style: TextStyle(
-                              color: error != null ? danger : blue,
-                              fontWeight: FontWeight.w800,
+                      const SizedBox(height: 16),
+                      // Kartu formulir putih bersih dengan tepi kaca
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .94),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                          boxShadow: surfaceShadow,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            AnimatedSize(
+                              duration: motionTime(context, motionPage),
+                              curve: motionCurve,
+                              child: register
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 12,
+                                      ),
+                                      child: TextField(
+                                        controller: name,
+                                        textCapitalization:
+                                            TextCapitalization.words,
+                                        autofillHints: const [
+                                          AutofillHints.nickname,
+                                        ],
+                                        decoration: _fieldDecoration(
+                                          hint: 'Nama panggilan',
+                                          glyph: Glyph.face,
+                                          accent: mint,
+                                        ),
+                                      ),
+                                    )
+                                  : const SizedBox(width: double.infinity),
                             ),
+                            TextField(
+                              controller: email,
+                              keyboardType: TextInputType.emailAddress,
+                              autofillHints: const [AutofillHints.email],
+                              decoration: _fieldDecoration(
+                                hint: 'Alamat email',
+                                glyph: Glyph.chat,
+                                accent: sky,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: password,
+                              obscureText: hidden,
+                              onSubmitted: (_) => submit(),
+                              autofillHints: [
+                                register
+                                    ? AutofillHints.newPassword
+                                    : AutofillHints.password,
+                              ],
+                              decoration: _fieldDecoration(
+                                hint: 'Kata sandi',
+                                glyph: Glyph.shield,
+                                accent: yellow,
+                                suffix: Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: TextButton(
+                                    onPressed: () =>
+                                        setState(() => hidden = !hidden),
+                                    style: TextButton.styleFrom(
+                                      minimumSize: const Size(52, 34),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      hidden ? 'Tampil' : 'Sembunyi',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12,
+                                        color: blue,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 200),
+                              child: error == null && info == null
+                                  ? const SizedBox(width: double.infinity)
+                                  : Padding(
+                                      padding: const EdgeInsets.only(top: 12),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 9,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: error != null
+                                              ? const Color(0xFFFFEEF1)
+                                              : const Color(0xFFEDF4FF),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          error ?? info!,
+                                          style: TextStyle(
+                                            color: error != null
+                                                ? danger
+                                                : blue,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Tombol kirim pil gelap dengan lencana panah putih
+                            Semantics(
+                              button: true,
+                              enabled: !busy,
+                              child: Bouncy(
+                                onTap: busy ? null : submit,
+                                scale: .97,
+                                child: Container(
+                                  height: 52,
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0B1120),
+                                    borderRadius: BorderRadius.circular(99),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x220B1120),
+                                        blurRadius: 18,
+                                        offset: Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 44,
+                                        ),
+                                        child: Text(
+                                          busy
+                                              ? 'Memproses…'
+                                              : register
+                                              ? 'Buat Akun'
+                                              : 'Masuk',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 15.5,
+                                          ),
+                                        ),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Container(
+                                          width: 42,
+                                          height: 42,
+                                          alignment: Alignment.center,
+                                          decoration: const BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Color(0xFF69A8FF),
+                                                Color(0xFF3E7BF6),
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const SpotIcon(
+                                            Glyph.send,
+                                            size: 17,
+                                            color: Colors.white,
+                                            tint: false,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Pil putih bersih untuk Google (gaya tombol Surprise me di Recenter)
+                      Bouncy(
+                        onTap: busy ? null : googleSignIn,
+                        scale: .98,
+                        child: Container(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .94),
+                            borderRadius: BorderRadius.circular(99),
+                            border: Border.all(color: Colors.white, width: 1.5),
+                            boxShadow: surfaceShadow,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GoogleMark(size: 18),
+                              SizedBox(width: 10),
+                              Flexible(
+                                child: Text(
+                                  'Lanjut dengan Google',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: ink,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14.5,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                ),
-                const SizedBox(height: 20),
-                Chunky(
-                  expand: true,
-                  color: register ? coral : piko,
-                  onTap: busy ? null : submit,
-                  child: Text(
-                    busy
-                        ? 'Sebentar…'
-                        : register
-                        ? 'Bikin akun'
-                        : 'Masuk',
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: busy
-                      ? null
-                      : () => setState(() {
-                          register = !register;
-                          error = null;
-                          info = null;
-                        }),
-                  child: Text(
-                    register
-                        ? 'Udah punya akun? Masuk'
-                        : 'Belum punya akun? Daftar',
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _StoreTeaser extends StatefulWidget {

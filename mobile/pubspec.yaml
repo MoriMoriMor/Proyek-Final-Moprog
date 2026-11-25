@@ -75,6 +75,7 @@ flutter:
     - assets/photos/nongkrong.jpg
     - assets/photos/taman.jpg
     - assets/photos/sate.jpg
+    - assets/photos/hangout.jpg
   fonts:
     - family: Nunito
       fonts:
