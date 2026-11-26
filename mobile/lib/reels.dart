@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -95,56 +97,93 @@ class _ReelsViewState extends State<ReelsView> {
       );
     }
     return ColoredBox(
-      color: Colors.black,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: controller,
-            scrollDirection: Axis.vertical,
-            itemCount: widget.spots.length,
-            onPageChanged: (i) {
-              HapticFeedback.selectionClick();
-              setState(() {
-                current = i;
-                hint = false;
-              });
-              GameState.instance.track('reel');
-            },
-            itemBuilder: (context, i) => ReelPage(
-              key: ValueKey(widget.spots[i].id),
-              spot: widget.spots[i],
-              repo: widget.repo,
-              active: i == current,
-              onChanged: widget.onChanged,
-              onOpenStore: widget.onOpenStore,
-              bottomInset: widget.bottomInset,
+      color: const Color(0xFF070B19),
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final theater = box.maxWidth >= 560 && box.maxHeight >= 500;
+          final stageWidth = theater
+              ? math.min(460.0, box.maxHeight * .64).clamp(360.0, 480.0)
+              : box.maxWidth;
+          Widget stage = Stack(
+            children: [
+              PageView.builder(
+                controller: controller,
+                scrollDirection: Axis.vertical,
+                itemCount: widget.spots.length,
+                onPageChanged: (i) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    current = i;
+                    hint = false;
+                  });
+                  GameState.instance.track('reel');
+                },
+                itemBuilder: (context, i) => ReelPage(
+                  key: ValueKey(widget.spots[i].id),
+                  spot: widget.spots[i],
+                  repo: widget.repo,
+                  active: i == current,
+                  onChanged: widget.onChanged,
+                  onOpenStore: widget.onOpenStore,
+                  bottomInset: widget.bottomInset,
+                ),
+              ),
+              Positioned(
+                top: (theater ? 16.0 : MediaQuery.paddingOf(context).top + 12),
+                left: 20,
+                child: IgnorePointer(
+                  child: Text('Reels', style: display(28, color: Colors.white)),
+                ),
+              ),
+              Positioned(
+                top: (theater ? 14.0 : MediaQuery.paddingOf(context).top + 10),
+                right: 16,
+                child: StreakChip(dark: true, onTap: () => openQuests(context)),
+              ),
+              IgnorePointer(
+                child: AnimatedSwitcher(
+                  duration: motionTime(context, motionPage),
+                  child: hint
+                      ? const Align(
+                          key: ValueKey('petunjuk'),
+                          alignment: Alignment(0, .25),
+                          child: _SwipeHint(),
+                        )
+                      : const SizedBox.expand(key: ValueKey('selesai')),
+                ),
+              ),
+            ],
+          );
+          if (!theater) return stage;
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Container(
+                width: stageWidth,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: .14),
+                    width: 1.2,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x66000000),
+                      blurRadius: 36,
+                      offset: Offset(0, 18),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(27),
+                  child: stage,
+                ),
+              ),
             ),
-          ),
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 12,
-            left: 20,
-            child: IgnorePointer(
-              child: Text('Reels', style: display(28, color: Colors.white)),
-            ),
-          ),
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 10,
-            right: 16,
-            child: StreakChip(dark: true, onTap: () => openQuests(context)),
-          ),
-          IgnorePointer(
-            child: AnimatedSwitcher(
-              duration: motionTime(context, motionPage),
-              child: hint
-                  ? const Align(
-                      key: ValueKey('petunjuk'),
-                      alignment: Alignment(0, .25),
-                      child: _SwipeHint(),
-                    )
-                  : const SizedBox.expand(key: ValueKey('selesai')),
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -356,10 +395,13 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
             child: KeyedSubtree(
               key: ValueKey('${spot.id}-$index'),
               child: media == null || media.path.startsWith('demo:')
-                  ? _KenBurns(
-                      active: widget.active && !paused,
-                      child: DemoCover(
+                  ? _ReelStillFrame(
+                      backdrop: DemoCover(
                         seed: media?.path ?? 'demo:${spot.category}:${spot.id}',
+                      ),
+                      foreground: DemoCover(
+                        seed: media?.path ?? 'demo:${spot.category}:${spot.id}',
+                        fit: BoxFit.contain,
                       ),
                     )
                   : media.type == 'video'
@@ -367,12 +409,19 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
                       url: widget.repo.publicMediaUrl(media.path),
                       playing: widget.active && !paused,
                     )
-                  : _KenBurns(
-                      active: widget.active && !paused,
-                      child: SpotImage(
+                  : _ReelStillFrame(
+                      backdrop: SpotImage(
                         url: widget.repo.publicMediaUrl(media.path),
                         fallback: DemoCover(
                           seed: 'demo:${spot.category}:${spot.id}',
+                        ),
+                      ),
+                      foreground: SpotImage(
+                        url: widget.repo.publicMediaUrl(media.path),
+                        fit: BoxFit.contain,
+                        fallback: DemoCover(
+                          seed: 'demo:${spot.category}:${spot.id}',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -735,58 +784,35 @@ class _RailToggle extends StatelessWidget {
   );
 }
 
-/// Foto yang perlahan membesar seperti efek Ken Burns.
-class _KenBurns extends StatefulWidget {
-  const _KenBurns({required this.child, required this.active});
-  final Widget child;
-  final bool active;
-  @override
-  State<_KenBurns> createState() => _KenBurnsState();
-}
-
-class _KenBurnsState extends State<_KenBurns>
-    with SingleTickerProviderStateMixin {
-  late final controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 7),
-  );
+/// Bingkai foto Reels tanpa zoom-in: foto utuh (contain) di atas latar buram gelap.
+class _ReelStillFrame extends StatelessWidget {
+  const _ReelStillFrame({required this.backdrop, required this.foreground});
+  final Widget backdrop, foreground;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (calm(context) || !widget.active) {
-      controller.stop();
-    } else {
-      controller.forward();
-    }
-  }
-
-  @override
-  void didUpdateWidget(_KenBurns old) {
-    super.didUpdateWidget(old);
-    widget.active && !calm(context) ? controller.forward() : controller.stop();
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => ClipRect(
-    child: AnimatedBuilder(
-      animation: controller,
-      child: SizedBox.expand(child: widget.child),
-      builder: (_, child) => Transform.scale(
-        scale: calm(context)
-            ? 1
-            : 1 + Curves.easeOut.transform(controller.value) * .06,
-        alignment: const Alignment(.2, -.1),
-        child: child,
+  Widget build(BuildContext context) {
+    final reduced = calm(context);
+    return ColoredBox(
+      color: const Color(0xFF070B19),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (!reduced)
+            Opacity(
+              opacity: .38,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: backdrop,
+              ),
+            ),
+          const DecoratedBox(
+            decoration: BoxDecoration(color: Color(0x52050918)),
+          ),
+          foreground,
+        ],
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _ReelVideo extends StatefulWidget {
@@ -862,7 +888,7 @@ class _ReelVideoState extends State<_ReelVideo> {
         ? const VideoUnavailable()
         : ready
         ? FittedBox(
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
             child: SizedBox(
               width: controller.value.size.width,
               height: controller.value.size.height,

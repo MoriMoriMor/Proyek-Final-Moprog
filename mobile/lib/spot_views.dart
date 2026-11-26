@@ -20,12 +20,29 @@ import 'ui/theme.dart';
 import 'ui/widgets.dart';
 
 String friendlyError(Object error) {
-  if (error is PostgrestException) return error.message;
+  if (error is PostgrestException) {
+    final msg = error.message.toLowerCase();
+    if (error.code == '23505' ||
+        msg.contains('username sudah dipakai') ||
+        msg.contains('profiles_username')) {
+      return 'Username sudah dipakai pengguna lain.';
+    }
+    if (msg.contains('email ini sudah terdaftar')) {
+      return 'Email ini sudah terdaftar. Silakan masuk.';
+    }
+    return error.message;
+  }
   if (error is AuthException) {
     final text = error.message.toLowerCase();
     if (text.contains('invalid login')) return 'Email atau kata sandi salah.';
-    if (text.contains('already registered')) {
-      return 'Email ini sudah terdaftar.';
+    if (text.contains('already registered') ||
+        text.contains('user already exists') ||
+        text.contains('email ini sudah terdaftar')) {
+      return 'Email ini sudah terdaftar. Silakan masuk.';
+    }
+    if (text.contains('username sudah dipakai') ||
+        text.contains('profiles_username')) {
+      return 'Username sudah dipakai pengguna lain.';
     }
     return error.message;
   }
@@ -572,8 +589,9 @@ class _SpotGalleryState extends State<SpotGallery> {
 
 /// Sampul foto kategori untuk data demo dan cadangan media.
 class DemoCover extends StatelessWidget {
-  const DemoCover({super.key, required this.seed});
+  const DemoCover({super.key, required this.seed, this.fit = BoxFit.cover});
   final String seed;
+  final BoxFit fit;
 
   static String _assetFor(String categoryKey, int hash) =>
       switch (categoryKey) {
@@ -601,7 +619,7 @@ class DemoCover extends StatelessWidget {
       children: [
         Image.asset(
           _assetFor(key, hash),
-          fit: BoxFit.cover,
+          fit: fit,
           gaplessPlayback: true,
         ),
         DecoratedBox(
@@ -1753,27 +1771,58 @@ class AuthSheet extends StatefulWidget {
 
 class _AuthSheetState extends State<AuthSheet> {
   final name = TextEditingController();
+  final username = TextEditingController();
   final email = TextEditingController();
   final password = TextEditingController();
-  bool register = false, busy = false, hidden = true;
+  bool register = false, busy = false, hidden = true, customUsername = false;
   String? error, info;
+
+  @override
+  void initState() {
+    super.initState();
+    name.addListener(_syncSuggestedUsername);
+  }
+
+  void _syncSuggestedUsername() {
+    if (!register || customUsername) return;
+    final clean = name.text
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '.')
+        .replaceAll(RegExp(r'[^a-z0-9_.]'), '');
+    if (clean.isEmpty) {
+      username.text = '';
+      return;
+    }
+    username.text = clean.length > 20 ? clean.substring(0, 20) : clean;
+  }
 
   @override
   void dispose() {
     name.dispose();
+    username.dispose();
     email.dispose();
     password.dispose();
     super.dispose();
   }
 
   Future<void> submit() async {
-    if (!email.text.contains('@') ||
+    final cleanEmail = email.text.trim().toLowerCase();
+    final cleanHandle = username.text.trim().toLowerCase().replaceAll('@', '');
+    if (!cleanEmail.contains('@') ||
         password.text.length < 6 ||
         (register && name.text.trim().length < 2)) {
       setState(
         () => error = register
-            ? 'Isi nama, email, dan sandi minimal 6 karakter.'
+            ? 'Isi nama, username, email, dan sandi minimal 6 karakter.'
             : 'Isi email dan sandi yang benar.',
+      );
+      return;
+    }
+    if (register && !usernamePattern.hasMatch(cleanHandle)) {
+      setState(
+        () => error =
+            'Username 3-20 karakter: huruf kecil, angka, titik, atau _.',
       );
       return;
     }
@@ -1786,8 +1835,9 @@ class _AuthSheetState extends State<AuthSheet> {
       if (register) {
         final ready = await widget.repo.signUp(
           name.text,
-          email.text,
+          cleanEmail,
           password.text,
+          username: cleanHandle,
         );
         if (!ready) {
           if (mounted) {
@@ -1799,7 +1849,7 @@ class _AuthSheetState extends State<AuthSheet> {
           return;
         }
       } else {
-        await widget.repo.signIn(email.text, password.text);
+        await widget.repo.signIn(cleanEmail, password.text);
       }
       widget.onSuccess?.call();
       if (mounted) Navigator.pop(context);
@@ -1965,22 +2015,7 @@ class _AuthSheetState extends State<AuthSheet> {
                               ),
                             ),
                           ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: .88),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white),
-                              boxShadow: surfaceShadow,
-                            ),
-                            child: Piko(
-                              size: 30,
-                              mood: register ? PikoMood.wow : PikoMood.happy,
-                              bounce: false,
-                            ),
-                          ),
+                          const SizedBox(width: 40, height: 40),
                         ],
                       ),
                       const SizedBox(height: 18),
@@ -2091,23 +2126,40 @@ class _AuthSheetState extends State<AuthSheet> {
                               duration: motionTime(context, motionPage),
                               curve: motionCurve,
                               child: register
-                                  ? Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12,
-                                      ),
-                                      child: TextField(
-                                        controller: name,
-                                        textCapitalization:
-                                            TextCapitalization.words,
-                                        autofillHints: const [
-                                          AutofillHints.nickname,
-                                        ],
-                                        decoration: _fieldDecoration(
-                                          hint: 'Nama panggilan',
-                                          glyph: Glyph.face,
-                                          accent: mint,
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        TextField(
+                                          controller: name,
+                                          textCapitalization:
+                                              TextCapitalization.words,
+                                          autofillHints: const [
+                                            AutofillHints.nickname,
+                                          ],
+                                          decoration: _fieldDecoration(
+                                            hint: 'Nama panggilan',
+                                            glyph: Glyph.face,
+                                            accent: mint,
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(height: 12),
+                                        TextField(
+                                          controller: username,
+                                          autocorrect: false,
+                                          autofillHints: const [
+                                            AutofillHints.username,
+                                          ],
+                                          onChanged: (_) =>
+                                              customUsername = true,
+                                          decoration: _fieldDecoration(
+                                            hint: 'Username unik (mis. rara.sby)',
+                                            glyph: Glyph.compass,
+                                            accent: piko,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
                                     )
                                   : const SizedBox(width: double.infinity),
                             ),
@@ -2191,7 +2243,7 @@ class _AuthSheetState extends State<AuthSheet> {
                                     ),
                             ),
                             const SizedBox(height: 16),
-                            // Tombol kirim pil gelap dengan lencana panah putih
+                            // Tombol biru penuh menyeluruh tanpa ikon pesawat
                             Semantics(
                               button: true,
                               enabled: !busy,
@@ -2200,64 +2252,39 @@ class _AuthSheetState extends State<AuthSheet> {
                                 scale: .97,
                                 child: Container(
                                   height: 52,
-                                  padding: const EdgeInsets.all(5),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF0B1120),
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF69A8FF),
+                                        Color(0xFF3E7BF6),
+                                      ],
+                                    ),
                                     borderRadius: BorderRadius.circular(99),
                                     boxShadow: const [
                                       BoxShadow(
-                                        color: Color(0x220B1120),
-                                        blurRadius: 18,
-                                        offset: Offset(0, 8),
+                                        color: Color(0x363E7BF6),
+                                        blurRadius: 16,
+                                        offset: Offset(0, 6),
                                       ),
                                     ],
                                   ),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 44,
-                                        ),
-                                        child: Text(
-                                          busy
-                                              ? 'Memproses…'
-                                              : register
-                                              ? 'Buat Akun'
-                                              : 'Masuk',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 15.5,
-                                          ),
-                                        ),
-                                      ),
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: Container(
-                                          width: 42,
-                                          height: 42,
-                                          alignment: Alignment.center,
-                                          decoration: const BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                Color(0xFF69A8FF),
-                                                Color(0xFF3E7BF6),
-                                              ],
-                                            ),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const SpotIcon(
-                                            Glyph.send,
-                                            size: 17,
-                                            color: Colors.white,
-                                            tint: false,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    busy
+                                        ? 'Memproses…'
+                                        : register
+                                        ? 'Buat Akun'
+                                        : 'Masuk',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15.5,
+                                    ),
                                   ),
                                 ),
                               ),

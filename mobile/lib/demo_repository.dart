@@ -16,6 +16,18 @@ class DemoSpotsRepository extends SpotsRepository {
   final _auth = StreamController<void>.broadcast();
   String? _user;
   String _name = 'Kamu';
+  String _email = '';
+  int _nextUserSeq = 1;
+  final Map<String, String> _accounts = {
+    'rara@spots.local': 'u-Rara',
+    'bimo@spots.local': 'u-Bimo',
+    'nadia@spots.local': 'u-Nadia',
+    'gilang@spots.local': 'u-Gilang',
+    'sekar@spots.local': 'u-Sekar',
+    'dimas@spots.local': 'u-Dimas',
+    'raka@spots.local': 'u-Raka',
+    'tasya@spots.local': 'u-Tasya',
+  };
   final _likes = <String>{'d3'};
   final _saves = <String>{'d2', 'd5'};
   final _ratings = <String, int>{};
@@ -619,7 +631,8 @@ class DemoSpotsRepository extends SpotsRepository {
   @override
   String? get userId => _user;
   @override
-  String get email => _user == null ? '' : 'demo@spots.app';
+  String get email =>
+      _user == null ? '' : (_email.isNotEmpty ? _email : 'demo@spots.app');
   @override
   String get displayName => _name;
   @override
@@ -628,10 +641,40 @@ class DemoSpotsRepository extends SpotsRepository {
   String publicMediaUrl(String path) => path;
 
   @override
+  Future<bool> isUsernameAvailable(
+    String username, {
+    String? excludeUserId,
+  }) async {
+    final handle = username.trim().toLowerCase().replaceAll('@', '');
+    if (!usernamePattern.hasMatch(handle)) return false;
+    return !_profiles.values.any(
+      (p) => p.username.toLowerCase() == handle && p.id != excludeUserId,
+    );
+  }
+
+  String _uniqueAutoHandle(String seed, String userId) {
+    final raw = seed.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final base = raw.length >= 3 ? raw.substring(0, math.min(14, raw.length)) : 'kamu.spots';
+    var candidate = base;
+    var suffix = 1;
+    while (_profiles.values.any(
+      (p) => p.username.toLowerCase() == candidate && p.id != userId,
+    )) {
+      suffix++;
+      candidate = '${base.substring(0, math.min(16, base.length))}$suffix';
+    }
+    return candidate;
+  }
+
+  @override
   Future<void> signIn(String email, String password) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
-    _user = 'demo-user';
-    _name = email.split('@').first;
+    final cleanEmail = email.trim().toLowerCase();
+    final existingId = _accounts[cleanEmail];
+    _user = existingId ?? 'demo-user';
+    _email = cleanEmail;
+    _accounts.putIfAbsent(cleanEmail, () => _user!);
+    _name = _profiles[_user]?.displayName ?? cleanEmail.split('@').first;
     _ensureMe();
     _auth.add(null);
   }
@@ -640,17 +683,55 @@ class DemoSpotsRepository extends SpotsRepository {
   Future<void> signInWithGoogle() async {
     await Future<void>.delayed(const Duration(milliseconds: 700));
     _user = 'demo-user';
-    _name = 'Kamu';
+    _email = 'demo@spots.app';
+    _accounts.putIfAbsent(_email, () => _user!);
+    _name = _profiles[_user]?.displayName ?? 'Kamu';
     _ensureMe();
     _auth.add(null);
   }
 
   @override
-  Future<bool> signUp(String name, String email, String password) async {
+  Future<bool> signUp(
+    String name,
+    String email,
+    String password, {
+    String? username,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
-    _user = 'demo-user';
-    _name = name;
-    _ensureMe();
+    final cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail.contains('@') || cleanEmail.length < 5) {
+      throw StateError('Format email tidak valid.');
+    }
+    if (_accounts.containsKey(cleanEmail)) {
+      throw StateError('Email ini sudah terdaftar. Silakan masuk.');
+    }
+    String? chosenHandle;
+    if (username != null && username.trim().isNotEmpty) {
+      chosenHandle = username.trim().toLowerCase().replaceAll('@', '');
+      if (!usernamePattern.hasMatch(chosenHandle)) {
+        throw StateError(
+          'Username 3-20 karakter: huruf kecil, angka, titik, atau _.',
+        );
+      }
+      if (!await isUsernameAvailable(chosenHandle)) {
+        throw StateError('Username @$chosenHandle sudah dipakai.');
+      }
+    }
+    final id = _profiles.containsKey('demo-user')
+        ? 'u-demo-${_nextUserSeq++}'
+        : 'demo-user';
+    final cleanName = name.trim();
+    final handle = chosenHandle ?? _uniqueAutoHandle(cleanName, id);
+    _user = id;
+    _email = cleanEmail;
+    _name = cleanName;
+    _accounts[cleanEmail] = id;
+    _profiles[id] = UserProfile(
+      id: id,
+      username: handle,
+      displayName: cleanName,
+      bio: 'Baru gabung Spots.',
+    );
     _auth.add(null);
     return true;
   }
@@ -658,6 +739,7 @@ class DemoSpotsRepository extends SpotsRepository {
   @override
   Future<void> signOut() async {
     _user = null;
+    _email = '';
     _auth.add(null);
   }
 
@@ -1382,12 +1464,12 @@ class DemoSpotsRepository extends SpotsRepository {
   };
 
   void _ensureMe() {
-    final handle = _name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final id = _user ?? 'demo-user';
     _profiles.putIfAbsent(
-      'demo-user',
+      id,
       () => UserProfile(
-        id: 'demo-user',
-        username: handle.length >= 3 ? handle : 'kamu.spots',
+        id: id,
+        username: _uniqueAutoHandle(_name, id),
         displayName: _name,
         bio: 'Baru gabung Spots.',
       ),

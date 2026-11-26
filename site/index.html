@@ -11,13 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div class="scenic-bg" aria-hidden="true">
-    <img src="photos/hangout.jpg" alt="">
-    <div class="scenic-veil"></div>
-    <div class="scenic-clouds"></div>
-    <div class="scenic-hills"></div>
-  </div>
+<body class="space-landing">
+  <canvas id="space-bg" class="space-bg" aria-hidden="true"></canvas>
 
   <main class="landing-shell">
     <section class="glass-hero-card">
@@ -26,29 +21,21 @@
         <span>spots<b>.</b></span>
       </div>
       <p class="kicker">Spot berikutnya</p>
-      <h1 class="sticker-title" data-text="Wajib Datang">Wajib Datang</h1>
+      <h1 class="sticker-title">Wajib Datang</h1>
       <span class="highlight-pill">mulai dari sini</span>
-      <p class="lead">Temukan kedai kopi, kuliner asli warga lokal, peta sekitar, dan pesan langsung tanpa antre.</p>
+      <p class="lead">Jelajahi ribuan titik kuliner, kedai kopi, taman, dan belanja langsung dari cerita warga sekitar.</p>
       <div class="cta-dark-pill">
         <span class="cta-arrow" aria-hidden="true">&rarr;</span>
         <span>Tersedia di Android, Web &amp; Windows</span>
       </div>
-      <p class="credit-line">Foto berlisensi terbuka dari Wikimedia Commons.</p>
     </section>
 
-    <section class="collage-stage" aria-label="Kolase tampilan aplikasi Spots">
-      <div class="glass-aura"></div>
-      <figure class="polaroid polaroid-a">
-        <img src="photos/kuliner.jpg" alt="Rawon Setan khas Surabaya">
-        <figcaption>Rawon Setan · Surabaya</figcaption>
-      </figure>
-      <div class="glass-note note-top">Kuahnya asli<br>juara banget!</div>
-      <figure class="polaroid polaroid-b">
-        <img src="photos/taman.jpg" alt="Suasana taman kota sore hari">
-        <figcaption>Tugu Pahlawan · 650 m</figcaption>
-      </figure>
-      <div class="glass-note note-bottom">18 spot seru dekatmu</div>
+    <section class="globe-stage" aria-label="Ilustrasi Globe Bumi 3D Spots dengan pin lokasi">
+      <canvas id="earth-globe"></canvas>
+      <div id="globe-chips" aria-hidden="true"></div>
     </section>
   </main>
+
+  <script src="globe.js"></script>
 </body>
 </html>

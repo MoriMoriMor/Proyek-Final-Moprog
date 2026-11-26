@@ -31,17 +31,64 @@ class SpotsRepository {
 
   Stream<void> get authChanges => client.auth.onAuthStateChange;
 
-  Future<void> signIn(String email, String password) =>
-      client.auth.signInWithPassword(email: email.trim(), password: password);
+  Future<void> signIn(String email, String password) => client.auth
+      .signInWithPassword(email: email.trim().toLowerCase(), password: password);
+
+  /// Cek apakah username memenuhi pola dan belum dipakai pengguna lain.
+  Future<bool> isUsernameAvailable(
+    String username, {
+    String? excludeUserId,
+  }) async {
+    final handle = username.trim().toLowerCase().replaceAll('@', '');
+    if (!usernamePattern.hasMatch(handle)) return false;
+    final row = await client
+        .from('profiles')
+        .select('id')
+        .ilike('username', handle)
+        .maybeSingle();
+    if (row == null) return true;
+    return excludeUserId != null && row['id'] == excludeUserId;
+  }
 
   /// Mengembalikan `false` jika akun perlu dikonfirmasi lewat email.
-  Future<bool> signUp(String name, String email, String password) async {
+  Future<bool> signUp(
+    String name,
+    String email,
+    String password, {
+    String? username,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail.contains('@') || cleanEmail.length < 5) {
+      throw StateError('Format email tidak valid.');
+    }
+    String? cleanHandle;
+    if (username != null && username.trim().isNotEmpty) {
+      cleanHandle = username.trim().toLowerCase().replaceAll('@', '');
+      if (!usernamePattern.hasMatch(cleanHandle)) {
+        throw StateError(
+          'Username 3-20 karakter: huruf kecil, angka, titik, atau _.',
+        );
+      }
+      final available = await isUsernameAvailable(cleanHandle);
+      if (!available) {
+        throw StateError('Username @$cleanHandle sudah dipakai.');
+      }
+    }
     final response = await client.auth.signUp(
-      email: email.trim(),
+      email: cleanEmail,
       password: password,
-      data: {'display_name': name.trim()},
+      data: {
+        'display_name': name.trim(),
+        'username': ?cleanHandle,
+      },
       emailRedirectTo: confirmUrl,
     );
+    // Saat konfirmasi email aktif, Supabase mengembalikan identities kosong
+    // apabila alamat email sudah terdaftar sebelumnya.
+    final identities = response.user?.identities;
+    if (response.user == null || (identities != null && identities.isEmpty)) {
+      throw StateError('Email ini sudah terdaftar. Silakan masuk.');
+    }
     return response.session != null;
   }
 
@@ -844,6 +891,9 @@ class SpotsRepository {
     }
     if (displayName.trim().length < 2) {
       throw StateError('Nama minimal 2 huruf.');
+    }
+    if (!await isUsernameAvailable(handle, excludeUserId: me)) {
+      throw StateError('Username @$handle sudah dipakai.');
     }
     String? avatarPath;
     if (avatar != null) {
