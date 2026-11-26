@@ -78,7 +78,6 @@
     globeCanvas.height = rect.height * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  window.addEventListener('resize', resize);
   resize();
 
   globeCanvas.addEventListener('pointerdown', (e) => {
@@ -92,6 +91,7 @@
     lastX = e.clientX;
     centerLon = (centerLon - dx * 0.42) % 360;
     dragVel = -dx * 3.2;
+    if (reduced) renderGlobe();
   });
   const endDrag = () => { dragging = false; };
   globeCanvas.addEventListener('pointerup', endDrag);
@@ -409,6 +409,11 @@
     renderGlobe();
     if (!reduced || dragging) requestAnimationFrame(frame);
   }
+  window.addEventListener('resize', () => {
+    resize();
+    drawSpace();
+    renderGlobe();
+  });
   drawSpace();
   renderGlobe();
   if (!reduced) requestAnimationFrame(frame);
