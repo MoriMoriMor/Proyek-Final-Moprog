@@ -828,6 +828,9 @@ class _ChibiEarthPainter extends CustomPainter {
     }
     visible.sort((a, b) => a.z.compareTo(b.z));
 
+    final labelItems =
+        <(Offset anchor, Color color, String label, double alpha)>[];
+
     for (final v in visible) {
       final pos = Offset(center.dx + v.x * radius, center.dy - v.y * radius);
       // Pudar halus saat mendekati horizon agar tidak pernah mendadak muncul/hilang
@@ -866,9 +869,10 @@ class _ChibiEarthPainter extends CustomPainter {
           reduced ? 0.0 : math.sin(elapsed * 2.0 + v.index * 1.15) * 1.4;
       final depthScale = (.76 + .24 * v.z).clamp(.76, 1.0);
       final pinSize = (radius * .19).clamp(22.0, 33.0) * depthScale;
+      final pinAnchor = Offset(pos.dx, pos.dy - lift + bob);
       _drawChibiPin(
         canvas: canvas,
-        anchor: Offset(pos.dx, pos.dy - lift + bob),
+        anchor: pinAnchor,
         size: pinSize,
         color: v.category.color,
         categoryKey: v.spot.categoryKey,
@@ -876,10 +880,84 @@ class _ChibiEarthPainter extends CustomPainter {
         sy: sy,
         alpha: alpha,
       );
+
+      if (v.z > 0.20 && alpha > 0.15) {
+        labelItems.add((pinAnchor, v.category.color, v.spot.city, alpha));
+      }
     }
 
     // 9. Busur lintasan orbit bagian depan
     _drawOrbitArc(canvas, orbitPhase, front: true);
+
+    // 10. Label nama lokasi pada pin (sinkron di Canvas, hindari tabrakan teks)
+    _drawPinLabels(canvas, size, labelItems);
+  }
+
+  void _drawPinLabels(
+    Canvas canvas,
+    Size size,
+    List<(Offset anchor, Color color, String label, double alpha)> items,
+  ) {
+    if (items.isEmpty) return;
+    final fontSize = (radius * .066).clamp(9.5, 11.5);
+    final placed = <Rect>[];
+    // Prioritaskan pin yang paling depan (urutan belakang -> depan ada di list, jadi balik)
+    for (final item in items.reversed) {
+      final (anchor, color, label, alpha) = item;
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            fontFamily: fontBody,
+            fontWeight: FontWeight.w800,
+            fontSize: fontSize,
+            color: ink.withValues(alpha: alpha),
+            height: 1.1,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+
+      const dotSize = 6.0;
+      const padH = 7.0;
+      const padV = 3.5;
+      const gap = 5.0;
+      final pillW = padH + dotSize + gap + tp.width + padH;
+      final pillH = math.max(tp.height, dotSize) + padV * 2;
+      final left = (anchor.dx - pillW * .5).clamp(4.0, math.max(4.0, size.width - pillW - 4.0));
+      final top = (anchor.dy + 3.0).clamp(4.0, math.max(4.0, size.height - pillH - 4.0));
+      final rect = Rect.fromLTWH(left, top, pillW, pillH);
+
+      if (placed.any((r) => r.overlaps(rect.inflate(3.0)))) continue;
+      placed.add(rect);
+
+      final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(99));
+      canvas.drawRRect(
+        rrect.shift(const Offset(0, 2)),
+        Paint()..color = const Color(0xFF040A1C).withValues(alpha: .28 * alpha),
+      );
+      canvas.drawRRect(
+        rrect,
+        Paint()..color = Colors.white.withValues(alpha: .92 * alpha),
+      );
+      canvas.drawRRect(
+        rrect,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0
+          ..color = Colors.white.withValues(alpha: .96 * alpha),
+      );
+      canvas.drawCircle(
+        Offset(left + padH + dotSize * .5, top + pillH * .5),
+        dotSize * .5,
+        Paint()..color = color.withValues(alpha: alpha),
+      );
+      tp.paint(
+        canvas,
+        Offset(left + padH + dotSize + gap, top + (pillH - tp.height) * .5),
+      );
+    }
   }
 
   void _drawChibiPin({
@@ -1311,13 +1389,19 @@ class _ChibiEarthPainter extends CustomPainter {
             if (visited[j] && j != i) continue;
             var d = (chains[j].enterAngle - ch.exitAngle) % (math.pi * 2);
             if (d < 0) d += math.pi * 2;
-            if (d < bestDelta) {
+            // Izinkan celah balik kecil (< ~9°) agar lekukan pantai di tepi horizon
+            // tidak memutar 355° mengelilingi seluruh bola Bumi menjadi hijau penuh.
+            if (d > math.pi * 1.95) d -= math.pi * 2;
+            final pick = (bestDelta < 0 || d < 0)
+                ? d.abs() < bestDelta.abs()
+                : d < bestDelta;
+            if (pick) {
               bestDelta = d;
               bestNext = j;
             }
           }
 
-          final steps = (bestDelta / 0.11).ceil().clamp(1, 64);
+          final steps = (bestDelta.abs() / 0.11).ceil().clamp(1, 64);
           for (var s = 1; s < steps; s++) {
             final ang = ch.exitAngle + bestDelta * (s / steps);
             loopPts.add(
@@ -1331,7 +1415,7 @@ class _ChibiEarthPainter extends CustomPainter {
           if (curr == i) break;
         }
 
-        if (loopPts.length >= 3) {
+        if (loopPts.length >= 3 && _isValidLoopArea(loopPts)) {
           total.moveTo(loopPts.first.dx, loopPts.first.dy);
           for (var k = 1; k < loopPts.length; k++) {
             total.lineTo(loopPts[k].dx, loopPts[k].dy);
@@ -1341,6 +1425,22 @@ class _ChibiEarthPainter extends CustomPainter {
       }
     }
     return total;
+  }
+
+  bool _isValidLoopArea(List<Offset> pts) {
+    var s = 0.0;
+    final n = pts.length;
+    for (var i = 0; i < n; i++) {
+      final a = pts[i];
+      final b = pts[(i + 1) % n];
+      final x1 = a.dx - center.dx;
+      final y1 = center.dy - a.dy;
+      final x2 = b.dx - center.dx;
+      final y2 = center.dy - b.dy;
+      s += x1 * y2 - x2 * y1;
+    }
+    final normArea = (0.5 * s) / (radius * radius);
+    return normArea > -0.05 && normArea < 2.2;
   }
 
   (double, double, double) _horizonHit(_ProjPt a, _ProjPt b) {
