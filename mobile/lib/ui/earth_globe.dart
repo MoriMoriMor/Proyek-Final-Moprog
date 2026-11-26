@@ -763,27 +763,6 @@ class _ChibiEarthPainter extends CustomPainter {
         ).createShader(sphereRect),
     );
 
-    canvas.save();
-    canvas.translate(center.dx - radius * .44, center.dy - radius * .46);
-    canvas.rotate(-.64);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset.zero,
-        width: radius * .42,
-        height: radius * .16,
-      ),
-      Paint()..color = Colors.white.withValues(alpha: .28),
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(-radius * .14, radius * .14),
-        width: radius * .11,
-        height: radius * .06,
-      ),
-      Paint()..color = Colors.white.withValues(alpha: .22),
-    );
-    canvas.restore();
-
     canvas.restore(); // lepas globeClip
 
     // Cincin atmosfer tipis

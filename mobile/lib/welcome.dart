@@ -8,7 +8,6 @@ import 'spot_views.dart';
 import 'spots_repository.dart';
 import 'ui/earth_globe.dart';
 import 'ui/motion.dart';
-import 'ui/spot_icons.dart';
 import 'ui/theme.dart';
 import 'ui/widgets.dart';
 
@@ -503,7 +502,6 @@ class _ActionStack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final h = compact ? 46.0 : 52.0;
-    final disc = h - 10;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -517,7 +515,8 @@ class _ActionStack extends StatelessWidget {
             child: Container(
               height: h,
               width: double.infinity,
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: const Color(0xFF0B1120),
                 borderRadius: BorderRadius.circular(99),
@@ -529,45 +528,16 @@ class _ActionStack extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      width: disc,
-                      height: disc,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Transform.flip(
-                        flipX: true,
-                        child: const SpotIcon(
-                          Glyph.back,
-                          size: 17,
-                          color: Color(0xFF0B1120),
-                          tint: false,
-                        ),
-                      ),
-                    ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  busy ? 'Memproses…' : 'Mulai Sekarang',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15.5,
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: disc + 8),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        busy ? 'Memproses…' : 'Mulai Sekarang',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

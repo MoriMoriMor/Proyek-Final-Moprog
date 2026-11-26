@@ -335,16 +335,6 @@
     ctx.strokeStyle = '#38C884';
     ctx.stroke(land);
 
-    // Kilau kapsul kaca
-    ctx.save();
-    ctx.translate(cx - R * 0.44, cy - R * 0.46);
-    ctx.rotate(-0.64);
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, R * 0.21, R * 0.08, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
     ctx.restore();
 
     // Cincin tepi atmosfer
