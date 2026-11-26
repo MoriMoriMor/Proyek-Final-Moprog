@@ -925,8 +925,12 @@ class _ChibiEarthPainter extends CustomPainter {
       const gap = 5.0;
       final pillW = padH + dotSize + gap + tp.width + padH;
       final pillH = math.max(tp.height, dotSize) + padV * 2;
-      final left = (anchor.dx - pillW * .5).clamp(4.0, math.max(4.0, size.width - pillW - 4.0));
-      final top = (anchor.dy + 3.0).clamp(4.0, math.max(4.0, size.height - pillH - 4.0));
+      final left = (anchor.dx - pillW * .5)
+          .clamp(4.0, math.max(4.0, size.width - pillW - 4.0))
+          .toDouble();
+      final top = (anchor.dy + 3.0)
+          .clamp(4.0, math.max(4.0, size.height - pillH - 4.0))
+          .toDouble();
       final rect = Rect.fromLTWH(left, top, pillW, pillH);
 
       if (placed.any((r) => r.overlaps(rect.inflate(3.0)))) continue;
