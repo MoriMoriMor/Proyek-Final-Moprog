@@ -5,11 +5,9 @@ import 'package:flutter/scheduler.dart';
 
 import 'earth_geo.dart';
 import 'motion.dart';
-import 'spot_icons.dart';
 import 'theme.dart';
-import 'widgets.dart';
 
-/// Data titik lokasi nyata di permukaan Bumi untuk ditampilkan pada globe 3D.
+/// Data titik ilustrasi di permukaan Bumi untuk ditampilkan pada globe 3D.
 class GlobeSpotPin {
   const GlobeSpotPin({
     required this.title,
@@ -25,242 +23,117 @@ class GlobeSpotPin {
   final bool indonesia;
 }
 
-/// Daftar spot nyata di Indonesia (sesuai data Spots) dan kota dunia pada
-/// koordinat lintang-bujur asli di daratan Natural Earth.
+/// Titik ilustrasi terbatas yang tersebar merata di seluruh dunia (bukan data
+/// live database) supaya globe tetap lapang dan tidak terlalu penuh.
 const List<GlobeSpotPin> kGlobeSpots = [
-  // Klaster utama Indonesia — menampilkan seluruh 7 kategori & ikon asli Spots
+  // Nusantara — 3 titik representatif agar tetap rapi & tidak menumpuk
   GlobeSpotPin(
-    title: 'Rawon Setan',
-    city: 'Surabaya',
-    categoryKey: 'kuliner',
-    lat: -7.26,
-    lon: 112.74,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Kopi Teras Hujan',
-    city: 'Bandung',
-    categoryKey: 'kafe',
-    lat: -6.89,
-    lon: 107.61,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Pantai Batu Nona',
-    city: 'Lombok',
-    categoryKey: 'destinasi',
-    lat: -8.55,
-    lon: 116.30,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Rumah Seduh Pojok',
-    city: 'Jakarta',
-    categoryKey: 'kafe',
-    lat: -6.26,
-    lon: 106.81,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Workshop Gerabah',
-    city: 'Yogyakarta',
-    categoryKey: 'aktivitas',
-    lat: -7.79,
-    lon: 110.36,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Pasar Terapung',
-    city: 'Banjarmasin',
-    categoryKey: 'belanja',
-    lat: -3.32,
-    lon: 114.59,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Lari Sore Losari',
-    city: 'Makassar',
-    categoryKey: 'olahraga',
-    lat: -5.14,
-    lon: 119.41,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Bukit Cinta',
-    city: 'Labuan Bajo',
-    categoryKey: 'destinasi',
-    lat: -8.49,
-    lon: 119.89,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Danau Toba',
+    title: 'Kuliner Nusantara',
     city: 'Sumatera',
-    categoryKey: 'destinasi',
-    lat: 2.68,
-    lon: 98.88,
-    indonesia: true,
-  ),
-  GlobeSpotPin(
-    title: 'Sate Padang Ajo',
-    city: 'Padang',
     categoryKey: 'kuliner',
-    lat: -0.95,
-    lon: 100.36,
+    lat: -0.50,
+    lon: 101.40,
     indonesia: true,
   ),
   GlobeSpotPin(
-    title: 'Kopi Rempah',
+    title: 'Kopi & Tongkrongan',
+    city: 'Jawa',
+    categoryKey: 'kafe',
+    lat: -7.30,
+    lon: 110.80,
+    indonesia: true,
+  ),
+  GlobeSpotPin(
+    title: 'Wisata Bahari',
     city: 'Maluku',
-    categoryKey: 'kafe',
-    lat: 0.80,
-    lon: 127.85,
+    categoryKey: 'destinasi',
+    lat: -3.20,
+    lon: 128.50,
     indonesia: true,
   ),
+  // Asia & Oseania
   GlobeSpotPin(
-    title: 'Homestay Teluk',
-    city: 'Papua',
-    categoryKey: 'menginap',
-    lat: -1.80,
-    lon: 134.10,
-    indonesia: true,
-  ),
-  // Titik spot di benua lain supaya globe 360 derajat selalu hidup saat berputar
-  GlobeSpotPin(
-    title: 'Kopitiam Sudut',
-    city: 'Singapura',
-    categoryKey: 'kafe',
-    lat: 1.35,
-    lon: 103.82,
-  ),
-  GlobeSpotPin(
-    title: 'Pasar Malam',
-    city: 'Bangkok',
-    categoryKey: 'belanja',
-    lat: 13.75,
-    lon: 100.50,
-  ),
-  GlobeSpotPin(
-    title: 'Kedai Ramen Gang',
+    title: 'Kuliner Asia Timur',
     city: 'Tokyo',
     categoryKey: 'kuliner',
     lat: 35.68,
     lon: 139.69,
   ),
   GlobeSpotPin(
-    title: 'Kafe Atap',
-    city: 'Seoul',
-    categoryKey: 'kafe',
-    lat: 37.56,
-    lon: 126.98,
+    title: 'Pasar Lokal',
+    city: 'Mumbai',
+    categoryKey: 'belanja',
+    lat: 19.08,
+    lon: 72.88,
   ),
   GlobeSpotPin(
-    title: 'Pantai Pagi',
+    title: 'Aktivitas Pesisir',
     city: 'Sydney',
     categoryKey: 'olahraga',
     lat: -33.87,
     lon: 151.21,
   ),
+  // Timur Tengah & Eropa
   GlobeSpotPin(
-    title: 'Taman Kota',
-    city: 'Melbourne',
-    categoryKey: 'kafe',
-    lat: -37.81,
-    lon: 144.96,
-  ),
-  GlobeSpotPin(
-    title: 'Bukit Hijau',
-    city: 'Auckland',
-    categoryKey: 'destinasi',
-    lat: -36.85,
-    lon: 174.76,
-  ),
-  GlobeSpotPin(
-    title: 'Chai Sudut Kota',
-    city: 'Mumbai',
-    categoryKey: 'kuliner',
-    lat: 19.08,
-    lon: 72.88,
-  ),
-  GlobeSpotPin(
-    title: 'Pasar Rempah',
+    title: 'Wisata Sejarah',
     city: 'Istanbul',
     categoryKey: 'belanja',
     lat: 41.01,
     lon: 28.98,
   ),
   GlobeSpotPin(
-    title: 'Gelato Alun-Alun',
-    city: 'Roma',
-    categoryKey: 'kuliner',
-    lat: 41.90,
-    lon: 12.50,
-  ),
-  GlobeSpotPin(
-    title: 'Toko Roti Pagi',
+    title: 'Kedai Kopi',
     city: 'Paris',
-    categoryKey: 'belanja',
+    categoryKey: 'kafe',
     lat: 48.86,
     lon: 2.35,
   ),
   GlobeSpotPin(
-    title: 'Taman Sungai',
+    title: 'Eksplorasi Kota',
     city: 'London',
     categoryKey: 'aktivitas',
     lat: 51.51,
     lon: -0.13,
   ),
+  // Afrika
   GlobeSpotPin(
-    title: 'Bazar Tua',
+    title: 'Jelajah Budaya',
     city: 'Kairo',
     categoryKey: 'aktivitas',
     lat: 30.04,
     lon: 31.24,
   ),
   GlobeSpotPin(
-    title: 'Kopi Savana',
-    city: 'Nairobi',
-    categoryKey: 'kafe',
-    lat: -1.29,
-    lon: 36.82,
-  ),
-  GlobeSpotPin(
-    title: 'Dermaga Senja',
+    title: 'Pesona Alam',
     city: 'Cape Town',
     categoryKey: 'destinasi',
     lat: -33.92,
     lon: 18.42,
   ),
+  // Amerika Utara & Selatan
   GlobeSpotPin(
-    title: 'Lapangan Taman',
+    title: 'Olahraga Taman',
     city: 'New York',
     categoryKey: 'olahraga',
     lat: 40.71,
     lon: -74.01,
   ),
   GlobeSpotPin(
-    title: 'Kopi Bukit',
+    title: 'Sudut Santai',
     city: 'San Francisco',
     categoryKey: 'kafe',
     lat: 37.77,
     lon: -122.42,
   ),
   GlobeSpotPin(
-    title: 'Jajanan Alun-Alun',
-    city: 'Mexico City',
-    categoryKey: 'kuliner',
-    lat: 19.43,
-    lon: -99.13,
-  ),
-  GlobeSpotPin(
-    title: 'Pantai Lari',
+    title: 'Pantai Selatan',
     city: 'Rio',
-    categoryKey: 'olahraga',
+    categoryKey: 'destinasi',
     lat: -22.91,
     lon: -43.17,
   ),
   GlobeSpotPin(
-    title: 'Penginapan Kota Tua',
+    title: 'Penginapan Hangat',
     city: 'Buenos Aires',
     categoryKey: 'menginap',
     lat: -34.60,
@@ -322,6 +195,8 @@ class _CosmicSpacePainter extends CustomPainter {
   final double phase;
   final bool wide;
 
+  // Kecepatan kelip harus bilangan bulat agar sin(phase * speed * 2pi)
+  // mulus tanpa lonjakan saat loop 8 detik berulang.
   static final List<(double x, double y, double r, double speed, int tint)>
   _stars = () {
     final rng = math.Random(4207);
@@ -330,7 +205,7 @@ class _CosmicSpacePainter extends CustomPainter {
         rng.nextDouble(),
         rng.nextDouble(),
         .9 + rng.nextDouble() * 1.9,
-        .5 + rng.nextDouble() * 1.5,
+        (i % 2) + 1.0,
         i % 4,
       );
     });
@@ -348,7 +223,6 @@ class _CosmicSpacePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    // Gradasi angkasa luar beludru
     canvas.drawRect(
       rect,
       Paint()
@@ -360,7 +234,6 @@ class _CosmicSpacePainter extends CustomPainter {
         ).createShader(rect),
     );
 
-    // Pendaran nebula lembut tepat di belakang panggung globe 3D
     final focus = wide
         ? Offset(size.width * .68, size.height * .50)
         : Offset(size.width * .50, size.height * .33);
@@ -393,7 +266,6 @@ class _CosmicSpacePainter extends CustomPainter {
         ).createShader(Rect.fromCircle(center: secondNebula, radius: nebulaR)),
     );
 
-    // Bintang-bintang kecil berkelip halus
     const tints = [
       Color(0xFFFFFFFF),
       Color(0xFFBFE8FF),
@@ -401,7 +273,8 @@ class _CosmicSpacePainter extends CustomPainter {
       Color(0xFFFFD6E4),
     ];
     for (final (sx, sy, sr, sp, ti) in _stars) {
-      final wave = .42 + .58 * (.5 + .5 * math.sin((phase * sp + sx) * math.pi * 2));
+      final wave =
+          .46 + .54 * (.5 + .5 * math.sin((phase * sp + sx) * math.pi * 2));
       canvas.drawCircle(
         Offset(sx * size.width, sy * size.height),
         sr,
@@ -409,9 +282,8 @@ class _CosmicSpacePainter extends CustomPainter {
       );
     }
 
-    // Bintang kilau empat sudut bergaya chibi
-    for (final ( kx, ky, kr, kp) in _sparkles) {
-      final pulse = .72 + .28 * math.sin((phase + kp) * math.pi * 2);
+    for (final (kx, ky, kr, kp) in _sparkles) {
+      final pulse = .74 + .26 * math.sin((phase + kp) * math.pi * 2);
       _drawChibiStar(
         canvas,
         Offset(kx * size.width, ky * size.height),
@@ -438,31 +310,53 @@ class _CosmicSpacePainter extends CustomPainter {
       old.phase != phase || old.wide != wide;
 }
 
-/// Proyeksi titik 3D satuan untuk globe ortografis.
 class _ProjPt {
   const _ProjPt(this.x, this.y, this.z);
   final double x, y, z;
 }
 
-class _ActivePinView {
-  const _ActivePinView({
-    required this.index,
-    required this.spot,
-    required this.category,
-    required this.x,
-    required this.y,
-    required this.z,
-    required this.dropProgress,
-  });
+class _GlobeMotion extends ChangeNotifier {
+  static const double initialLonDeg = 114.0;
+  static const double baseDegPerSec = -5.0;
 
-  final int index;
-  final GlobeSpotPin spot;
-  final SpotCategory category;
-  final double x, y, z, dropProgress;
+  double elapsedSec = 0;
+  double centerLonDeg = initialLonDeg;
+  double dragVelocityDeg = 0;
+  bool dragging = false;
+  bool reduced = false;
+  int? tappedPinIndex;
+  double tappedAtSec = -10;
+
+  void tick(double dt) {
+    elapsedSec += dt;
+    if (!dragging) {
+      dragVelocityDeg *= math.exp(-dt * 3.4);
+      final speed = baseDegPerSec + dragVelocityDeg;
+      centerLonDeg = (centerLonDeg + speed * dt) % 360.0;
+    }
+    notifyListeners();
+  }
+
+  void dragDelta(double dx) {
+    centerLonDeg = (centerLonDeg - dx * 0.42) % 360.0;
+    notifyListeners();
+  }
+
+  void triggerPinTap(int index) {
+    tappedPinIndex = index;
+    tappedAtSec = elapsedSec;
+    notifyListeners();
+  }
+
+  void setReduced(bool value) {
+    if (reduced == value) return;
+    reduced = value;
+    if (value) elapsedSec = 3.0;
+  }
 }
 
 /// Ilustrasi Globe Bumi 3D bergaya chibi Spots berdasarkan garis pantai asli
-/// Natural Earth, berputar perlahan dengan animasi pin jatuh dan tempat Spots.
+/// Natural Earth, berputar mulus dengan titik ilustrasi di seluruh dunia.
 class SpotsEarthGlobe extends StatefulWidget {
   const SpotsEarthGlobe({super.key, this.compact = false});
   final bool compact;
@@ -473,24 +367,14 @@ class SpotsEarthGlobe extends StatefulWidget {
 
 class _SpotsEarthGlobeState extends State<SpotsEarthGlobe>
     with SingleTickerProviderStateMixin {
-  // Mulai tepat menghadap kepulauan Indonesia & Asia-Pasifik.
-  static const double _initialLonDeg = 114.0;
   static const double _centerLatRad = -4.5 * math.pi / 180.0;
   static const double _tiltRad = 9.5 * math.pi / 180.0;
-  // Kecepatan putar prograde (barat ke timur): ~72 detik per putaran penuh.
-  static const double _baseDegPerSec = -5.0;
 
   late final Ticker _ticker;
+  final _GlobeMotion _motion = _GlobeMotion();
   Duration? _lastTick;
-  double _elapsedSec = 0;
-  double _centerLonDeg = _initialLonDeg;
-  double _dragVelocityDeg = 0;
-  bool _dragging = false;
-  int? _tappedPinIndex;
-  double _tappedAtSec = -10;
-
-  // Catat kapan tiap pin masuk ke belahan depan supaya langsung jatuh membal.
-  final Map<int, double> _pinSpawnSec = {};
+  Offset _lastCenter = Offset.zero;
+  double _lastRadius = 120.0;
 
   static final List<List<(double, double, double)>> _unitRings = [
     for (final ring in earthLandRings)
@@ -514,20 +398,17 @@ class _SpotsEarthGlobeState extends State<SpotsEarthGlobe>
   @override
   void initState() {
     super.initState();
-    // Jadwalkan hujan pin awal secara bertahap pada detik 0..1.1
-    for (var i = 0; i < kGlobeSpots.length; i++) {
-      _pinSpawnSec[i] = (i % 8) * 0.13;
-    }
     _ticker = createTicker(_onTick);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (calm(context) || !TickerMode.valuesOf(context).enabled) {
+    final isCalm = calm(context);
+    _motion.setReduced(isCalm);
+    if (isCalm || !TickerMode.valuesOf(context).enabled) {
       if (_ticker.isActive) _ticker.stop();
       _lastTick = null;
-      _elapsedSec = 3.0;
     } else if (!_ticker.isActive) {
       _lastTick = null;
       _ticker.start();
@@ -539,358 +420,87 @@ class _SpotsEarthGlobeState extends State<SpotsEarthGlobe>
     _lastTick = now;
     if (prev == null) return;
     final dt = ((now - prev).inMicroseconds / 1e6).clamp(0.0, 0.06);
-    setState(() {
-      _elapsedSec += dt;
-      if (!_dragging) {
-        // Peluruhan kecepatan geser (Apple velocity handoff) kembali ke rotasi lambat
-        _dragVelocityDeg *= math.exp(-dt * 3.4);
-        final speed = _baseDegPerSec + _dragVelocityDeg;
-        _centerLonDeg = (_centerLonDeg + speed * dt) % 360.0;
-      }
-    });
+    _motion.tick(dt);
   }
 
   @override
   void dispose() {
     _ticker.dispose();
+    _motion.dispose();
     super.dispose();
   }
 
-  _ProjPt _project((double, double, double) u, double lonRad) {
-    final (ux, uy, uz) = u;
+  void _handleTap(Offset localPos) {
+    final lonRad = _motion.centerLonDeg * math.pi / 180.0;
     final cl = math.cos(lonRad), sl = math.sin(lonRad);
     final cp = math.cos(_centerLatRad), sp = math.sin(_centerLatRad);
     final ct = math.cos(_tiltRad), st = math.sin(_tiltRad);
 
-    final x1 = ux * cl - uz * sl;
-    final y1 = uy;
-    final z1 = ux * sl + uz * cl;
-
-    final x2 = x1;
-    final y2 = y1 * cp - z1 * sp;
-    final z2 = y1 * sp + z1 * cp;
-
-    final x = x2 * ct - y2 * st;
-    final y = x2 * st + y2 * ct;
-    return _ProjPt(x, y, z2);
-  }
-
-  /// Kurva jatuh fisik bergaya chibi: meluncur dari atas -> mendarat kenyal -> membal halus.
-  (double lift, double scaleX, double scaleY, double opacity, double ripple)
-  _dropMotion(double ageSec, bool reduced) {
-    if (reduced || ageSec >= 1.05) {
-      return (0.0, 1.0, 1.0, 1.0, 0.0);
+    int? nearest;
+    var bestDist = 34.0;
+    for (var i = 0; i < _spotUnits.length; i++) {
+      final (ux, uy, uz) = _spotUnits[i];
+      final x1 = ux * cl - uz * sl;
+      final z1 = ux * sl + uz * cl;
+      final y2 = uy * cp - z1 * sp;
+      final z2 = uy * sp + z1 * cp;
+      if (z2 <= 0.16) continue;
+      final x = x1 * ct - y2 * st;
+      final y = x1 * st + y2 * ct;
+      final pinCenter = Offset(
+        _lastCenter.dx + x * _lastRadius,
+        _lastCenter.dy - y * _lastRadius - 12,
+      );
+      final d = (pinCenter - localPos).distance;
+      if (d < bestDist) {
+        bestDist = d;
+        nearest = i;
+      }
     }
-    if (ageSec < 0) {
-      return (44.0, .86, 1.08, 0.0, 0.0);
+    if (nearest != null) {
+      _motion.triggerPinTap(nearest);
     }
-    final u = (ageSec / 1.05).clamp(0.0, 1.0);
-    final opacity = (u / 0.18).clamp(0.0, 1.0);
-    if (u < 0.44) {
-      // Fase meluncur turun ke koordinat kota
-      final k = u / 0.44;
-      final fall = 1.0 - Curves.easeInQuad.transform(k);
-      return (42.0 * fall, .92 + .08 * (1 - fall), 1.08 - .08 * (1 - fall), opacity, 0.0);
-    }
-    if (u < 0.62) {
-      // Mendarat empuk (squash) + gelombang cincin di tanah
-      final k = (u - 0.44) / 0.18;
-      final s = math.sin(k * math.pi);
-      return (0.0, 1.0 + .22 * s, 1.0 - .20 * s, 1.0, k * .45);
-    }
-    if (u < 0.84) {
-      // Membal ringan ke atas (follow-through)
-      final k = (u - 0.62) / 0.22;
-      final hop = math.sin(k * math.pi);
-      return (9.0 * hop, 1.0 - .06 * hop, 1.0 + .08 * hop, 1.0, .45 + k * .40);
-    }
-    final k = (u - 0.84) / 0.16;
-    final settle = math.sin(k * math.pi) * .04;
-    return (0.0, 1.0 + settle, 1.0 - settle, 1.0, .85 + k * .15);
   }
 
   @override
   Widget build(BuildContext context) {
-    final reduced = calm(context);
     return LayoutBuilder(
       builder: (context, box) {
         final w = box.maxWidth;
         final h = box.maxHeight;
         final shortest = math.min(w, h);
-        // Ukuran bola proporsional dengan ruang kosong di sekeliling untuk label & orbit
-        final radius = (shortest * (widget.compact ? .37 : .385)).clamp(76.0, 215.0);
+        final radius =
+            (shortest * (widget.compact ? .37 : .385)).clamp(76.0, 215.0);
         final center = Offset(w * .5, h * .51);
-        final lonRad = _centerLonDeg * math.pi / 180.0;
-
-        // Kumpulkan semua pin di belahan depan & perbarui siklus jatuhnya
-        final visiblePins = <_ActivePinView>[];
-        // Setiap 2.6 detik satu pin utama di bagian depan melakukan animasi jatuh ulang
-        final cycleBucket = (_elapsedSec / 2.6).floor();
-        int? autoDropCandidate;
-        var bestScore = -1.0;
-
-        for (var i = 0; i < kGlobeSpots.length; i++) {
-          final p = _project(_spotUnits[i], lonRad);
-          if (p.z <= 0.13) {
-            // Begitu berada di balik bumi, reset supaya jatuh segar saat terbit lagi
-            _pinSpawnSec.remove(i);
-            continue;
-          }
-          final spawn = _pinSpawnSec.putIfAbsent(i, () => _elapsedSec + 0.06);
-          if (p.z > 0.52) {
-            final score = ((i * 7 + cycleBucket * 3) % 13) + (kGlobeSpots[i].indonesia ? 6.0 : 0.0);
-            if (score > bestScore) {
-              bestScore = score;
-              autoDropCandidate = i;
-            }
-          }
-          var effectiveSpawn = spawn;
-          if (_tappedPinIndex == i && (_elapsedSec - _tappedAtSec) < 1.2) {
-            effectiveSpawn = _tappedAtSec;
-          }
-          visiblePins.add(
-            _ActivePinView(
-              index: i,
-              spot: kGlobeSpots[i],
-              category: categoryOf(kGlobeSpots[i].categoryKey),
-              x: p.x,
-              y: p.y,
-              z: p.z,
-              dropProgress: _elapsedSec - effectiveSpawn,
-            ),
-          );
-        }
-
-        // Pin yang terpilih pada siklus berkala menjatuhkan pin baru secara halus
-        if (!reduced && autoDropCandidate != null && _elapsedSec > 2.8) {
-          final cycleStart = cycleBucket * 2.6;
-          final idx = visiblePins.indexWhere((v) => v.index == autoDropCandidate);
-          if (idx >= 0 && (_elapsedSec - cycleStart) < 1.15) {
-            final cur = visiblePins[idx];
-            visiblePins[idx] = _ActivePinView(
-              index: cur.index,
-              spot: cur.spot,
-              category: cur.category,
-              x: cur.x,
-              y: cur.y,
-              z: cur.z,
-              dropProgress: _elapsedSec - cycleStart,
-            );
-          }
-        }
-
-        // Urutkan dari belakang ke depan (depth sort z)
-        visiblePins.sort((a, b) => a.z.compareTo(b.z));
-
-        // Pilih hingga 11 pin ikon penuh yang tersebar merata, mengutamakan spot Indonesia
-        final heroSet = <int>{};
-        final heroScreenPts = <Offset>[];
-        final minPinGap = (radius * .145).clamp(20.0, 29.0);
-        final maxHero = radius < 100 ? 7 : 11;
-        final heroOrder = [...visiblePins]..sort((a, b) {
-          final ai = a.spot.indonesia ? 1 : 0;
-          final bi = b.spot.indonesia ? 1 : 0;
-          if (ai != bi) return bi.compareTo(ai);
-          return b.z.compareTo(a.z);
-        });
-        for (final v in heroOrder) {
-          if (v.z <= 0.24) continue;
-          final pt = Offset(center.dx + v.x * radius, center.dy - v.y * radius);
-          if (v.index != _tappedPinIndex &&
-              heroScreenPts.any((o) => (o - pt).distance < minPinGap)) {
-            continue;
-          }
-          heroSet.add(v.index);
-          heroScreenPts.add(pt);
-          if (heroSet.length >= maxHero) break;
-        }
-
-        // Pilih hingga 3 lencana tempat yang sudah mendarat (dropProgress >= 0.35)
-        // pada slot luar bola yang berbeda dengan garis penunjuk halus ke pinnya.
-        final calloutItems =
-            <(_ActivePinView view, Offset boxRectTopLeft, double width, Offset lineTarget)>[];
-        final usedSlots = <int>{};
-        final usedCats = <String>{};
-        final candidates = [
-          ...visiblePins.where(
-            (v) =>
-                heroSet.contains(v.index) &&
-                v.z > 0.38 &&
-                (reduced || v.dropProgress >= 0.35),
-          ),
-        ]..sort((a, b) {
-          final aTap = a.index == _tappedPinIndex ? 1 : 0;
-          final bTap = b.index == _tappedPinIndex ? 1 : 0;
-          if (aTap != bTap) return bTap.compareTo(aTap);
-          final aIndo = a.spot.indonesia ? 1 : 0;
-          final bIndo = b.spot.indonesia ? 1 : 0;
-          if (aIndo != bIndo) return bIndo.compareTo(aIndo);
-          return b.z.compareTo(a.z);
-        });
-        final maxCallouts = (shortest < 250 || radius < 92)
-            ? 1
-            : (shortest < 330 ? 2 : 3);
-        final chipW = (w * .48).clamp(142.0, 192.0).toDouble();
-        const chipH = 42.0;
-
-        // Empat slot sudut luar di sekeliling globe: [kiri-atas, kanan-atas, kiri-bawah, kanan-bawah]
-        final slotAnchors = <Offset>[
-          Offset(
-            (center.dx - radius * 1.02 - chipW * .55)
-                .clamp(4.0, math.max(4.0, w - chipW - 4.0))
-                .toDouble(),
-            (center.dy - radius * .78)
-                .clamp(4.0, math.max(4.0, h - chipH - 4.0))
-                .toDouble(),
-          ),
-          Offset(
-            (center.dx + radius * 1.02 - chipW * .45)
-                .clamp(4.0, math.max(4.0, w - chipW - 4.0))
-                .toDouble(),
-            (center.dy - radius * .84)
-                .clamp(4.0, math.max(4.0, h - chipH - 4.0))
-                .toDouble(),
-          ),
-          Offset(
-            (center.dx - radius * 1.02 - chipW * .55)
-                .clamp(4.0, math.max(4.0, w - chipW - 4.0))
-                .toDouble(),
-            (center.dy + radius * .54)
-                .clamp(4.0, math.max(4.0, h - chipH - 4.0))
-                .toDouble(),
-          ),
-          Offset(
-            (center.dx + radius * .96 - chipW * .38)
-                .clamp(4.0, math.max(4.0, w - chipW - 4.0))
-                .toDouble(),
-            (center.dy + radius * .48)
-                .clamp(4.0, math.max(4.0, h - chipH - 4.0))
-                .toDouble(),
-          ),
-        ];
-
-        for (final c in candidates) {
-          if (calloutItems.isNotEmpty &&
-              usedCats.contains(c.spot.categoryKey) &&
-              c.index != _tappedPinIndex) {
-            continue;
-          }
-          final pinPt = Offset(center.dx + c.x * radius, center.dy - c.y * radius);
-          // Pilih slot kosong terdekat dengan posisi pin
-          var bestSlot = -1;
-          var bestDist = double.infinity;
-          for (var s = 0; s < slotAnchors.length; s++) {
-            if (usedSlots.contains(s)) continue;
-            final boxCenter = slotAnchors[s] + Offset(chipW * .5, chipH * .5);
-            // Hindari tumpang tindih antar kotak pada layar sempit
-            final overlaps = calloutItems.any((existing) {
-              return (existing.$2.dx - slotAnchors[s].dx).abs() < chipW * .88 &&
-                  (existing.$2.dy - slotAnchors[s].dy).abs() < chipH + 8;
-            });
-            if (overlaps) continue;
-            final dist = (boxCenter - pinPt).distance;
-            if (dist < bestDist) {
-              bestDist = dist;
-              bestSlot = s;
-            }
-          }
-          if (bestSlot < 0) continue;
-          usedSlots.add(bestSlot);
-          usedCats.add(c.spot.categoryKey);
-          final tl = slotAnchors[bestSlot];
-          final lineEnd = Offset(
-            pinPt.dx.clamp(tl.dx + 14.0, tl.dx + chipW - 14.0).toDouble(),
-            pinPt.dy < tl.dy ? tl.dy : (pinPt.dy > tl.dy + chipH ? tl.dy + chipH : tl.dy + chipH * .5),
-          );
-          calloutItems.add((c, tl, chipW, lineEnd));
-          if (calloutItems.length >= maxCallouts) break;
-        }
-
-        final leaderLines =
-            <(Offset fromPin, Offset toCard, Color color, double alpha)>[
-              for (final item in calloutItems)
-                (
-                  Offset(
-                    center.dx + item.$1.x * radius,
-                    center.dy - item.$1.y * radius - 14,
-                  ),
-                  item.$4,
-                  item.$1.category.color,
-                  _dropMotion(item.$1.dropProgress, reduced).$4,
-                ),
-            ];
-
-        final rippleData = <(Offset, Color, double)>[];
-        final secondaryDots = <(Offset, Color, double)>[];
-        for (final v in visiblePins) {
-          final pos = Offset(center.dx + v.x * radius, center.dy - v.y * radius);
-          final (_, _, _, _, ripple) = _dropMotion(v.dropProgress, reduced);
-          if (ripple > 0 && ripple < 1) {
-            rippleData.add((pos, v.category.color, ripple));
-          }
-          if (!heroSet.contains(v.index)) {
-            secondaryDots.add((pos, v.category.color, v.z));
-          }
-        }
+        _lastCenter = center;
+        _lastRadius = radius;
 
         return Semantics(
-          label: 'Ilustrasi globe Bumi 3D Spots dengan pin lokasi tempat seru',
+          label: 'Ilustrasi globe Bumi 3D Spots dengan pin lokasi di seluruh dunia',
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
-            onHorizontalDragStart: (_) => _dragging = true,
-            onHorizontalDragUpdate: (d) {
-              setState(() {
-                // Manipulasi langsung 1:1 sesuai arah jari/kursor
-                _centerLonDeg = (_centerLonDeg - d.delta.dx * 0.42) % 360.0;
-              });
-            },
+            onTapUp: (d) => _handleTap(d.localPosition),
+            onHorizontalDragStart: (_) => _motion.dragging = true,
+            onHorizontalDragUpdate: (d) => _motion.dragDelta(d.delta.dx),
             onHorizontalDragEnd: (d) {
-              _dragging = false;
-              _dragVelocityDeg = (-d.velocity.pixelsPerSecond.dx * 0.08).clamp(
-                -95.0,
-                95.0,
-              );
+              _motion.dragging = false;
+              _motion.dragVelocityDeg =
+                  (-d.velocity.pixelsPerSecond.dx * 0.08).clamp(-95.0, 95.0);
             },
-            onHorizontalDragCancel: () => _dragging = false,
+            onHorizontalDragCancel: () => _motion.dragging = false,
             child: RepaintBoundary(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _ChibiEarthPainter(
-                        unitRings: _unitRings,
-                        center: center,
-                        radius: radius,
-                        lonRad: lonRad,
-                        centerLatRad: _centerLatRad,
-                        tiltRad: _tiltRad,
-                        cloudShiftRad: reduced ? .4 : _elapsedSec * 0.11,
-                        orbitPhase: reduced ? .2 : (_elapsedSec * 0.09) % 1.0,
-                        ripples: rippleData,
-                        secondaryPins: secondaryDots,
-                        leaderLines: leaderLines,
-                      ),
-                    ),
-                  ),
-                  // Pin 3D chibi lengkap dengan ikon asli SpotIcon
-                  for (final v in visiblePins)
-                    if (heroSet.contains(v.index))
-                      _buildPinWidget(
-                        v: v,
-                        center: center,
-                        radius: radius,
-                        reduced: reduced,
-                      ),
-                  // Lencana kaca mengambang penunjuk nama tempat & kota asli Spots
-                  for (final item in calloutItems)
-                    _buildCalloutChip(
-                      v: item.$1,
-                      topLeft: item.$2,
-                      chipW: item.$3,
-                      reduced: reduced,
-                    ),
-                ],
+              child: CustomPaint(
+                size: Size(w, h),
+                painter: _ChibiEarthPainter(
+                  motion: _motion,
+                  unitRings: _unitRings,
+                  spotUnits: _spotUnits,
+                  center: center,
+                  radius: radius,
+                  centerLatRad: _centerLatRad,
+                  tiltRad: _tiltRad,
+                  reduced: _motion.reduced,
+                ),
               ),
             ),
           ),
@@ -898,266 +508,42 @@ class _SpotsEarthGlobeState extends State<SpotsEarthGlobe>
       },
     );
   }
-
-  Widget _buildPinWidget({
-    required _ActivePinView v,
-    required Offset center,
-    required double radius,
-    required bool reduced,
-  }) {
-    final (lift, sx, sy, opacity, _) = _dropMotion(v.dropProgress, reduced);
-    final depthScale = (.76 + .28 * v.z).clamp(.76, 1.04);
-    final pinSize = (radius * .22).clamp(26.0, 38.0) * depthScale;
-    final anchorX = center.dx + v.x * radius;
-    final anchorY = center.dy - v.y * radius;
-    final floatBob = reduced
-        ? 0.0
-        : math.sin(_elapsedSec * 2.4 + v.index * .9) * 1.8;
-
-    return Positioned(
-      left: anchorX - pinSize * .5,
-      top: anchorY - pinSize * 1.12 - lift + floatBob,
-      child: Opacity(
-        opacity: (opacity * (.55 + .45 * v.z)).clamp(0.0, 1.0),
-        child: GestureDetector(
-          onTap: () => setState(() {
-            _tappedPinIndex = v.index;
-            _tappedAtSec = _elapsedSec;
-          }),
-          child: Transform(
-            alignment: Alignment.bottomCenter,
-            transform: Matrix4.diagonal3Values(sx, sy, 1.0),
-            child: _ChibiMapPin(
-              size: pinSize,
-              color: v.category.color,
-              glyph: v.category.glyph,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCalloutChip({
-    required _ActivePinView v,
-    required Offset topLeft,
-    required double chipW,
-    required bool reduced,
-  }) {
-    final (_, _, _, opacity, _) = _dropMotion(v.dropProgress, reduced);
-
-    return Positioned(
-      left: topLeft.dx,
-      top: topLeft.dy,
-      width: chipW,
-      child: IgnorePointer(
-        child: Opacity(
-          opacity: opacity.clamp(0.0, 1.0),
-          child: FrostedSurface(
-            radius: 99,
-            sigma: 14,
-            fill: Colors.white.withValues(alpha: .92),
-            padding: const EdgeInsets.fromLTRB(6, 5, 11, 5),
-            shadows: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: .22),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-            child: Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: v.category.color,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: v.category.color.withValues(alpha: .38),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: SpotIcon(
-                    v.category.glyph,
-                    size: 15,
-                    color: Colors.white,
-                    tint: false,
-                  ),
-                ),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        v.spot.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11.5,
-                          color: ink,
-                          height: 1.1,
-                        ),
-                      ),
-                      Text(
-                        '${v.spot.city} · ${v.category.label}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 10,
-                          color: muted,
-                          height: 1.15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-/// Pin peta 3D kenyal bergaya chibi dengan kilau jelly & ikon asli Spots.
-class _ChibiMapPin extends StatelessWidget {
-  const _ChibiMapPin({
-    required this.size,
-    required this.color,
-    required this.glyph,
+class _PinDrawItem {
+  const _PinDrawItem({
+    required this.index,
+    required this.spot,
+    required this.category,
+    required this.x,
+    required this.y,
+    required this.z,
   });
 
-  final double size;
-  final Color color;
-  final Glyph glyph;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size * 1.18,
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          CustomPaint(
-            size: Size(size, size * 1.18),
-            painter: _ChibiPinBodyPainter(color),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: size * .20),
-            child: SpotIcon(
-              glyph,
-              size: size * .52,
-              color: Colors.white,
-              tint: false,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChibiPinBodyPainter extends CustomPainter {
-  const _ChibiPinBodyPainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final r = w * .46;
-    final cx = w * .5;
-    final cy = w * .48;
-
-    // Bayangan lembut di ujung pin pada daratan globe
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, h - 1.5), width: w * .44, height: 4.5),
-      Paint()..color = const Color(0x5506102E),
-    );
-
-    final tipY = h - 2.0;
-    final pin = Path()
-      ..moveTo(cx, tipY)
-      ..quadraticBezierTo(cx - r * .92, cy + r * .52, cx - r, cy)
-      ..arcToPoint(
-        Offset(cx + r, cy),
-        radius: Radius.circular(r),
-        largeArc: true,
-      )
-      ..quadraticBezierTo(cx + r * .92, cy + r * .52, cx, tipY)
-      ..close();
-
-    // Isi gradasi kenyal 3D seperti maskot Spots
-    final light = Color.lerp(color, Colors.white, .28)!;
-    final dark = Color.lerp(color, const Color(0xFF0E183B), .24)!;
-    canvas.drawPath(
-      pin,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [light, color, dark],
-          stops: const [0, .55, 1],
-        ).createShader(Offset.zero & size),
-    );
-
-    // Garis tepi putih bersih supaya kontras di atas pulau maupun samudra
-    canvas.drawPath(
-      pin,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = (w * .065).clamp(1.6, 2.4)
-        ..strokeJoin = StrokeJoin.round
-        ..color = Colors.white.withValues(alpha: .92),
-    );
-
-    // Kilau kapsul kecil di kiri atas ala mainan chibi 3D
-    canvas.save();
-    canvas.translate(cx - r * .36, cy - r * .38);
-    canvas.rotate(-.48);
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: r * .46, height: r * .22),
-      Paint()..color = Colors.white.withValues(alpha: .46),
-    );
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_ChibiPinBodyPainter old) => old.color != color;
+  final int index;
+  final GlobeSpotPin spot;
+  final SpotCategory category;
+  final double x, y, z;
 }
 
 class _ChibiEarthPainter extends CustomPainter {
-  const _ChibiEarthPainter({
+  _ChibiEarthPainter({
+    required this.motion,
     required this.unitRings,
+    required this.spotUnits,
     required this.center,
     required this.radius,
-    required this.lonRad,
     required this.centerLatRad,
     required this.tiltRad,
-    required this.cloudShiftRad,
-    required this.orbitPhase,
-    required this.ripples,
-    required this.secondaryPins,
-    required this.leaderLines,
-  });
+    required this.reduced,
+  }) : super(repaint: motion);
 
+  final _GlobeMotion motion;
   final List<List<(double, double, double)>> unitRings;
+  final List<(double, double, double)> spotUnits;
   final Offset center;
-  final double radius, lonRad, centerLatRad, tiltRad, cloudShiftRad, orbitPhase;
-  final List<(Offset, Color, double)> ripples;
-  final List<(Offset, Color, double)> secondaryPins;
-  final List<(Offset, Offset, Color, double)> leaderLines;
+  final double radius, centerLatRad, tiltRad;
+  final bool reduced;
 
   static const _clouds = <(double lat, double lon, double scale)>[
     (8.0, 106.0, 1.0),
@@ -1170,15 +556,84 @@ class _ChibiEarthPainter extends CustomPainter {
     (-26.0, -118.0, .88),
   ];
 
+  static final Path _unitCloudPath = _buildUnitCloudPath();
+
+  static Path _buildUnitCloudPath() {
+    var puff = Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: 11.5));
+    for (final part in [
+      Path()
+        ..addOval(Rect.fromCircle(center: const Offset(-10.0, 2.5), radius: 8.5)),
+      Path()
+        ..addOval(Rect.fromCircle(center: const Offset(10.5, 2.0), radius: 9.0)),
+      Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: const Offset(0.0, 5.5),
+              width: 34.0,
+              height: 10.0,
+            ),
+            const Radius.circular(5.0),
+          ),
+        ),
+    ]) {
+      puff = Path.combine(PathOperation.union, puff, part);
+    }
+    return puff;
+  }
+
+  /// Animasi mendarat satu kali saat awal tampil atau saat pin diketuk,
+  /// lalu tetap tenang tanpa menghilang/berkedip ulang.
+  (double lift, double scaleX, double scaleY, double opacity, double ripple)
+  _dropMotion(double ageSec, bool reduced) {
+    if (reduced || ageSec >= 1.05) {
+      return (0.0, 1.0, 1.0, 1.0, 0.0);
+    }
+    if (ageSec < 0) {
+      return (36.0, .90, 1.06, 0.0, 0.0);
+    }
+    final u = (ageSec / 1.05).clamp(0.0, 1.0);
+    final opacity = (u / 0.22).clamp(0.0, 1.0);
+    if (u < 0.44) {
+      final k = u / 0.44;
+      final fall = 1.0 - Curves.easeInQuad.transform(k);
+      return (
+        36.0 * fall,
+        .92 + .08 * (1 - fall),
+        1.08 - .08 * (1 - fall),
+        opacity,
+        0.0,
+      );
+    }
+    if (u < 0.62) {
+      final k = (u - 0.44) / 0.18;
+      final s = math.sin(k * math.pi);
+      return (0.0, 1.0 + .20 * s, 1.0 - .18 * s, 1.0, k * .45);
+    }
+    if (u < 0.84) {
+      final k = (u - 0.62) / 0.22;
+      final hop = math.sin(k * math.pi);
+      return (8.0 * hop, 1.0 - .05 * hop, 1.0 + .07 * hop, 1.0, .45 + k * .40);
+    }
+    final k = (u - 0.84) / 0.16;
+    final settle = math.sin(k * math.pi) * .035;
+    return (0.0, 1.0 + settle, 1.0 - settle, 1.0, .85 + k * .15);
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
+    final lonRad = motion.centerLonDeg * math.pi / 180.0;
+    final elapsed = motion.elapsedSec;
+    final cloudShiftRad = reduced ? .4 : elapsed * 0.11;
+    final orbitPhase = reduced ? .2 : (elapsed * 0.09) % 1.0;
+
     final sphereRect = Rect.fromCircle(center: center, radius: radius);
     final globeClip = Path()..addOval(sphereRect);
 
-    // 1. Busur lintasan orbit bagian belakang (di balik bola Bumi)
-    _drawOrbitArc(canvas, front: false);
+    // 1. Busur lintasan orbit bagian belakang
+    _drawOrbitArc(canvas, orbitPhase, front: false);
 
-    // 2. Pendaran atmosfer luar (Fresnel corona) dari angkasa
+    // 2. Pendaran atmosfer luar
     final atmoRadius = radius * 1.22;
     canvas.drawCircle(
       center,
@@ -1194,7 +649,7 @@ class _ChibiEarthPainter extends CustomPainter {
         ).createShader(Rect.fromCircle(center: center, radius: atmoRadius)),
     );
 
-    // 3. Permukaan samudra 3D bergaya chibi jelly
+    // 3. Permukaan samudra 3D
     canvas.drawCircle(
       center,
       radius,
@@ -1215,13 +670,12 @@ class _ChibiEarthPainter extends CustomPainter {
     canvas.save();
     canvas.clipPath(globeClip);
 
-    // 4. Garis lintang & bujur bola halus untuk menegaskan kelengkungan 3D
-    _drawGraticule(canvas);
+    // 4. Garis lintang & bujur
+    _drawGraticule(canvas, lonRad);
 
-    // 5. Proyeksi seluruh benua & kepulauan nyata Natural Earth
-    final landPath = _buildVisibleLandPath();
+    // 5. Daratan Natural Earth
+    final landPath = _buildVisibleLandPath(lonRad);
 
-    // 5a. Dangkalan laut pirus (lagoon shelf) membulat di sekeliling pulau asli
     canvas.drawPath(
       landPath,
       Paint()
@@ -1232,11 +686,9 @@ class _ChibiEarthPainter extends CustomPainter {
         ..color = const Color(0xFF53EFE2).withValues(alpha: .36),
     );
 
-    // 5b. Ketebalan timbul 3D (extrusion lip) di sisi bawah pulau & benua
     canvas.save();
     canvas.translate(0, (radius * .016).clamp(1.5, 3.6));
-    final bevelPaint = Paint()..color = const Color(0xFF13684B);
-    canvas.drawPath(landPath, bevelPaint);
+    canvas.drawPath(landPath, Paint()..color = const Color(0xFF13684B));
     canvas.drawPath(
       landPath,
       Paint()
@@ -1248,7 +700,6 @@ class _ChibiEarthPainter extends CustomPainter {
     );
     canvas.restore();
 
-    // 5c. Isi daratan hijau-mint chibi bergradasi cahaya matahari
     final landShader = const RadialGradient(
       center: Alignment(-.42, -.46),
       radius: 1.25,
@@ -1262,7 +713,6 @@ class _ChibiEarthPainter extends CustomPainter {
     ).createShader(sphereRect);
 
     canvas.drawPath(landPath, Paint()..shader = landShader);
-    // Sedikit garis tepi sewarna supaya pulau ramping (Jawa, Bali, Sulawesi) tetap empuk
     canvas.drawPath(
       landPath,
       Paint()
@@ -1273,7 +723,6 @@ class _ChibiEarthPainter extends CustomPainter {
         ..shader = landShader,
     );
 
-    // 5d. Pantulan tepi atas (rim highlight) di permukaan benua seperti mainan 3D
     canvas.save();
     canvas.clipPath(landPath);
     canvas.drawCircle(
@@ -1294,29 +743,10 @@ class _ChibiEarthPainter extends CustomPainter {
     );
     canvas.restore();
 
-    // 6. Gelombang riak cincin saat pin baru mendarat di koordinat kota
-    for (final (pos, color, progress) in ripples) {
-      final rr = (6.0 + progress * 22.0) * (radius / 160.0).clamp(.7, 1.2);
-      final alpha = (1.0 - progress).clamp(0.0, 1.0);
-      canvas.drawCircle(
-        pos,
-        rr,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.4
-          ..color = Colors.white.withValues(alpha: alpha * .85),
-      );
-      canvas.drawCircle(
-        pos,
-        rr * .65,
-        Paint()..color = color.withValues(alpha: alpha * .35),
-      );
-    }
+    // 6. Awan gembul chibi (memakai path terprekomputasi agar mulus)
+    _drawChibiClouds(canvas, lonRad, cloudShiftRad);
 
-    // 7. Awan gembul chibi mengambang sedikit di atas permukaan beserta bayangannya
-    _drawChibiClouds(canvas);
-
-    // 8. Bayangan malam lembut di sisi kanan-bawah + pendaran atmosfer tepi bola
+    // 7. Bayangan malam lembut & kilau kapsul kaca
     canvas.drawCircle(
       center,
       radius,
@@ -1333,7 +763,6 @@ class _ChibiEarthPainter extends CustomPainter {
         ).createShader(sphereRect),
     );
 
-    // Kilau kapsul kaca di kiri atas bola Bumi
     canvas.save();
     canvas.translate(center.dx - radius * .44, center.dy - radius * .46);
     canvas.rotate(-.64);
@@ -1357,7 +786,7 @@ class _ChibiEarthPainter extends CustomPainter {
 
     canvas.restore(); // lepas globeClip
 
-    // Cincin atmosfer tipis berkilau di sekeliling bola Bumi
+    // Cincin atmosfer tipis
     canvas.drawCircle(
       center,
       radius,
@@ -1371,63 +800,266 @@ class _ChibiEarthPainter extends CustomPainter {
         ).createShader(sphereRect),
     );
 
-    // 9. Pin titik chibi sekunder untuk kota-kota di kejauhan / tepi horizon
-    for (final (pos, color, z) in secondaryPins) {
-      final dotR = (radius * .034).clamp(3.6, 6.2) * (.7 + .3 * z);
-      canvas.drawCircle(
-        pos + const Offset(0, 1.5),
-        dotR,
-        Paint()..color = const Color(0x5506102E),
+    // 8. Pin ilustrasi di seluruh dunia (digambar sinkron di Canvas -> bebas kedip)
+    final cl = math.cos(lonRad), sl = math.sin(lonRad);
+    final cp = math.cos(centerLatRad), sp = math.sin(centerLatRad);
+    final ct = math.cos(tiltRad), st = math.sin(tiltRad);
+
+    final visible = <_PinDrawItem>[];
+    for (var i = 0; i < spotUnits.length; i++) {
+      final (ux, uy, uz) = spotUnits[i];
+      final x1 = ux * cl - uz * sl;
+      final z1 = ux * sl + uz * cl;
+      final y2 = uy * cp - z1 * sp;
+      final z2 = uy * sp + z1 * cp;
+      if (z2 <= 0.10) continue;
+      final x = x1 * ct - y2 * st;
+      final y = x1 * st + y2 * ct;
+      visible.add(
+        _PinDrawItem(
+          index: i,
+          spot: kGlobeSpots[i],
+          category: categoryOf(kGlobeSpots[i].categoryKey),
+          x: x,
+          y: y,
+          z: z2,
+        ),
       );
-      canvas.drawCircle(pos, dotR, Paint()..color = color);
-      canvas.drawCircle(
-        pos,
-        dotR,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
-          ..color = Colors.white.withValues(alpha: .92),
+    }
+    visible.sort((a, b) => a.z.compareTo(b.z));
+
+    for (final v in visible) {
+      final pos = Offset(center.dx + v.x * radius, center.dy - v.y * radius);
+      // Pudar halus saat mendekati horizon agar tidak pernah mendadak muncul/hilang
+      final hzRaw = ((v.z - 0.10) / 0.24).clamp(0.0, 1.0);
+      final horizonFade = hzRaw * hzRaw * (3.0 - 2.0 * hzRaw);
+
+      final isTapped =
+          motion.tappedPinIndex == v.index &&
+          (elapsed - motion.tappedAtSec) < 1.15;
+      final age = isTapped
+          ? (elapsed - motion.tappedAtSec)
+          : elapsed - (v.index % 6) * 0.10;
+      final (lift, sx, sy, dropOp, ripple) = _dropMotion(age, reduced);
+      final alpha = (horizonFade * dropOp).clamp(0.0, 1.0);
+      if (alpha <= 0.01) continue;
+
+      if (ripple > 0 && ripple < 1) {
+        final rr = (6.0 + ripple * 20.0) * (radius / 160.0).clamp(.7, 1.2);
+        final ra = ((1.0 - ripple) * horizonFade).clamp(0.0, 1.0);
+        canvas.drawCircle(
+          pos,
+          rr,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.2
+            ..color = Colors.white.withValues(alpha: ra * .85),
+        );
+        canvas.drawCircle(
+          pos,
+          rr * .65,
+          Paint()..color = v.category.color.withValues(alpha: ra * .32),
+        );
+      }
+
+      final bob =
+          reduced ? 0.0 : math.sin(elapsed * 2.0 + v.index * 1.15) * 1.4;
+      final depthScale = (.76 + .24 * v.z).clamp(.76, 1.0);
+      final pinSize = (radius * .19).clamp(22.0, 33.0) * depthScale;
+      _drawChibiPin(
+        canvas: canvas,
+        anchor: Offset(pos.dx, pos.dy - lift + bob),
+        size: pinSize,
+        color: v.category.color,
+        categoryKey: v.spot.categoryKey,
+        sx: sx,
+        sy: sy,
+        alpha: alpha,
       );
     }
 
-    // 10. Busur lintasan orbit bagian depan (melintas di depan globe)
-    _drawOrbitArc(canvas, front: true);
+    // 9. Busur lintasan orbit bagian depan
+    _drawOrbitArc(canvas, orbitPhase, front: true);
+  }
 
-    // 11. Garis penunjuk halus dari pin terpilih menuju kartu nama tempat
-    for (final (fromPin, toCard, color, alpha) in leaderLines) {
-      if (alpha <= 0.05) continue;
-      final ctrl = Offset(
-        (fromPin.dx + toCard.dx) * .5,
-        math.min(fromPin.dy, toCard.dy) - 8,
-      );
-      final linePath = Path()
-        ..moveTo(fromPin.dx, fromPin.dy)
-        ..quadraticBezierTo(ctrl.dx, ctrl.dy, toCard.dx, toCard.dy);
-      canvas.drawPath(
-        linePath,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6
-          ..strokeCap = StrokeCap.round
-          ..color = Colors.white.withValues(alpha: .55 * alpha),
-      );
-      canvas.drawCircle(
-        toCard,
-        3.2,
-        Paint()..color = color.withValues(alpha: alpha),
-      );
-      canvas.drawCircle(
-        toCard,
-        3.2,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2
-          ..color = Colors.white.withValues(alpha: alpha),
-      );
+  void _drawChibiPin({
+    required Canvas canvas,
+    required Offset anchor,
+    required double size,
+    required Color color,
+    required String categoryKey,
+    required double sx,
+    required double sy,
+    required double alpha,
+  }) {
+    final h = size * 1.16;
+    final r = size * .46;
+    final cy = -h + size * .48;
+
+    canvas.save();
+    canvas.translate(anchor.dx, anchor.dy);
+    canvas.scale(sx, sy);
+
+    // Bayangan lembut di permukaan bumi
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(0, -1.0), width: size * .42, height: 4.0),
+      Paint()..color = const Color(0xFF06102E).withValues(alpha: .32 * alpha),
+    );
+
+    final pin = Path()
+      ..moveTo(0, -1.5)
+      ..quadraticBezierTo(-r * .92, cy + r * .52, -r, cy)
+      ..arcToPoint(
+        Offset(r, cy),
+        radius: Radius.circular(r),
+        largeArc: true,
+      )
+      ..quadraticBezierTo(r * .92, cy + r * .52, 0, -1.5)
+      ..close();
+
+    final light = Color.lerp(color, Colors.white, .28)!.withValues(alpha: alpha);
+    final mid = color.withValues(alpha: alpha);
+    final dark = Color.lerp(color, const Color(0xFF0E183B), .24)!.withValues(alpha: alpha);
+    canvas.drawPath(
+      pin,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [light, mid, dark],
+          stops: const [0, .55, 1],
+        ).createShader(Rect.fromLTWH(-r, -h, r * 2, h)),
+    );
+
+    canvas.drawPath(
+      pin,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (size * .068).clamp(1.5, 2.2)
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white.withValues(alpha: .94 * alpha),
+    );
+
+    // Kilau kapsul kecil di kiri atas pin
+    canvas.save();
+    canvas.translate(-r * .36, cy - r * .36);
+    canvas.rotate(-.48);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: r * .42, height: r * .20),
+      Paint()..color = Colors.white.withValues(alpha: .42 * alpha),
+    );
+    canvas.restore();
+
+    // Simbol kategori sederhana di tengah pin (sinkron di Canvas)
+    _drawCategorySymbol(canvas, Offset(0, cy), r * .48, categoryKey, alpha);
+
+    canvas.restore();
+  }
+
+  void _drawCategorySymbol(
+    Canvas canvas,
+    Offset c,
+    double sr,
+    String key,
+    double alpha,
+  ) {
+    final whiteStroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (sr * .28).clamp(1.3, 2.0)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = Colors.white.withValues(alpha: .96 * alpha);
+    final whiteFill = Paint()
+      ..color = Colors.white.withValues(alpha: .96 * alpha);
+
+    switch (key) {
+      case 'kuliner':
+        // Mangkuk sederhana
+        canvas.drawArc(
+          Rect.fromCenter(center: c.translate(0, sr * .05), width: sr * 1.6, height: sr * 1.4),
+          0,
+          math.pi,
+          true,
+          whiteFill,
+        );
+        canvas.drawLine(
+          c.translate(-sr * .85, sr * .05),
+          c.translate(sr * .85, sr * .05),
+          whiteStroke,
+        );
+      case 'kafe':
+        // Cangkir kopi
+        canvas.drawRRect(
+          RRect.fromRectAndCorners(
+            Rect.fromCenter(center: c.translate(-sr * .06, sr * .12), width: sr * 1.15, height: sr * 1.1),
+            bottomLeft: Radius.circular(sr * .45),
+            bottomRight: Radius.circular(sr * .45),
+          ),
+          whiteFill,
+        );
+        canvas.drawArc(
+          Rect.fromCenter(center: c.translate(sr * .62, sr * .08), width: sr * .55, height: sr * .55),
+          -math.pi / 2,
+          math.pi,
+          false,
+          whiteStroke,
+        );
+      case 'destinasi':
+        // Puncak gunung
+        final m = Path()
+          ..moveTo(c.dx - sr * .85, c.dy + sr * .62)
+          ..lineTo(c.dx - sr * .15, c.dy - sr * .55)
+          ..lineTo(c.dx + sr * .25, c.dy + sr * .15)
+          ..lineTo(c.dx + sr * .50, c.dy - sr * .18)
+          ..lineTo(c.dx + sr * .90, c.dy + sr * .62)
+          ..close();
+        canvas.drawPath(m, whiteFill);
+      case 'olahraga':
+        // Bola / cincin olahraga
+        canvas.drawCircle(c, sr * .78, whiteStroke);
+        canvas.drawCircle(c, sr * .24, whiteFill);
+      case 'belanja':
+        // Tas belanja
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: c.translate(0, sr * .18), width: sr * 1.25, height: sr * 1.1),
+            Radius.circular(sr * .22),
+          ),
+          whiteFill,
+        );
+        canvas.drawArc(
+          Rect.fromCenter(center: c.translate(0, -sr * .35), width: sr * .72, height: sr * .65),
+          math.pi,
+          math.pi,
+          false,
+          whiteStroke,
+        );
+      case 'menginap':
+        // Rumah kecil
+        final h = Path()
+          ..moveTo(c.dx - sr * .78, c.dy - sr * .05)
+          ..lineTo(c.dx, c.dy - sr * .78)
+          ..lineTo(c.dx + sr * .78, c.dy - sr * .05)
+          ..lineTo(c.dx + sr * .56, c.dy - sr * .05)
+          ..lineTo(c.dx + sr * .56, c.dy + sr * .68)
+          ..lineTo(c.dx - sr * .56, c.dy + sr * .68)
+          ..lineTo(c.dx - sr * .56, c.dy - sr * .05)
+          ..close();
+        canvas.drawPath(h, whiteFill);
+      default:
+        // Bintang/aktivitas (4 sudut)
+        final star = Path()
+          ..moveTo(c.dx, c.dy - sr * .88)
+          ..quadraticBezierTo(c.dx + sr * .22, c.dy - sr * .22, c.dx + sr * .88, c.dy)
+          ..quadraticBezierTo(c.dx + sr * .22, c.dy + sr * .22, c.dx, c.dy + sr * .88)
+          ..quadraticBezierTo(c.dx - sr * .22, c.dy + sr * .22, c.dx - sr * .88, c.dy)
+          ..quadraticBezierTo(c.dx - sr * .22, c.dy - sr * .22, c.dx, c.dy - sr * .88)
+          ..close();
+        canvas.drawPath(star, whiteFill);
     }
   }
 
-  void _drawOrbitArc(Canvas canvas, {required bool front}) {
+  void _drawOrbitArc(Canvas canvas, double orbitPhase, {required bool front}) {
     final rx = radius * 1.28;
     final ry = radius * .36;
     canvas.save();
@@ -1445,7 +1077,6 @@ class _ChibiEarthPainter extends CustomPainter {
         ..strokeWidth = 1.4
         ..color = const Color(0xFF8BE8FF).withValues(alpha: front ? .28 : .14),
     );
-    // Titik satelit/kilau kecil yang mengorbit pelan mengelilingi Bumi
     final ang = orbitPhase * math.pi * 2;
     final inFront = math.sin(ang) >= 0;
     if (inFront == front) {
@@ -1465,7 +1096,7 @@ class _ChibiEarthPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _drawGraticule(Canvas canvas) {
+  void _drawGraticule(Canvas canvas, double lonRad) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
@@ -1526,7 +1157,7 @@ class _ChibiEarthPainter extends CustomPainter {
     }
   }
 
-  void _drawChibiClouds(Canvas canvas) {
+  void _drawChibiClouds(Canvas canvas, double lonRad, double cloudShiftRad) {
     final cl = math.cos(lonRad - cloudShiftRad);
     final sl = math.sin(lonRad - cloudShiftRad);
     final cp = math.cos(centerLatRad), sp = math.sin(centerLatRad);
@@ -1564,47 +1195,18 @@ class _ChibiEarthPainter extends CustomPainter {
         Paint()..color = const Color(0x24071642),
       );
 
-      var puff = Path()
-        ..addOval(Rect.fromCircle(center: cloudPos, radius: 11.5 * k));
-      for (final part in [
-        Path()
-          ..addOval(
-            Rect.fromCircle(
-              center: cloudPos + Offset(-10 * k, 2.5 * k),
-              radius: 8.5 * k,
-            ),
-          ),
-        Path()
-          ..addOval(
-            Rect.fromCircle(
-              center: cloudPos + Offset(10.5 * k, 2 * k),
-              radius: 9.0 * k,
-            ),
-          ),
-        Path()
-          ..addRRect(
-            RRect.fromRectAndRadius(
-              Rect.fromCenter(
-                center: cloudPos + Offset(0, 5.5 * k),
-                width: 34 * k,
-                height: 10 * k,
-              ),
-              Radius.circular(5 * k),
-            ),
-          ),
-      ]) {
-        puff = Path.combine(PathOperation.union, puff, part);
-      }
+      canvas.save();
+      canvas.translate(cloudPos.dx, cloudPos.dy);
+      canvas.scale(k);
       canvas.drawPath(
-        puff,
+        _unitCloudPath,
         Paint()..color = Colors.white.withValues(alpha: (.82 * z2).clamp(.25, .86)),
       );
+      canvas.restore();
     }
   }
 
-  /// Memotong poligon bola terhadap horizon z = 0 dengan menyambung busur
-  /// melingkar berlawanan jarum jam (CCW) supaya tepi benua melengkung mulus.
-  Path _buildVisibleLandPath() {
+  Path _buildVisibleLandPath(double lonRad) {
     final total = Path();
     final cl = math.cos(lonRad), sl = math.sin(lonRad);
     final cp = math.cos(centerLatRad), sp = math.sin(centerLatRad);
@@ -1638,14 +1240,13 @@ class _ChibiEarthPainter extends CustomPainter {
 
       if (allFront) {
         _appendSmoothClosedRing(total, [
-          for (final p in pts) Offset(center.dx + p.x * radius, center.dy - p.y * radius),
+          for (final p in pts)
+            Offset(center.dx + p.x * radius, center.dy - p.y * radius),
         ]);
         continue;
       }
 
-      // Kumpulkan rantai titik yang berada di belahan depan (z > 0) dari titik masuk ke titik keluar horizon
       final chains = <_HorizonChain>[];
-      // Cari indeks awal yang berada di belakang (z <= 0) supaya rantai tidak terbelah di indeks 0
       var startIdx = 0;
       for (var i = 0; i < n; i++) {
         if (pts[i].z <= 0) {
@@ -1692,8 +1293,6 @@ class _ChibiEarthPainter extends CustomPainter {
 
       if (chains.isEmpty) continue;
 
-      // Sambungkan titik keluar (exitAngle) tiap rantai ke titik masuk (enterAngle) terdekat
-      // dalam arah CCW (sudut bertambah) sepanjang lingkaran horizon.
       final visited = List<bool>.filled(chains.length, false);
       for (var i = 0; i < chains.length; i++) {
         if (visited[i]) continue;
@@ -1706,7 +1305,6 @@ class _ChibiEarthPainter extends CustomPainter {
           final ch = chains[curr];
           loopPts.addAll(ch.points);
 
-          // Cari rantai berikutnya berdasarkan jarak sudut CCW terkecil dari ch.exitAngle
           var bestNext = i;
           var bestDelta = double.infinity;
           for (var j = 0; j < chains.length; j++) {
@@ -1719,7 +1317,6 @@ class _ChibiEarthPainter extends CustomPainter {
             }
           }
 
-          // Sisipkan titik-titik busur sepanjang lingkaran tepi bola Bumi
           final steps = (bestDelta / 0.11).ceil().clamp(1, 64);
           for (var s = 1; s < steps; s++) {
             final ang = ch.exitAngle + bestDelta * (s / steps);
@@ -1783,12 +1380,10 @@ class _ChibiEarthPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ChibiEarthPainter old) =>
-      old.lonRad != lonRad ||
-      old.cloudShiftRad != cloudShiftRad ||
-      old.orbitPhase != orbitPhase ||
       old.radius != radius ||
       old.center != center ||
-      old.ripples.length != ripples.length;
+      old.reduced != reduced ||
+      !identical(old.motion, motion);
 }
 
 class _HorizonChain {
