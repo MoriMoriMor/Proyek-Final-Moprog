@@ -140,10 +140,17 @@ enum Glyph {
   final String? fill;
   final String extra;
 
-  String svg(Color stroke, Color accent, {bool tint = true}) {
+  String svg(
+    Color stroke,
+    Color accent, {
+    bool tint = true,
+    bool solid = false,
+  }) {
     final shape = fill ?? outline;
     final inkHex = _hex(stroke);
-    final duotone = tint && shape.isNotEmpty
+    final duotone = solid && shape.isNotEmpty
+        ? '<g fill="${_hex(accent)}" stroke="none">$shape</g>'
+        : tint && shape.isNotEmpty
         ? '<g fill="${_hex(accent)}" fill-opacity="0.18" stroke="none">$shape</g>'
         : '';
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
@@ -164,18 +171,19 @@ class SpotIcon extends StatelessWidget {
     this.color = const Color(0xFF192553),
     this.accent = const Color(0xFFF4C65F),
     this.tint = true,
+    this.solid = false,
     this.label,
   });
 
   final Glyph glyph;
   final double size;
   final Color color, accent;
-  final bool tint;
+  final bool tint, solid;
   final String? label;
 
   @override
   Widget build(BuildContext context) => SvgPicture.string(
-    glyph.svg(color, accent, tint: tint),
+    glyph.svg(color, accent, tint: tint, solid: solid),
     width: size,
     height: size,
     semanticsLabel: label,

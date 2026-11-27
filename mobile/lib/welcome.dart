@@ -165,9 +165,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     },
                     child: FrostedSurface(
                       radius: 34,
-                      sigma: 22,
-                      fill: Colors.white.withValues(alpha: .91),
-                      borderColor: Colors.white.withValues(alpha: .88),
+                      fill: Colors.white,
+                      borderColor: line,
                       padding: EdgeInsets.fromLTRB(
                         26,
                         veryShort ? 16 : 26,
@@ -255,9 +254,8 @@ class _WelcomePageState extends State<WelcomePage> {
           children: [
             FrostedSurface(
               radius: 99,
-              sigma: 16,
-              fill: Colors.white.withValues(alpha: .90),
-              borderColor: Colors.white.withValues(alpha: .88),
+              fill: Colors.white,
+              borderColor: line,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
               child: SvgPicture.asset(
                 'assets/logo.svg',
@@ -282,9 +280,8 @@ class _WelcomePageState extends State<WelcomePage> {
               },
               child: FrostedSurface(
                 radius: 32,
-                sigma: 22,
-                fill: Colors.white.withValues(alpha: .92),
-                borderColor: Colors.white.withValues(alpha: .88),
+                fill: Colors.white,
+                borderColor: line,
                 padding: EdgeInsets.fromLTRB(
                   20,
                   compactH ? 12 : 18,

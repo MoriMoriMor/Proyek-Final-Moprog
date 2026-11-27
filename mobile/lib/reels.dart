@@ -104,6 +104,9 @@ class _ReelsViewState extends State<ReelsView> {
           final stageWidth = theater
               ? math.min(460.0, box.maxHeight * .64).clamp(360.0, 480.0)
               : box.maxWidth;
+          final headerTop = theater
+              ? 16.0
+              : MediaQuery.paddingOf(context).top + 10.0;
           Widget stage = Stack(
             children: [
               PageView.builder(
@@ -126,19 +129,32 @@ class _ReelsViewState extends State<ReelsView> {
                   onChanged: widget.onChanged,
                   onOpenStore: widget.onOpenStore,
                   bottomInset: widget.bottomInset,
+                  topInset: headerTop + 48,
                 ),
               ),
               Positioned(
-                top: (theater ? 16.0 : MediaQuery.paddingOf(context).top + 12),
-                left: 20,
-                child: IgnorePointer(
-                  child: Text('Reels', style: display(28, color: Colors.white)),
+                top: headerTop,
+                left: 18,
+                right: 18,
+                child: SizedBox(
+                  height: 36,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      IgnorePointer(
+                        child: Text(
+                          'Reels',
+                          style: display(26, color: Colors.white, height: 1),
+                        ),
+                      ),
+                      const Spacer(),
+                      StreakChip(
+                        dark: true,
+                        onTap: () => openQuests(context),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Positioned(
-                top: (theater ? 14.0 : MediaQuery.paddingOf(context).top + 10),
-                right: 16,
-                child: StreakChip(dark: true, onTap: () => openQuests(context)),
               ),
               IgnorePointer(
                 child: AnimatedSwitcher(
@@ -263,6 +279,7 @@ class ReelPage extends StatefulWidget {
     required this.onChanged,
     required this.onOpenStore,
     this.bottomInset = 0,
+    this.topInset,
   });
   final Spot spot;
   final SpotsRepository repo;
@@ -270,6 +287,7 @@ class ReelPage extends StatefulWidget {
   final VoidCallback onChanged;
   final ValueChanged<String> onOpenStore;
   final double bottomInset;
+  final double? topInset;
 
   @override
   State<ReelPage> createState() => _ReelPageState();
@@ -445,9 +463,9 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
             ),
           ),
           Positioned(
-            top: MediaQuery.paddingOf(context).top + 56,
-            left: 14,
-            right: 14,
+            top: widget.topInset ?? (MediaQuery.paddingOf(context).top + 58),
+            left: 18,
+            right: 18,
             child: Row(
               children: [
                 for (var i = 0; i < count; i++)
@@ -618,7 +636,7 @@ class _ReelPageState extends State<ReelPage> with TickerProviderStateMixin {
                     const SizedBox(width: 10),
                     if (spot.distanceKm != null)
                       Pill(
-                        color: Colors.white.withValues(alpha: .2),
+                        color: darkGlassFill,
                         child: Text(
                           distanceLabel(spot.distanceKm!),
                           style: const TextStyle(color: Colors.white),

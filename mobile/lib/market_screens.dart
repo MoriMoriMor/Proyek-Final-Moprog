@@ -591,13 +591,13 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-      color: color.withValues(alpha: .14),
+      color: color,
       borderRadius: BorderRadius.circular(10),
     ),
     child: Text(
       text,
       style: TextStyle(
-        color: edgeOf(color),
+        color: foregroundOn(color),
         fontWeight: FontWeight.w900,
         fontSize: 11.5,
       ),
@@ -1565,13 +1565,16 @@ class StatusChip extends StatelessWidget {
   const StatusChip(this.status, {super.key});
   final String status;
   @override
-  Widget build(BuildContext context) => Pill(
-    color: statusColor(status).withValues(alpha: .15),
-    child: Text(
-      orderStatusLabel[status] ?? status,
-      style: TextStyle(color: edgeOf(statusColor(status))),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final bg = statusColor(status);
+    return Pill(
+      color: bg,
+      child: Text(
+        orderStatusLabel[status] ?? status,
+        style: TextStyle(color: foregroundOn(bg)),
+      ),
+    );
+  }
 }
 
 class OrderTile extends StatelessWidget {
@@ -1604,13 +1607,14 @@ class OrderTile extends StatelessWidget {
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: statusColor(order.status).withValues(alpha: .15),
+              color: statusColor(order.status),
               borderRadius: BorderRadius.circular(16),
             ),
             child: SpotIcon(
               Glyph.receipt,
-              size: 26,
-              accent: statusColor(order.status),
+              size: 24,
+              color: foregroundOn(statusColor(order.status)),
+              tint: false,
             ),
           ),
           const SizedBox(width: 12),

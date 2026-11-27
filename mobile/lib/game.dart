@@ -553,23 +553,31 @@ class StreakChip extends StatelessWidget {
         child: Bouncy(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(9, 6, 12, 6),
+            height: 36,
+            padding: const EdgeInsets.fromLTRB(10, 0, 12, 0),
             decoration: BoxDecoration(
-              color: dark
-                  ? Colors.white.withValues(alpha: .16)
-                  : glassStrong,
+              color: dark ? darkGlassFill : Colors.white,
               borderRadius: BorderRadius.circular(99),
               border: Border.all(
-                color: dark ? darkGlassBorder : glassBorder,
-                width: 1.2,
+                color: dark ? darkGlassBorder : line,
+                width: 1.3,
               ),
               boxShadow: dark ? null : surfaceShadow,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                StreakFlame(streak: game.streak, size: 22),
-                const SizedBox(width: 4),
+                SizedBox(
+                  width: 20,
+                  height: 22,
+                  child: OverflowBox(
+                    maxWidth: 28,
+                    maxHeight: 28,
+                    child: StreakFlame(streak: game.streak, size: 22),
+                  ),
+                ),
+                const SizedBox(width: 5),
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: game.streak.toDouble()),
                   duration: const Duration(milliseconds: 900),
@@ -578,7 +586,9 @@ class StreakChip extends StatelessWidget {
                     '${v.round()}',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 16,
+                      fontSize: 15,
+                      height: 1,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                       color: dark ? Colors.white : const Color(0xFFD9541E),
                     ),
                   ),
@@ -866,9 +876,9 @@ class QuestCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .90),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white, width: 1.5),
+            border: Border.all(color: line, width: 1.5),
             boxShadow: surfaceShadow,
           ),
           child: Row(
@@ -1116,7 +1126,7 @@ class _QuestRow extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 10),
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: done ? quest.color.withValues(alpha: .12) : Colors.white,
+      color: Colors.white,
       borderRadius: BorderRadius.circular(22),
       border: Border.all(color: done ? quest.color : line, width: 2),
     ),

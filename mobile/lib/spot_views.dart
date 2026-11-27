@@ -211,9 +211,9 @@ class _SpotCardState extends State<SpotCard>
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .92),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white, width: 1.5),
+          border: Border.all(color: line, width: 1.4),
           boxShadow: surfaceShadow,
         ),
         child: Column(
@@ -436,12 +436,8 @@ class _RatingBadge extends StatelessWidget {
   const _RatingBadge(this.rating);
   final double rating;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(6, 3, 9, 3),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFF4D6),
-      borderRadius: BorderRadius.circular(12),
-    ),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 2),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -450,14 +446,15 @@ class _RatingBadge extends StatelessWidget {
           size: 17,
           color: Color(0xFFB77A0E),
           accent: yellow,
+          solid: true,
         ),
-        const SizedBox(width: 3),
+        const SizedBox(width: 4),
         Text(
           rating.toStringAsFixed(1),
           style: const TextStyle(
             fontWeight: FontWeight.w900,
-            fontSize: 13,
-            color: Color(0xFF8A5B06),
+            fontSize: 13.5,
+            color: ink,
           ),
         ),
       ],
@@ -1232,49 +1229,58 @@ class _SpotDetailState extends State<SpotDetail> {
                 index: 4,
                 child: ListenableBuilder(
                   listenable: reactions,
-                  builder: (context, _) => Row(
-                    children: [
-                      Expanded(
-                        child: _StatTile(
-                          glyph: Glyph.heart,
-                          color: coral,
-                          tint: const Color(0xFFFFEDF0),
-                          value: compact(reactions.likes),
-                          label: 'suka',
-                          active: reactions.liked,
-                          onTap: () async {
-                            final was = reactions.liked;
-                            final ok = await reactions.toggle(
-                              context,
-                              widget.repo,
-                              spot.id,
-                              'like',
-                            );
-                            if (ok && !was) GameState.instance.track('like');
-                          },
+                  builder: (context, _) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: line, width: 1.5),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _StatTile(
+                            glyph: Glyph.heart,
+                            color: coral,
+                            value: compact(reactions.likes),
+                            label: 'suka',
+                            active: reactions.liked,
+                            onTap: () async {
+                              final was = reactions.liked;
+                              final ok = await reactions.toggle(
+                                context,
+                                widget.repo,
+                                spot.id,
+                                'like',
+                              );
+                              if (ok && !was) GameState.instance.track('like');
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _StatTile(
-                          glyph: Glyph.chat,
-                          color: piko,
-                          tint: const Color(0xFFEDF1FF),
-                          value: compact(commentCount),
-                          label: 'komentar',
+                        Container(width: 1, height: 28, color: line),
+                        Expanded(
+                          child: _StatTile(
+                            glyph: Glyph.chat,
+                            color: piko,
+                            value: compact(commentCount),
+                            label: 'komentar',
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _StatTile(
-                          glyph: Glyph.star,
-                          color: caramel,
-                          tint: const Color(0xFFFFF5DD),
-                          value: spot.rating?.toStringAsFixed(1) ?? '—',
-                          label: 'rating',
+                        Container(width: 1, height: 28, color: line),
+                        Expanded(
+                          child: _StatTile(
+                            glyph: Glyph.star,
+                            color: caramel,
+                            value: spot.rating?.toStringAsFixed(1) ?? '—',
+                            label: 'rating',
+                            solidIcon: spot.rating != null,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1480,55 +1486,78 @@ class _StatTile extends StatelessWidget {
   const _StatTile({
     required this.glyph,
     required this.color,
-    required this.tint,
     required this.value,
     required this.label,
     this.active = false,
+    this.solidIcon = false,
     this.onTap,
   });
   final Glyph glyph;
-  final Color color, tint;
+  final Color color;
   final String value, label;
-  final bool active;
+  final bool active, solidIcon;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Bouncy(
-    onTap: onTap,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-      decoration: BoxDecoration(
-        color: active ? color : tint,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SpotIcon(
-            glyph,
-            size: 24,
-            color: active ? Colors.white : edgeOf(color),
-            accent: active ? edgeOf(color) : color.withValues(alpha: .45),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              color: active ? Colors.white : ink,
+  Widget build(BuildContext context) => Semantics(
+    button: onTap != null,
+    selected: active,
+    label: '$value $label',
+    child: Bouncy(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SpotIcon(
+              glyph,
+              size: 21,
+              color: active ? Colors.white : edgeOf(color),
+              accent: active ? Colors.white : color,
+              tint: false,
+              solid: !active && solidIcon,
             ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-              color: active ? Colors.white70 : muted,
+            const SizedBox(width: 7),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      height: 1.05,
+                      color: active ? Colors.white : ink,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11.5,
+                      height: 1.1,
+                      color: active ? Colors.white : muted,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );

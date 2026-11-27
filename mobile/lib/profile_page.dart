@@ -450,17 +450,10 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              tier.accent.withValues(alpha: .35),
-              tier.stroke.withValues(alpha: .12),
-            ],
-          ),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: tier.stroke.withValues(alpha: .25),
-            width: 2,
-          ),
+          border: Border.all(color: line, width: 1.5),
+          boxShadow: surfaceShadow,
         ),
         child: Row(
           children: [
@@ -828,27 +821,23 @@ class _PassportChip extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+    padding: const EdgeInsets.fromLTRB(9, 6, 12, 6),
     decoration: BoxDecoration(
-      color: color.withValues(alpha: .12),
+      color: Colors.white,
       borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: line, width: 1.4),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SpotIcon(
-          glyph,
-          size: 18,
-          color: edgeOf(color),
-          accent: color.withValues(alpha: .5),
-        ),
+        SpotIcon(glyph, size: 17, color: edgeOf(color), tint: false),
         const SizedBox(width: 5),
         Text(
           text,
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 13,
-            color: edgeOf(color),
+            color: ink,
           ),
         ),
       ],

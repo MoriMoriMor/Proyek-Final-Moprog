@@ -46,11 +46,11 @@ const marketGradient = LinearGradient(
   end: Alignment.bottomRight,
   colors: [Color(0xFFFFEFE2), Color(0xFFFFF8F2), pale],
 );
-const glassFill = Color(0xC9FFFFFF);
-const glassStrong = Color(0xE3FFFFFF);
-const glassBorder = Color(0xB8FFFFFF);
-const darkGlassFill = Color(0xBD15204A);
-const darkGlassBorder = Color(0x38FFFFFF);
+const glassFill = Colors.white;
+const glassStrong = Colors.white;
+const glassBorder = line;
+const darkGlassFill = Color(0xFF18223D);
+const darkGlassBorder = Color(0xFF2B3960);
 const surfaceShadow = [
   BoxShadow(color: Color(0x10192553), blurRadius: 28, offset: Offset(0, 10)),
   BoxShadow(color: Color(0x06192553), blurRadius: 6, offset: Offset(0, 2)),

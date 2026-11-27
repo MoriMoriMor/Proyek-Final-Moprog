@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -8,14 +7,13 @@ import 'piko.dart';
 import 'spot_icons.dart';
 import 'theme.dart';
 
-/// Permukaan kaca buram (frosted glass) ala iOS untuk bilah apung dan lencana.
-/// Otomatis menjadi lebih pekat tanpa blur saat mode reduced motion aktif.
+/// Permukaan kartu dan bilah apung dengan latar solid yang bersih.
 class FrostedSurface extends StatelessWidget {
   const FrostedSurface({
     super.key,
     required this.child,
     this.radius = 24,
-    this.sigma = 18,
+    this.sigma = 0,
     this.padding,
     this.dark = false,
     this.fill,
@@ -32,32 +30,23 @@ class FrostedSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduced = calm(context);
-    final bg =
-        fill ??
-        (dark
-            ? (reduced ? const Color(0xEB15204A) : darkGlassFill)
-            : (reduced ? Colors.white.withValues(alpha: .96) : glassFill));
-    final rim = borderColor ?? (dark ? darkGlassBorder : glassBorder);
+    final bg = fill ?? (dark ? darkGlassFill : Colors.white);
+    final rim = borderColor ?? (dark ? darkGlassBorder : line);
     final r = BorderRadius.circular(radius);
-    Widget box = Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: r,
-        border: Border.all(color: rim, width: 1.2),
-      ),
-      child: child,
-    );
-    if (!reduced && sigma > 0) {
-      box = BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-        child: box,
-      );
-    }
     return DecoratedBox(
       decoration: BoxDecoration(borderRadius: r, boxShadow: shadows),
-      child: ClipRRect(borderRadius: r, child: box),
+      child: ClipRRect(
+        borderRadius: r,
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: r,
+            border: Border.all(color: rim, width: 1.2),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }
@@ -419,7 +408,6 @@ class SpotsBackdrop extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: market ? marketGradient : discoveryGradient,
                 ),
-                child: CustomPaint(painter: _BackdropLines(market)),
               ),
               builder: (_, value, child) =>
                   Opacity(opacity: value, child: child),
@@ -430,49 +418,6 @@ class SpotsBackdrop extends StatelessWidget {
       child,
     ],
   );
-}
-
-class _BackdropLines extends CustomPainter {
-  const _BackdropLines(this.market);
-  final bool market;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final glow = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          (market ? const Color(0xFFFFD8C2) : const Color(0xFFB7D6FF))
-              .withValues(alpha: .42),
-          Colors.transparent,
-        ],
-      ).createShader(
-        Rect.fromCircle(
-          center: Offset(size.width * .84, 88),
-          radius: size.shortestSide * .55,
-        ),
-      );
-    canvas.drawCircle(
-      Offset(size.width * .84, 88),
-      size.shortestSide * .55,
-      glow,
-    );
-    var leftCloud = Path()
-      ..addOval(Rect.fromCircle(center: Offset(size.width * .18, 128), radius: 56));
-    leftCloud = Path.combine(
-      PathOperation.union,
-      leftCloud,
-      Path()
-        ..addOval(
-          Rect.fromCircle(center: Offset(size.width * .26, 138), radius: 42),
-        ),
-    );
-    final cloudPaint = Paint()..color = Colors.white.withValues(alpha: .46);
-    canvas.drawPath(leftCloud, cloudPaint);
-    canvas.drawCircle(Offset(size.width * .78, 210), 54, cloudPaint);
-  }
-
-  @override
-  bool shouldRepaint(_BackdropLines old) => old.market != market;
 }
 
 class Avatar extends StatelessWidget {
@@ -556,7 +501,7 @@ class Avatar extends StatelessWidget {
   }
 }
 
-/// Tombol bulat transparan untuk diletakkan di atas foto atau peta.
+/// Tombol bulat dengan latar solid di atas foto atau peta.
 class GlassButton extends StatelessWidget {
   const GlassButton({
     super.key,
@@ -578,33 +523,24 @@ class GlassButton extends StatelessWidget {
       label: label,
       child: Bouncy(
         onTap: onTap,
-        child: ClipOval(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: calm(context) ? 0 : 16,
-              sigmaY: calm(context) ? 0 : 16,
+        child: Container(
+          width: 46,
+          height: 46,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: dark ? darkGlassFill : Colors.white,
+            border: Border.all(
+              color: dark ? darkGlassBorder : line,
+              width: 1.2,
             ),
-            child: Container(
-              width: 46,
-              height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: dark
-                    ? ink.withValues(alpha: .46)
-                    : Colors.white.withValues(alpha: .82),
-                border: Border.all(
-                  color: dark ? darkGlassBorder : glassBorder,
-                  width: 1.2,
-                ),
-              ),
-              child: SpotIcon(
-                glyph,
-                size: 23,
-                color: dark ? Colors.white : ink,
-                tint: false,
-              ),
-            ),
+            boxShadow: surfaceShadow,
+          ),
+          child: SpotIcon(
+            glyph,
+            size: 23,
+            color: dark ? Colors.white : ink,
+            tint: false,
           ),
         ),
       ),

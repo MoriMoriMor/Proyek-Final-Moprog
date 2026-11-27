@@ -24,10 +24,8 @@ body {
 }
 .card {
   width: min(440px, 100%);
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  background: #ffffff;
+  border: 1.5px solid var(--line);
   border-radius: 32px;
   box-shadow: 0 20px 50px rgba(25, 37, 83, .11);
   padding: 22px 24px 26px;
@@ -68,10 +66,8 @@ body.space-landing {
   max-width: 170px;
   padding: 6px 11px 6px 7px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1.2px solid rgba(255, 255, 255, 0.95);
+  background: #ffffff;
+  border: 1.2px solid var(--line);
   box-shadow: 0 8px 20px rgba(4, 10, 28, 0.28);
   pointer-events: none;
 }
@@ -118,10 +114,8 @@ body.space-landing {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: rgba(255, 255, 255, .85);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
-  border: 1.5px solid rgba(255, 255, 255, .94);
+  background: #ffffff;
+  border: 1.5px solid var(--line);
   border-radius: 34px;
   box-shadow: 0 24px 54px rgba(25, 37, 83, .13);
   padding: 28px 28px 24px;

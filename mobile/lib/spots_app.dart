@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -585,7 +584,7 @@ class _SpotsShellState extends State<SpotsShell> {
         ],
       ),
     );
-    return SpotsBackdrop(market: explore, child: feed);
+    return wide ? feed : SpotsBackdrop(market: explore, child: feed);
   }
 
   Widget _cards(List<Spot> items, bool wide) => SliverLayoutBuilder(
@@ -795,11 +794,9 @@ class _SpotsShellState extends State<SpotsShell> {
           _StoryBubble(
             label: 'Bagikan',
             onTap: create,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .86),
-              ),
-              child: const Center(
+            child: const ColoredBox(
+              color: Colors.white,
+              child: Center(
                 child: SpotIcon(
                   Glyph.plus,
                   size: 26,
@@ -1084,39 +1081,33 @@ class _SpotsShellState extends State<SpotsShell> {
               Expanded(
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                        color: Colors.white.withValues(alpha: .86),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Mascot(
-                              kind: MascotKind.pino,
-                              size: 36,
-                              wave: true,
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text('Peta', style: display(26)),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Pill(
-                              color: mint,
-                              child: Text(
-                                loading ? '…' : '${spots.length}',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
+                  child: FrostedSurface(
+                    radius: 22,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Mascot(
+                          kind: MascotKind.pino,
+                          size: 36,
+                          wave: true,
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Peta', style: display(26)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Pill(
+                          color: mint,
+                          child: Text(
+                            loading ? '…' : '${spots.length}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1501,18 +1492,16 @@ class _NavItem extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
             decoration: BoxDecoration(
               color: active
-                  ? (dark
-                        ? Colors.white.withValues(alpha: .16)
-                        : Colors.white.withValues(alpha: .86))
+                  ? (dark ? const Color(0xFF253257) : pale)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(18),
               border: active
                   ? Border.all(
-                      color: dark ? darkGlassBorder : Colors.white,
+                      color: dark ? darkGlassBorder : line,
                       width: 1.2,
                     )
                   : null,
-              boxShadow: active && !dark ? surfaceShadow : null,
+              boxShadow: null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1576,8 +1565,7 @@ class _SideRail extends StatelessWidget {
         width: 244,
         child: FrostedSurface(
           radius: 30,
-          sigma: 22,
-          fill: Colors.white.withValues(alpha: .84),
+          fill: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
           shadows: [
             BoxShadow(
@@ -2131,8 +2119,7 @@ class _MiniCard extends StatelessWidget {
     onTap: onTap,
     child: FrostedSurface(
       radius: 26,
-      sigma: 18,
-      fill: Colors.white.withValues(alpha: .86),
+      fill: Colors.white,
       padding: const EdgeInsets.all(8),
       shadows: [
         BoxShadow(
